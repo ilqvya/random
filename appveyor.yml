@@ -1,0 +1,21 @@
+version: '{build}'
+
+os: 
+  - Visual Studio 2015
+  - Visual Studio 2017
+
+platform:
+  - x86
+  - x64
+
+configuration:
+  - Debug
+  - Release
+
+build_script:
+  - IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2015" ( IF "%PLATFORM%" == "x86" ( SET GEN="Visual Studio 14 2015" ) ELSE ( SET GEN="Visual Studio 14 2015 Win64" ) )
+  - IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2017" ( IF "%PLATFORM%" == "x86" ( SET GEN="Visual Studio 15 2017" ) ELSE ( SET GEN="Visual Studio 15 2017 Win64" ) )
+  - IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2013" ( IF "%PLATFORM%" == "x86" ( SET GEN="Visual Studio 12 2013" ) ELSE ( SET GEN="Visual Studio 12 2013 Win64" ) )
+  - echo %GEN%
+  - cmake . -G%GEN% -DCMAKE_CXX_FLAGS="%additional_flags%"
+  - cmake --build . --config Release
