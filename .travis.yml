@@ -21,13 +21,29 @@ matrix:
   #    - valgrind --error-exitcode=1 --leak-check=full PROGRAM_NAME
     # linux gcc
     - os: linux
-      compiler: gcc
-      before_install:
-        - pip install --user cpp-coveralls
-      script:
-        - ./configure --enable-gcov && make && make check
-      after_success:
-        - coveralls --exclude lib --exclude tests --gcov-options '\-lp'
+    compiler: gcc
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: ['g++-4.9', 'ruby']
+    before_script:
+      - wget http://ftp.de.debian.org/debian/pool/main/l/lcov/lcov_1.11.orig.tar.gz
+      - tar xf lcov_1.11.orig.tar.gz
+      - sudo make -C lcov-1.11/ install
+      - gem install coveralls-lcov
+      - pip install --user cpp-coveralls
+    after_success:
+      - make clean
+      - CXXFLAGS="--coverage -g -O0" CPPFLAGS="-DNDEBUG" make EasyRandomTest
+      - test/json_unit "*"
+      - coveralls --build-root test --exclude src/catch.hpp --exclude src/unit-algorithms.cpp --exclude src/unit-allocator.cpp --exclude src/unit-capacity.cpp --exclude src/unit-class_const_iterator.cpp --exclude src/unit-class_iterator.cpp --exclude src/unit-class_lexer.cpp --exclude src/unit-class_parser.cpp --exclude src/unit-comparison.cpp --exclude src/unit-concepts.cpp --exclude src/unit-constructor1.cpp --exclude src/unit-constructor2.cpp --exclude src/unit-convenience.cpp --exclude src/unit-conversions.cpp --exclude src/unit-deserialization.cpp --exclude src/unit-element_access1.cpp --exclude src/unit-element_access2.cpp --exclude src/unit-inspection.cpp --exclude src/unit-iterator_wrapper.cpp --exclude src/unit-iterators1.cpp --exclude src/unit-iterators2.cpp --exclude src/unit-json_patch.cpp --exclude src/unit-json_pointer.cpp --exclude src/unit-modifiers.cpp --exclude src/unit-pointer_access.cpp --exclude src/unit-readme.cpp --exclude src/unit-reference_access.cpp --exclude src/unit-regression.cpp --exclude src/unit-serialization.cpp --exclude src/unit-testsuites.cpp --exclude src/unit-unicode.cpp --include ../src/json.hpp --gcov-options '\-lp' --gcov 'gcov-4.9'
+      - lcov --directory src --directory test/src --capture --output-file coverage.info --rc lcov_branch_coverage=1 --no-external
+      - lcov --remove coverage.info 'test/src/*' --output-file coverage.info --rc lcov_branch_coverage=1
+      - lcov --list coverage.info --rc lcov_branch_coverage=1
+      - coveralls-lcov --repo-token F9bs4Nop10JRgqPQXRcifyQKYhb3FczkS coverage.info
+    env:
+      - COMPILER=g++-4.9
+      - SPECIAL=coveralls
     #- os: linux
     #  compiler: gcc
     #  addons:
