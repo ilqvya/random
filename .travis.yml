@@ -32,12 +32,15 @@ matrix:
         - pip install --user cpp-coveralls
       after_success:
         - make clean
-        - CXXFLAGS="--coverage -g -O0" CPPFLAGS="-DNDEBUG" make EasyRandomTest
+        - CXXFLAGS="--coverage -g -O0" CPPFLAGS="-DNDEBUG" make -j4
         - test/EasyRandomTest "*"
         - ls
         - cd test
         - ls
         - cd ..
+        - cd ..
+        - ls
+        - cd build
         - coveralls --help
         - coveralls --build-root test --exclude ../test/catch.hpp --exclude ../test/EasyRandomTest.cpp --include ../source/EasyRandom.hpp --gcov-options '\-lp' --gcov 'gcov-4.9'
         - ls
