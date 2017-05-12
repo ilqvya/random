@@ -3,7 +3,7 @@
 namespace EasyRandom {
     class Random {
     public:
-        static auto get( ) {
+        static int get( ) {
             std::uniform_int_distribution<> dist{ -10, 10 };
             return dist( mtEngine( ) );
         }
