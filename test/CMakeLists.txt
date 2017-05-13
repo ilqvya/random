@@ -22,6 +22,12 @@
 
 project(EasyRandomTest)
 
+if(COVERAGE_ENABLED)
+	message(STATUS "COVERAGE ENABLED")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0") # debug, no optimisation
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage") # enabling coverage
+endif()
+
 add_executable(${PROJECT_NAME} EasyRandomTest.cpp)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
