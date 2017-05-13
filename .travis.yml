@@ -32,11 +32,14 @@ matrix:
         - pip install --user cpp-coveralls
       after_success:
         - make clean
-        - CXXFLAGS="--coverage -g -O0" CPPFLAGS="-DNDEBUG" make -j4
+        - cmake -DCOVERAGE_ENAGLED=1 -DCMAKE_CXX_COMPILER=$COMPILER ..
+        - make -j4
         - test/EasyRandomTest "*"
         - ls
         - cd test
+        - ls
         - cd CMakeFiles
+        - ls
         - cd EasyRandomTest.dir
         - ls
         - cd ../../..
