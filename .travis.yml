@@ -36,13 +36,13 @@ matrix:
         - test/EasyRandomTest "*"
         - ls
         - cd test
+        - cd CMakeFiles
+        - cd EasyRandomTest.dir
         - ls
-        - cd ..
-        - cd ..
+        - cd ../../..
         - ls
-        - cd build
         - coveralls --help
-        - coveralls --build-root test --exclude ../test/catch.hpp --exclude ../test/EasyRandomTest.cpp --include ../source/EasyRandom.hpp --gcov-options '\-lp' --gcov 'gcov-4.9'
+        - coveralls --build-root test/CMakeFiles/EasyRandomTest.dir --exclude ../test/catch.hpp --exclude ../test/EasyRandomTest.cpp --include ../source/EasyRandom.hpp --gcov-options '\-lp' --gcov 'gcov-4.9'
         - ls
         - lcov --directory test --capture --output-file coverage.info --rc lcov_branch_coverage=1 --no-external
         - lcov --remove coverage.info 'test/*' --output-file coverage.info --rc lcov_branch_coverage=1
