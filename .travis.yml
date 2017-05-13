@@ -18,6 +18,8 @@ matrix:
   #    - valgrind -h
   #    - valgrind --error-exitcode=1 --leak-check=full PROGRAM_NAME
     # linux gcc
+    
+    # coveralls
     - os: linux
       compiler: gcc
       addons:
@@ -35,24 +37,8 @@ matrix:
         - cmake -DCOVERAGE_ENABLED=1 -DCMAKE_CXX_COMPILER=$COMPILER ..
         - make -j4
         - test/EasyRandomTest "*"
-        - ls
-        - cd test
-        - ls
-        - cd CMakeFiles
-        - ls
-        - cd EasyRandomTest.dir
-        - ls
-        - cd ../../..
-        - ls
-        - coveralls --help
-        #- coveralls --verbose --build-root test/CMakeFiles/EasyRandomTest.dir --exclude ../../catch.hpp --exclude ../../EasyRandomTest.cpp --include ../../../source/EasyRandom.hpp --gcov-options '\-lp' --gcov 'gcov-4.9'
-        - ls
-        #- lcov -h
-        #- lcov -v
         - lcov --directory test --capture --output-file coverage.info --rc lcov_branch_coverage=1
-        #- cat coverage.info
         - lcov --remove coverage.info 'test/*' '/usr/*' --output-file coverage.info --rc lcov_branch_coverage=1
-        - ls
         - lcov --list coverage.info --rc lcov_branch_coverage=1
         - coveralls-lcov --repo-token cHlbNiLF1jmjueuJt59Wu4ntkZYNN4i9q coverage.info
       env:
