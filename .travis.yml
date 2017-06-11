@@ -71,8 +71,8 @@ matrix:
           packages:
             - g++-6
       env: COMPILER=g++-6
-    #  
-     linux clang
+      
+    # linux clang
     - os: linux
       env: LLVM_VERSION=3.6.0
       compiler: clang
@@ -113,7 +113,7 @@ matrix:
       env: LLVM_VERSION=4.0.0
       compiler: clang
       
-     OSX xcode
+    # OSX xcode
     - os: osx
       osx_image: xcode8
 
