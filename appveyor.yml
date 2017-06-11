@@ -18,4 +18,5 @@ build_script:
   - IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2013" ( IF "%PLATFORM%" == "x86" ( SET GEN="Visual Studio 12 2013" ) ELSE ( SET GEN="Visual Studio 12 2013 Win64" ) )
   - echo %GEN%
   - cmake . -G%GEN% -DCMAKE_CXX_FLAGS="%additional_flags%"
-  - cmake --build . --config Release
+  - cmake --build . --config %CONFIGURATION%
+  - ctest
