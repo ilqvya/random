@@ -72,60 +72,59 @@ matrix:
             - g++-6
       env: COMPILER=g++-6
     #  
-    # linux clang
-    #- os: linux
-    #  env: LLVM_VERSION=3.6.0
-    #  compiler: clang
+     linux clang
+    - os: linux
+      env: LLVM_VERSION=3.6.0
+      compiler: clang
 
-    #- os: linux
-    #  env: LLVM_VERSION=3.6.1
-    #  compiler: clang
+    - os: linux
+      env: LLVM_VERSION=3.6.1
+      compiler: clang
 
-    #- os: linux
-    #  env: LLVM_VERSION=3.6.2
-    #  compiler: clang
+    - os: linux
+      env: LLVM_VERSION=3.6.2
+      compiler: clang
 
-    #- os: linux
-    #  env: LLVM_VERSION=3.7.0
-    #  compiler: clang
+    - os: linux
+      env: LLVM_VERSION=3.7.0
+      compiler: clang
 
-    #- os: linux
-    #  env: LLVM_VERSION=3.7.1
-    #  compiler: clang
+    - os: linux
+      env: LLVM_VERSION=3.7.1
+      compiler: clang
 
-    #- os: linux
-    #  env: LLVM_VERSION=3.8.0
-    #  compiler: clang
+    - os: linux
+      env: LLVM_VERSION=3.8.0
+      compiler: clang
 
-    #- os: linux
-    #  env: LLVM_VERSION=3.8.1
-    #  compiler: clang
+    - os: linux
+      env: LLVM_VERSION=3.8.1
+      compiler: clang
       
-    #- os: linux
-    #  env: 
-    #    - LLVM_VERSION=3.9.0 
-    #  compiler: clang
+    - os: linux
+      env: LLVM_VERSION=3.9.0 
+      compiler: clang
       
-    # os: linux
-    #  env: LLVM_VERSION=3.9.1
-    #  compiler: clang
+     os: linux
+      env: LLVM_VERSION=3.9.1
+      compiler: clang
       
-    #- os: linux
-    #  env: LLVM_VERSION=4.0.0
-    #  compiler: clang
+    - os: linux
+      env: LLVM_VERSION=4.0.0
+      compiler: clang
       
-    # OSX xcode
-    #- os: osx
-    #  osx_image: xcode8
+     OSX xcode
+    - os: osx
+      osx_image: xcode8
 
-    #- os: osx
-    #  osx_image: xcode8.1
+    - os: osx
+      osx_image: xcode8.1
 
-    #- os: osx
-    #  osx_image: xcode8.2
+    - os: osx
+      osx_image: xcode8.2
 
-    #- os: osx
-    #  osx_image: xcode8.3
+    - os: osx
+      osx_image: xcode8.3
       
 # Build steps
 script:
