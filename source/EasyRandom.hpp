@@ -46,7 +46,7 @@ namespace EasyRandom {
 
     /// The basic random alias based on a mt19937 random number engine
     template<typename Engine>
-    Engine basic_random<Engine>::engine{ std::random_device{ }( ) };
+    Engine basic_random<Engine>::engine( std::random_device{ }( ) );
 
     using Random = basic_random<std::mt19937>;
 }
