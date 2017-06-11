@@ -30,7 +30,7 @@ namespace EasyRandom {
         * \return A random number in a [from, to] range
         * \note Allow both: from <= to and from >= to
         */
-        template<typename A, typename B, typename C = std::common_type_t<A, B>>
+        template<typename A, typename B, typename C = typename std::common_type<A, B>::type>
         static typename std::enable_if<
                is_uniform_int<A>::value
             && is_uniform_int<B>::value
