@@ -44,15 +44,15 @@ matrix:
       env:
         - COMPILER=g++-4.9
         - SPECIAL=coveralls
-    #- os: linux
-    #  compiler: gcc
-    #  addons:
-    #    apt:
-    #      sources:
-    #        - ubuntu-toolchain-r-test
-    #      packages:
-    #        - g++-4.9
-    #  env: COMPILER=g++-4.9
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-4.9
+      env: COMPILER=g++-4.9
     #- os: linux
     #  compiler: gcc
     #  addons:
