@@ -46,7 +46,7 @@ namespace EasyRandom {
                is_uniform_int<A>::value
             && is_uniform_int<B>::value
             && std::is_signed<A>::value != std::is_unsigned<B>::value // Prevent conversion from signed to unsigned
-            , C>::type get( A from, B to ) {
+            , C>::type get( A from, B to )noexcept {
             if( from < to ) // Allow range from higher to lower
                 return std::uniform_int_distribution<C>{ from, to }( engine );
             return std::uniform_int_distribution<C>{ to, from }( engine );
@@ -63,7 +63,7 @@ namespace EasyRandom {
         static typename std::enable_if<
                is_uniform_real<A>::value
             && is_uniform_real<B>::value
-            , C>::type get( A from, B to ) {
+            , C>::type get( A from, B to )noexcept {
             if( from < to ) // Allow range from higher to lower
                 return std::uniform_real_distribution<C>{ from, to }( engine );
             return std::uniform_real_distribution<C>{ to, from }( engine );
