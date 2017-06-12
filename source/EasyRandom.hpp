@@ -28,7 +28,7 @@ namespace EasyRandom {
         * \param from The first limit number of a random range
         * \param to The second limit number of a random range
         * \return A random number in a [from, to] range
-        * \note Allow both: from <= to and from >= to
+        * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
         */
         template<typename A, typename B, typename C = typename std::common_type<A, B>::type>
         static typename std::enable_if<
@@ -44,9 +44,9 @@ namespace EasyRandom {
         static Engine engine;
     };
 
-    /// The basic random alias based on a mt19937 random number engine
     template<typename Engine>
     Engine basic_random<Engine>::engine( std::random_device{ }( ) );
 
+    /// The basic random alias based on a std::mt19937 random number engine
     using Random = basic_random<std::mt19937>;
 }
