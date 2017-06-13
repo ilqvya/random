@@ -45,8 +45,16 @@ namespace EasyRandom {
         static typename std::enable_if<
                is_uniform_int<A>::value
             && is_uniform_int<B>::value
-            && std::is_signed<A>::value != std::is_unsigned<B>::value // Prevent conversion from signed to unsigned
             , C>::type get( A from, B to )noexcept {
+
+            // Prevent weird conversion from signed to unsigned
+            static_assert( std::is_signed<A>::value != std::is_unsigned<B>::value,
+                           "EasyRandom error: Conversion from signed to unsigned is not allowed. | "
+                           "Why? Because By C++ standard: "
+                           "\"if either operand is unsigned, the other shall be converted to unsigned\" | "
+                           "https://stackoverflow.com/questions/10047614/why-int-plus-uint-returns-uint | "
+                           "https://stackoverflow.com/questions/16728281/adding-unsigned-int-to-int");
+
             if( from < to ) // Allow range from higher to lower
                 return std::uniform_int_distribution<C>{ from, to }( engine );
             return std::uniform_int_distribution<C>{ to, from }( engine );
