@@ -2,13 +2,20 @@
 #include <type_traits>
 
 namespace EasyRandom {
+	/**
+	* \brief Base template class for EasyRandom
+	* \param Engine A random engine with interface like in the std::mt19937
+	*/
     template<typename Engine>
     class basic_random {
     public:
+		/**
+		* \brief Type of used random number engine
+		*/
         using engine_type = Engine;
 
         /**
-        * \brief True if type T is applicable by a std::uniform_int_distribution
+        * \brief True if type T is applicable by the std::uniform_int_distribution
         */
         template<typename T>
         struct is_uniform_int {
@@ -40,24 +47,16 @@ namespace EasyRandom {
         * \param to The second limit number of a random range
         * \return A random integer number in a [from, to] range
         * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
+		* \note Prevent implicit type conversion
         */
-        template<typename A, typename B, typename C = typename std::common_type<A, B>::type>
+        template<typename A>
         static typename std::enable_if<
                is_uniform_int<A>::value
-            && is_uniform_int<B>::value
-            , C>::type get( A from, B to )noexcept {
-
-            // Prevent weird conversion from signed to unsigned
-            static_assert( std::is_signed<A>::value != std::is_unsigned<B>::value,
-                           "EasyRandom error: Conversion from signed to unsigned is not allowed. | "
-                           "Why? Because By C++ standard: "
-                           "\"if either operand is unsigned, the other shall be converted to unsigned\" | "
-                           "https://stackoverflow.com/questions/10047614/why-int-plus-uint-returns-uint | "
-                           "https://stackoverflow.com/questions/16728281/adding-unsigned-int-to-int");
-
+            && is_uniform_int<A>::value
+            , A>::type get( A from, A to ) noexcept {
             if( from < to ) // Allow range from higher to lower
-                return std::uniform_int_distribution<C>{ from, to }( engine );
-            return std::uniform_int_distribution<C>{ to, from }( engine );
+                return std::uniform_int_distribution<A>{ from, to }( engine );
+            return std::uniform_int_distribution<A>{ to, from }( engine );
         }
 
         /**
@@ -66,15 +65,16 @@ namespace EasyRandom {
         * \param to The second limit number of a random range
         * \return A random real number in a [from, to] range
         * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
+		* \note Prevent implicit type conversion
         */
-        template<typename A, typename B, typename C = typename std::common_type<A, B>::type>
+        template<typename A>
         static typename std::enable_if<
                is_uniform_real<A>::value
-            && is_uniform_real<B>::value
-            , C>::type get( A from, B to )noexcept {
+            && is_uniform_real<A>::value
+            , A>::type get( A from, A to ) noexcept {
             if( from < to ) // Allow range from higher to lower
-                return std::uniform_real_distribution<C>{ from, to }( engine );
-            return std::uniform_real_distribution<C>{ to, from }( engine );
+                return std::uniform_real_distribution<A>{ from, to }( engine );
+            return std::uniform_real_distribution<A>{ to, from }( engine );
         }
     private:
         /// The random number engine
