@@ -1,3 +1,6 @@
+#ifndef EASY_RANDOM_HPP
+#define EASY_RANDOM_HPP
+
 #include <random>
 #include <type_traits>
 
@@ -86,4 +89,7 @@ namespace EasyRandom {
 
     /// The basic random alias based on a std::mt19937 random number engine
     using Random = basic_random<std::mt19937>;
-}
+
+}// namespace EasyRandom
+
+#endif // #ifndef EASY_RANDOM_HPP
