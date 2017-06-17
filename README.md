@@ -8,3 +8,18 @@
 </a>
 
 Random without extra actions for modern C++
+- [Design goals](#design-goals)
+- [Integration](#integration)
+- [Examples](#examples)
+
+## Design goals
+
+There are a few ways to get working with random in C++. EasyRandom class had these design goals:
+
+- **Intuitive syntax**. You can do almost everything with random by simple 'get' method
+
+- **Trivial integration**. All code consists of a single header file [`EasyRandom.hpp`](https://github.com/effolkronium/EasyRandom/blob/develop/source/EasyRandom.hpp). That's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
+## Example
+```cpp
+Random::get();
+```
