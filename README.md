@@ -52,7 +52,7 @@ int main() {
 using EasyRandom::Random;
 
 int main() {
-	return Random::get(1, 9) // Invoke 'get' method to generate  a pseudo-random integer between 1 and 9
+  return Random::get(1, 9) // Invoke 'get' method to generate  a pseudo-random integer between 1 and 9
   // Yep, that's all.
 }
 
