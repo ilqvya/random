@@ -7,7 +7,7 @@
        src="https://scan.coverity.com/projects/12707/badge.svg"/>
 </a>
 
-Random without extra actions for modern C++
+Easy to use Random for modern C++
 - [Design goals](#design-goals)
 - [Integration](#integration)
 - [Examples](#examples)
