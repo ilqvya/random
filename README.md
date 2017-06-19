@@ -44,7 +44,7 @@ int main() {
   return dist(eng) // call distribution with engine argument
 }
 ```
-- **Random style**
+- **EasyRandom style**
 
 ```cpp
 #include "EasyRandom.hpp"
@@ -64,8 +64,36 @@ EasyRandom class had these design goals:
 - **Trivial integration**. All code consists of a single header file [`EasyRandom.hpp`](https://github.com/effolkronium/EasyRandom/blob/develop/source/EasyRandom.hpp). That's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
 
 ## Integration
+The single required source, file `EasyRandom.hpp` is in the `source` directory.
+All you need to do is add
 
-## Example
 ```cpp
-Random::get();
+#include "EasyRandom.hpp"
+
+// for convenience
+using EasyRandom::Random;
+```
+
+to the files you want to use JSON objects. That's it. Do not forget to set the necessary switches to enable C++11 (e.g., `-std=c++11` for GCC and Clang).
+## Examples
+### Getting integer numbers
+```cpp
+auto val = Random::get(-10, 10) //decltype(val) is int
+```
+```cpp
+// you can use range from greater to lower
+auto val = Random::get(10l, -10000l) // decltype(val) is long
+```
+```cpp
+auto val = Random::get(1000u, -10000) // COMPILE ERROR: Implicit conversions are not allowed here.
+```
+### Getting float point numbers
+```cpp
+auto val = Random::get(-10.321f, 10.123f) //decltype(val) is float
+```
+```cpp
+auto val = Random::get(10.l, -10.l) // decltype(val) is long double
+```
+```cpp
+auto val = Random::get(10.f, -10.) // COMPILE ERROR: Implicit conversions are not allowed here.
 ```
