@@ -1,3 +1,4 @@
+# Random for modern C++ with convenient API
 [![Build Status](https://travis-ci.org/effolkronium/EasyRandom.svg?branch=develop)](https://travis-ci.org/effolkronium/EasyRandom)
 [![Build status](https://ci.appveyor.com/api/projects/status/xv0aq60p91j1jnjr/branch/develop?svg=true)](https://ci.appveyor.com/project/effolkronium/easyrandom/branch/develop)
 [![Coverage Status](https://coveralls.io/repos/github/effolkronium/EasyRandom/badge.svg?branch=develop)](https://coveralls.io/github/effolkronium/EasyRandom?branch=develop)
@@ -5,7 +6,6 @@
   <img alt="Coverity Scan Build Status"
        src="https://scan.coverity.com/projects/12707/badge.svg"/>
 </a>
-# Random for modern C++ with convenient API
 - [Design goals](#design-goals)
 - [Integration](#integration)
 - [Examples](#examples)
@@ -48,6 +48,7 @@ To get a random number, you must create and use a chain of various objects.
 ```cpp
 #include "random.hpp"
 
+// get base random alias based on a std::mt19937 random number engine
 using Random = effolkronium::random;
 
 int main() {
@@ -64,7 +65,7 @@ All you need to do is add
 ```cpp
 #include "random.hpp"
 
-// for convenience
+// get base random alias based on a std::mt19937 random number engine
 using Random = effolkronium::random;
 ```
 to the files you want to use effolkronium random class. That's it. Do not forget to set the necessary switches to enable C++11 (e.g., `-std=c++11` for GCC and Clang).
@@ -74,7 +75,7 @@ to the files you want to use effolkronium random class. That's it. Do not forget
 auto val = Random::get(-10, 10) //decltype(val) is int
 ```
 ```cpp
-// you can use range from greater to lower
+// you able to use range from greater to lower
 auto val = Random::get(10.l, -10.l) // decltype(val) is long double
 ```
 ```cpp
