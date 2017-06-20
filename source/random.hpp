@@ -1,25 +1,21 @@
-#ifndef EASY_RANDOM_HPP
-#define EASY_RANDOM_HPP
+#ifndef RANDOM_HPP
+#define RANDOM_HPP
 
 #include <random>
 #include <type_traits>
 
-namespace EasyRandom {
+namespace effolkronium {
 	/**
-	* \brief Base template class for EasyRandom
+	* \brief Base template class for random
 	* \param Engine A random engine with interface like in the std::mt19937
 	*/
     template<typename Engine>
     class basic_random {
     public:
-		/**
-		* \brief Type of used random number engine
-		*/
+		/// Type of used random number engine
         using engine_type = Engine;
 
-        /**
-        * \brief True if type T is applicable by the std::uniform_int_distribution
-        */
+        /// True if type T is applicable by the std::uniform_int_distribution
         template<typename T>
         struct is_uniform_int {
             static constexpr bool value =
@@ -33,9 +29,7 @@ namespace EasyRandom {
                 || std::is_same<T, unsigned long long>::value;
         };
 
-        /**
-        * \brief True if type T is applicable by a std::uniform_real_distribution
-        */
+        /// True if type T is applicable by a std::uniform_real_distribution
         template<typename T>
         struct is_uniform_real {
             static constexpr bool value =
@@ -88,8 +82,8 @@ namespace EasyRandom {
     Engine basic_random<Engine>::engine( std::random_device{ }( ) );
 
     /// The basic random alias based on a std::mt19937 random number engine
-    using Random = basic_random<std::mt19937>;
+    using random = basic_random<std::mt19937>;
 
-}// namespace EasyRandom
+} // namespace effolkronium
 
-#endif // #ifndef EASY_RANDOM_HPP
+#endif // #ifndef RANDOM_HPP

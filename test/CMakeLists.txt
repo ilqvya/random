@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-project(EasyRandomTest)
+project(random_test)
 
 if(COVERAGE_ENABLED)
 	message(STATUS "COVERAGE ENABLED")
@@ -28,7 +28,7 @@ if(COVERAGE_ENABLED)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage") # enabling coverage
 endif()
 
-add_executable(${PROJECT_NAME} EasyRandomTest.cpp)
+add_executable(${PROJECT_NAME} random_test.cpp)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     CXX_STANDARD 11
@@ -37,7 +37,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 
 target_include_directories(${PROJECT_NAME} PRIVATE "../source")
 
-add_test(NAME ${PROJECT_NAME}
-	COMMAND ${PROJECT_NAME}
-	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+add_test( NAME ${PROJECT_NAME}
+          COMMAND ${PROJECT_NAME}
+		  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )

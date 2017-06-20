@@ -23,7 +23,7 @@
 cmake_minimum_required(VERSION 3.0)
 
 # define the project
-project(EasyRandom LANGUAGES CXX)
+project(random LANGUAGES CXX)
 
 enable_testing()
 

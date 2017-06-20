@@ -1,9 +1,9 @@
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 #include "catch.hpp"
-#include "EasyRandom.hpp"
+#include "random.hpp"
 #include <limits>
 
-using namespace EasyRandom;
+using Random = effolkronium::random;
 
 TEST_CASE( "Test random random integer" ) {
     const auto firstRandomNumber = Random::get( std::numeric_limits<std::intmax_t>::min( ),
