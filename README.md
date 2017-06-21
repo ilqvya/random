@@ -52,13 +52,14 @@ To get a random number, you must create and use a chain of various objects.
 using Random = effolkronium::random;
 
 int main() {
+  // auto seeded
   return Random::get(1, 9) // Invoke 'get' method to generate  a pseudo-random integer between 1 and 9
   // Yep, that's all.
 }
 ```
 effolkronium random class had these design goals:
 - **Intuitive syntax**. You can do almost everything with random by simple 'get' method
-- **Trivial integration**. All code consists of a single header file [`EasyRandom.hpp`](https://github.com/effolkronium/EasyRandom/blob/develop/source/EasyRandom.hpp). That's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
+- **Trivial integration**. All code consists of a single header file [`random.hpp`](https://github.com/effolkronium/EasyRandom/blob/develop/source/random.hpp). Tahat's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
 ## Integration
 The single required source, file `random.hpp` is in the `source` directory.
 All you need to do is add
