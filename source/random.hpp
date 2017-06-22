@@ -81,8 +81,8 @@ namespace effolkronium {
     template<typename Engine>
     Engine basic_random<Engine>::engine( std::random_device{ }( ) );
 
-    /// The basic random alias based on a std::mt19937 random number engine
-    using random = basic_random<std::mt19937>;
+    /// The basic random alias based on a std::default_random_engine
+    using random = basic_random<std::default_random_engine>;
 
 } // namespace effolkronium
 
