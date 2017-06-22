@@ -48,8 +48,8 @@ TEST_CASE( "Type deduction for random integer numbers" ) {
     // unsigned short
     static_assert( std::is_same<unsigned short,
                    decltype( Random DOT get(
-                       unsigned short{ 0u },
-                       unsigned short{ 0u } ) ) > ::value, "" );
+                       static_cast<unsigned short>( 0u ),
+                       static_cast<unsigned short>( 0u ) ) ) > ::value, "" );
     // int
     static_assert( std::is_same<int,
                    decltype( Random DOT get( 0, 0 ) )>::value, "" );
@@ -170,8 +170,8 @@ TEST_CASE( "Range overflow for random byte numbers" ) {
          i < std::numeric_limits<std::uint8_t>::max( )
          && !isRangeOverflow;
          ++i ) {
-        const auto randomNumber = Random DOT get( signed char{ -1 },
-                                                  signed char{ 1 } );
+        const auto randomNumber = Random DOT get( static_cast<signed char>( -1 ),
+                                                  static_cast<signed char>( 1 ) );
         isRangeOverflow = randomNumber < -1 || randomNumber > 1;
     }
     REQUIRE( !isRangeOverflow );
@@ -180,8 +180,8 @@ TEST_CASE( "Range overflow for random byte numbers" ) {
     for( std::uint8_t i{ 0u };
          i < std::numeric_limits<std::uint8_t>::max( );
          ++i ) {
-        const auto randomNumber = Random DOT get( signed char{ 1 },
-                                                  signed char{ -1 } );
+        const auto randomNumber = Random DOT get( static_cast<signed char>( 1 ),
+                                                  static_cast<signed char>( -1 ) );
         isRangeOverflow = randomNumber < -1. || randomNumber > 1.;
     }
     REQUIRE( !isRangeOverflow );
@@ -190,8 +190,8 @@ TEST_CASE( "Range overflow for random byte numbers" ) {
     for( std::uint8_t i{ 0u };
          i < std::numeric_limits<std::uint8_t>::max( );
          ++i ) {
-        const auto randomNumber = Random DOT get( signed char{ 0 },
-                                                  signed char{ 0 } );
+        const auto randomNumber = Random DOT get( static_cast<signed char>( 0 ),
+                                                  static_cast<signed char>( 0 ) );
         isRangeOverflow = randomNumber != 0.;
     }
     REQUIRE( !isRangeOverflow );
@@ -201,13 +201,13 @@ TEST_CASE( "Type deduction for random byte numbers" ) {
     // signed char
     static_assert( std::is_same<signed char,
                    decltype( Random DOT get(
-                       signed char{ 0 },
-                       signed char{ 0 } ) ) > ::value, "" );
+                       static_cast<signed char>( 0 ),
+                       static_cast<signed char>( 0 ) ) ) > ::value, "" );
     // unsigned char
     static_assert( std::is_same<unsigned char,
                    decltype( Random DOT get(
-                       unsigned char{ 0 },
-                       unsigned char{ 0 } ) ) > ::value, "" );
+                       static_cast<unsigned char>( 0 ),
+                       static_cast<unsigned char>( 0 ) ) ) > ::value, "" );
     // std::int8_t
     static_assert( std::is_same<std::int8_t,
                    decltype( Random DOT get(
@@ -252,7 +252,7 @@ TEST_CASE( "Range overflow for random common_type numbers" ) {
          && !isRangeOverflow;
          ++i ) {
         const auto randomNumber = Random DOT get<Random::common>( 
-                                                 signed char{ -1 },
+                                                 static_cast<signed char>( -1 ),
                                                  short{ 1 } );
 
         isRangeOverflow = randomNumber < -1 || randomNumber > 1;
@@ -275,8 +275,8 @@ TEST_CASE( "Range overflow for random common_type numbers" ) {
          i < std::numeric_limits<std::uint8_t>::max( );
          ++i ) {
         const auto randomNumber = Random DOT get<Random::common>(
-                                                signed char{ 0 },
-                                                long long{ 0 } );
+                                                static_cast<signed char>( 0 ),
+                                                0ll );
         isRangeOverflow = randomNumber != 0.;
     }
     REQUIRE( !isRangeOverflow );
@@ -286,12 +286,12 @@ TEST_CASE( "Type deduction for random common_type numbers" ) {
     // signed char
     static_assert( std::is_same<signed char,
                    decltype( Random DOT get<Random::common>(
-                       signed char{ 0 },
-                       signed char{ 0 } ) ) > ::value, "" );
+                       static_cast<signed char>( 0 ),
+                       static_cast<signed char>( 0 ) ) ) > ::value, "" );
     // unsigned long
     static_assert( std::is_same<unsigned long,
                    decltype( Random DOT get<Random::common>(
-                       unsigned char{ 0u }, 0ul ) ) > ::value, "" );
+                       static_cast<unsigned char>( 0u ), 0ul ) ) > ::value, "" );
     // double
     static_assert( std::is_same<double,
                    decltype( Random DOT get<Random::common>(
