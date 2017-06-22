@@ -242,3 +242,86 @@ TEST_CASE( "Random byte numbres is truly random" ) {
     // May fail but very rarely
     CHECK( isDifferentNumber );
 }
+
+TEST_CASE( "Range overflow for random common_type numbers" ) {
+    bool isRangeOverflow = false;
+
+    // From lower to greater
+    for( std::uint8_t i{ 0u };
+         i < std::numeric_limits<std::uint8_t>::max( )
+         && !isRangeOverflow;
+         ++i ) {
+        const auto randomNumber = Random DOT get<Random::common>( 
+                                                 signed char{ -1 },
+                                                 short{ 1 } );
+
+        isRangeOverflow = randomNumber < -1 || randomNumber > 1;
+    }
+    REQUIRE( !isRangeOverflow );
+
+    // From greater to lower
+    for( std::uint8_t i{ 0u };
+         i < std::numeric_limits<std::uint8_t>::max( );
+         ++i ) {
+        const auto randomNumber = Random DOT get<Random::common>( 
+                                           1ull, 0u );
+
+        isRangeOverflow = randomNumber < 0. || randomNumber > 1.;
+    }
+    REQUIRE( !isRangeOverflow );
+
+    // Range with 0 gap
+    for( std::uint8_t i{ 0u };
+         i < std::numeric_limits<std::uint8_t>::max( );
+         ++i ) {
+        const auto randomNumber = Random DOT get<Random::common>(
+                                                signed char{ 0 },
+                                                long long{ 0 } );
+        isRangeOverflow = randomNumber != 0.;
+    }
+    REQUIRE( !isRangeOverflow );
+}
+
+TEST_CASE( "Type deduction for random common_type numbers" ) {
+    // signed char
+    static_assert( std::is_same<signed char,
+                   decltype( Random DOT get<Random::common>(
+                       signed char{ 0 },
+                       signed char{ 0 } ) ) > ::value, "" );
+    // unsigned long
+    static_assert( std::is_same<unsigned long,
+                   decltype( Random DOT get<Random::common>(
+                       unsigned char{ 0u }, 0ul ) ) > ::value, "" );
+    // double
+    static_assert( std::is_same<double,
+                   decltype( Random DOT get<Random::common>(
+                       0.,
+                       std::int8_t{ 0 } ) ) > ::value, "" );
+    // long double
+    static_assert( std::is_same<long double,
+                   decltype( Random DOT get<Random::common>(
+                       0.f, 0.l ) ) > ::value, "" );
+}
+
+TEST_CASE( "Random common type numbres is truly random" ) {
+    bool isDifferentNumber{ false };
+
+    for( std::uint8_t i{ 0u };
+         i < std::numeric_limits<std::uint8_t>::max( )
+         && !isDifferentNumber;
+         ++i ) {
+
+        const auto firstRandomNumber = Random DOT get<Random::common>(
+            std::numeric_limits<float>::min( ),
+            std::numeric_limits<signed char>::max( ) );
+
+        const auto secondRandomNumber = Random DOT get<Random::common>(
+            std::numeric_limits<signed char>::min( ),
+            std::numeric_limits<float>::max( ) );
+
+        isDifferentNumber = firstRandomNumber != secondRandomNumber;
+    }
+
+    // May fail but very rarely
+    CHECK( isDifferentNumber );
+}
