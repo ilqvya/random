@@ -161,3 +161,26 @@ TEST_CASE( "Random real numbres is truly random" ) {
     // May fail but very rarely
     CHECK( isDifferentNumber );
 }
+
+TEST_CASE( "Type deduction for random byte numbers" ) {
+    // signed char
+    static_assert( std::is_same<signed char,
+                   decltype( Random DOT get(
+                       signed char{ 0 },
+                       signed char{ 0 } ) ) > ::value, "" );
+    // unsigned char
+    static_assert( std::is_same<unsigned char,
+                   decltype( Random DOT get(
+                       unsigned char{ 0 },
+                       unsigned char{ 0 } ) ) > ::value, "" );
+    // std::int8_t
+    static_assert( std::is_same<std::int8_t,
+                   decltype( Random DOT get(
+                       std::int8_t{ 0 },
+                       std::int8_t{ 0 } ) ) > ::value, "" );
+    // std::uint8_t
+    static_assert( std::is_same<std::uint8_t,
+                   decltype( Random DOT get(
+                       std::uint8_t{ 0 },
+                       std::uint8_t{ 0 } ) ) > ::value, "" );
+}

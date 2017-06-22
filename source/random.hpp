@@ -38,6 +38,14 @@ namespace effolkronium {
                 || std::is_same<T, long double>::value;
         };
 
+        /// True if type T is plain byte
+        template<typename T>
+        struct is_byte {
+            static constexpr bool value =
+                   std::is_same<T,   signed char>::value
+                || std::is_same<T, unsigned char>::value
+        };
+
         /**
         * \brief Generate a random integer number in a [from, to] range
         * \param from The first limit number of a random range
@@ -47,9 +55,7 @@ namespace effolkronium {
 		* \note Prevent implicit type conversion
         */
         template<typename A>
-        static typename std::enable_if<
-               is_uniform_int<A>::value
-            && is_uniform_int<A>::value
+        static typename std::enable_if<is_uniform_int<A>::value
             , A>::type get( A from, A to ) noexcept {
             if( from < to ) // Allow range from higher to lower
                 return std::uniform_int_distribution<A>{ from, to }( engine );
@@ -65,13 +71,30 @@ namespace effolkronium {
 		* \note Prevent implicit type conversion
         */
         template<typename A>
-        static typename std::enable_if<
-               is_uniform_real<A>::value
-            && is_uniform_real<A>::value
+        static typename std::enable_if<is_uniform_real<A>::value
             , A>::type get( A from, A to ) noexcept {
             if( from < to ) // Allow range from higher to lower
                 return std::uniform_real_distribution<A>{ from, to }( engine );
             return std::uniform_real_distribution<A>{ to, from }( engine );
+        }
+
+        /**
+        * \brief Generate a random byte number in a [from, to] range
+        * \param from The first limit number of a random range
+        * \param to The second limit number of a random range
+        * \return A random byte number in a [from, to] range
+        * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
+        * \note Prevent implicit type conversion
+        */
+        template<typename A>
+        static typename std::enable_if<is_byte<A>::value
+            , A>::type get( A from, A to ) noexcept {
+            // Choose between short and unsigned short for byte conversion
+            using short_t = typename std::conditional<
+                std::is_signed<A>::value, short, unsigned short>::type;
+
+            return static_cast<A>( get( static_cast<short_t>( from ),
+                                        static_cast<short_t>( to ) ) );
         }
     private:
         /// The random number engine
