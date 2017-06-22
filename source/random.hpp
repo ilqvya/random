@@ -10,7 +10,7 @@ namespace effolkronium {
 	* \param Engine A random engine with interface like in the std::mt19937
 	*/
     template<typename Engine>
-    class basic_random {
+    class basic_random_static {
     public:
 		/// Type of used random number engine
         using engine_type = Engine;
@@ -79,10 +79,14 @@ namespace effolkronium {
     };
 
     template<typename Engine>
-    Engine basic_random<Engine>::engine( std::random_device{ }( ) );
+    Engine basic_random_static<Engine>::engine( std::random_device{ }( ) );
 
-    /// The basic random alias based on a std::default_random_engine
-    using random = basic_random<std::default_random_engine>;
+    /** 
+    * \brief The basic static random alias based on a std::default_random_engine
+    * \note It uses static methods API and data with static storage
+    * \note Not thread safe but more prefomance
+    */
+    using random_static = basic_random_static<std::default_random_engine>;
 
 } // namespace effolkronium
 

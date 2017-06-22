@@ -3,10 +3,12 @@
 #include "random.hpp"
 #include <limits>
 
-using Random = effolkronium::random;
+using Random = effolkronium::random_static;
+
+#define DOT ::
 
 TEST_CASE( "Test random random integer" ) {
-    const auto firstRandomNumber = Random::get( std::numeric_limits<std::intmax_t>::min( ),
+    const auto firstRandomNumber = Random DOT get( std::numeric_limits<std::intmax_t>::min( ),
                                                 std::numeric_limits<std::intmax_t>::max( ) );
 
     const auto secondRandomNumber = Random::get( std::numeric_limits<std::intmax_t>::min( ),
