@@ -49,8 +49,18 @@ namespace effolkronium {
                 || std::is_same<T, unsigned char>::value;
         };
 
+        /// True if type T is plain number type
+        template<typename T>
+        struct is_supported_number {
+            static constexpr bool value =
+                   is_byte        <T>::value
+                || is_uniform_real<T>::value
+                || is_uniform_int <T>::value;
+        };
+
         /**
         * \brief Generate a random integer number in a [from, to] range
+        *        by std::uniform_int_distribution
         * \param from The first limit number of a random range
         * \param to The second limit number of a random range
         * \return A random integer number in a [from, to] range
@@ -67,6 +77,7 @@ namespace effolkronium {
 
         /**
         * \brief Generate a random real number in a [from, to] range
+        *        by std::uniform_real_distribution
         * \param from The first limit number of a random range
         * \param to The second limit number of a random range
         * \return A random real number in a [from, to] range
@@ -98,6 +109,33 @@ namespace effolkronium {
 
             return static_cast<A>( get( static_cast<short_t>( from ),
                                         static_cast<short_t>( to ) ) );
+        }
+
+        /**
+        * \brief Generate a random common_type number in a [from, to] range
+        * \param Key The Key type for this version of 'get' method
+        *        Type should be '(THIS_TYPE)::common' struct
+        * \param from The first limit number of a random range
+        * \param to The second limit number of a random range
+        * \return A random common_type number in a [from, to] range
+        * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
+        * \note Allow implicit type conversion
+        * \note Prevent implicit type conversion from singed to unsigned types
+        *       Why? std::common_type<Unsigned, Signed> chooses unsigned value,
+        *                 then Signed value will be converted to Unsigned value
+        *                       which gives us a wrong range for random values.
+        *                           https://stackoverflow.com/a/5416498/5734836
+        */
+        template<typename Key, typename A, typename B, 
+                 typename C = typename std::common_type<A, B>::type>
+        static typename std::enable_if<
+               std::is_same<Key, common>::value
+            && is_supported_number<A>::value
+            && is_supported_number<B>::value
+            // Prevent implicit type conversion from singed to unsigned types
+            && std::is_signed<A>::value != std::is_unsigned<B>::value
+            , C>::type get( A from, B to ) noexcept {
+            return get( static_cast<C>( from ), static_cast<C>( to ) );
         }
     private:
         /// The random number engine
