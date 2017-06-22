@@ -15,6 +15,9 @@ namespace effolkronium {
 		/// Type of used random number engine
         using engine_type = Engine;
 
+        /// Key type for getting common_type numbers or objects
+        struct common { };
+
         /// True if type T is applicable by the std::uniform_int_distribution
         template<typename T>
         struct is_uniform_int {
@@ -43,7 +46,7 @@ namespace effolkronium {
         struct is_byte {
             static constexpr bool value =
                    std::is_same<T,   signed char>::value
-                || std::is_same<T, unsigned char>::value
+                || std::is_same<T, unsigned char>::value;
         };
 
         /**
