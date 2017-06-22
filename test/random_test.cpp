@@ -162,6 +162,41 @@ TEST_CASE( "Random real numbres is truly random" ) {
     CHECK( isDifferentNumber );
 }
 
+TEST_CASE( "Range overflow for random byte numbers" ) {
+    bool isRangeOverflow = false;
+
+    // From lower to greater
+    for( std::uint8_t i{ 0u };
+         i < std::numeric_limits<std::uint8_t>::max( )
+         && !isRangeOverflow;
+         ++i ) {
+        const auto randomNumber = Random DOT get( signed char{ -1 },
+                                                  signed char{ 1 } );
+        isRangeOverflow = randomNumber < -1 || randomNumber > 1;
+    }
+    REQUIRE( !isRangeOverflow );
+
+    // From greater to lower
+    for( std::uint8_t i{ 0u };
+         i < std::numeric_limits<std::uint8_t>::max( );
+         ++i ) {
+        const auto randomNumber = Random DOT get( signed char{ 1 },
+                                                  signed char{ -1 } );
+        isRangeOverflow = randomNumber < -1. || randomNumber > 1.;
+    }
+    REQUIRE( !isRangeOverflow );
+
+    // Range with 0 gap
+    for( std::uint8_t i{ 0u };
+         i < std::numeric_limits<std::uint8_t>::max( );
+         ++i ) {
+        const auto randomNumber = Random DOT get( signed char{ 0 },
+                                                  signed char{ 0 } );
+        isRangeOverflow = randomNumber != 0.;
+    }
+    REQUIRE( !isRangeOverflow );
+}
+
 TEST_CASE( "Type deduction for random byte numbers" ) {
     // signed char
     static_assert( std::is_same<signed char,
@@ -183,4 +218,27 @@ TEST_CASE( "Type deduction for random byte numbers" ) {
                    decltype( Random DOT get(
                        std::uint8_t{ 0 },
                        std::uint8_t{ 0 } ) ) > ::value, "" );
+}
+
+TEST_CASE( "Random byte numbres is truly random" ) {
+    bool isDifferentNumber{ false };
+
+    for( std::uint8_t i{ 0u };
+         i < std::numeric_limits<std::uint8_t>::max( )
+         && !isDifferentNumber;
+         ++i ) {
+
+        const auto firstRandomNumber = Random DOT get(
+            std::numeric_limits<signed char>::min( ),
+            std::numeric_limits<signed char>::max( ) );
+
+        const auto secondRandomNumber = Random DOT get(
+            std::numeric_limits<signed char>::min( ),
+            std::numeric_limits<signed char>::max( ) );
+
+        isDifferentNumber = firstRandomNumber != secondRandomNumber;
+    }
+
+    // May fail but very rarely
+    CHECK( isDifferentNumber );
 }
