@@ -11,8 +11,7 @@
 - [Examples](#examples)
 ## Design goals
 There are a few ways to get working with random in C++:
-
- **C style**
+- **C style**
 ```cpp
   srand(time(NULL));
   rand() % (9 - 1)) + 1; // returns a pseudo-random integer between 1 and 9
@@ -23,24 +22,17 @@ There are a few ways to get working with random in C++:
   * [There are no guarantees as to the quality of the random sequence produced.](http://en.cppreference.com/w/cpp/numeric/random/rand#Notes)
 - **C++11 style**
 ```cpp
-#include <random>
-
-int main() {
-  // create source of randomness, and initialize it with non-deterministic seed
-  std::random_device r; //create random_device for seeding
-  // choose and seed random engine
-  std::mt19937 eng{r()}; // allocate 5000 stack memory
-
-  // choose a specific distribution to generate a pseudo-random integer between 1 and 9
-  std::uniform_int_distribution<> dist(1,9);
-  
-  return dist(eng) // call distribution with engine argument
-}
+  std::random_device random_device; // create object for seeding
+  std::mt19937 engine{random_device()}; // create engine and seed it
+  std::uniform_int_distribution<> dist(1,9); // create distribution for integers with [1, 9] range
+  dist(engine) // finally get a random number
 ```
-#### Problem
-To get a random number, you must create and use a chain of various objects.
+* Problems
+  * should specify seed
+  * should choose, create and use a chain of various objects like engines and distributions
+  * mt19937 use 5000 bytes of memory for each creation
+  * Uncomfortable and not intuitively clear
 - **effolkronium random style**
-
 ```cpp
 #include "random.hpp"
 
