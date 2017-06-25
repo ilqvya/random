@@ -10,11 +10,11 @@
 - [Integration](#integration)
 - [Examples](#examples)
 ## Design goals
-There are a few ways to get working with random in C++:
+There are few ways to get working with random in C++:
 - **C style**
 ```cpp
-  srand(time(NULL));
-  rand() % (9 - 1)) + 1; // returns a pseudo-random integer between 1 and 9
+  srand( time(NULL) ); // seed with time since epoch
+  rand() % (9 - 1)) + 1; // get a pseudo-random integer between 1 and 9
 ```
 * Problems
   * should specify seed before using rand() function
@@ -34,28 +34,25 @@ There are a few ways to get working with random in C++:
   * Uncomfortable and not intuitively clear
 - **effolkronium random style**
 ```cpp
-#include "random.hpp"
-
-// get base random alias based on a std::mt19937 random number engine
-using Random = effolkronium::random;
-
-int main() {
   // auto seeded
-  return Random::get(1, 9) // Invoke 'get' method to generate  a pseudo-random integer between 1 and 9
-  // Yep, that's all.
-}
+  Random::get(1, 9) // invoke 'get' method to generate  a pseudo-random integer between 1 and 9
+  // yep, that's all.
 ```
-effolkronium random class had these design goals:
-- **Intuitive syntax**. You can do almost everything with random by simple 'get' method
-- **Trivial integration**. All code consists of a single header file [`random.hpp`](https://github.com/effolkronium/EasyRandom/blob/develop/source/random.hpp). Tahat's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
+* Advantages
+  * **Intuitive syntax**. You can do almost everything with random by simple 'get' method, like getting simple numbers, bools, random object from given set or using custom distribution.
+  * **Trivial integration**. All code consists of a single header file [`random.hpp`](https://github.com/effolkronium/random/blob/develop/source/random.hpp). Tahat's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
+  * **Usability**. There is a 3 versions of random: 
+    * *random_static* which has static methods and static internal state. It's not thread safe but more efficient
+    * *random_thread_local* which has static methods and [thread_local](http://en.cppreference.com/w/cpp/keyword/thread_local) internal state. It's thread safe but less efficient
+    * *random_local* which has non static methods and local internal state. It can be created at local scope
 ## Integration
 The single required source, file `random.hpp` is in the `source` directory.
 All you need to do is add
 ```cpp
 #include "random.hpp"
 
-// get base random alias based on a std::mt19937 random number engine
-using Random = effolkronium::random;
+// get base random alias which is auto seeded and has static API and internal state
+using Random = effolkronium::random_static;
 ```
 to the files you want to use effolkronium random class. That's it. Do not forget to set the necessary switches to enable C++11 (e.g., `-std=c++11` for GCC and Clang).
 ## Examples
