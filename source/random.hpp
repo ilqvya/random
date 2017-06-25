@@ -1,18 +1,18 @@
-#ifndef RANDOM_HPP
+﻿#ifndef RANDOM_HPP
 #define RANDOM_HPP
 
 #include <random>
 #include <type_traits>
 
 namespace effolkronium {
-	/**
-	* \brief Base template class for random
-	* \param Engine A random engine with interface like in the std::mt19937
-	*/
+    /**
+    * \brief Base template class for random
+    * \param Engine A random engine with interface like in the std::mt19937
+    */
     template<typename Engine>
     class basic_random_static {
     public:
-		/// Type of used random number engine
+        /// Type of used random number engine
         using engine_type = Engine;
 
         /// Key type for getting common_type numbers or objects
@@ -82,7 +82,7 @@ namespace effolkronium {
         * \param to The second limit number of a random range
         * \return A random real number in a [from, to] range
         * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
-		* \note Prevent implicit type conversion
+        * \note Prevent implicit type conversion
         */
         template<typename A>
         static typename std::enable_if<is_uniform_real<A>::value
