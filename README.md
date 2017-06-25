@@ -25,7 +25,7 @@ There are few ways to get working with random in C++:
   std::random_device random_device; // create object for seeding
   std::mt19937 engine{random_device()}; // create engine and seed it
   std::uniform_int_distribution<> dist(1,9); // create distribution for integers with [1, 9] range
-  dist(engine) // finally get a random number
+  dist(engine); // finally get a random number
 ```
 * Problems
   * should specify seed
@@ -35,7 +35,7 @@ There are few ways to get working with random in C++:
 - **effolkronium random style**
 ```cpp
   // auto seeded
-  Random::get(1, 9) // invoke 'get' method to generate  a pseudo-random integer between 1 and 9
+  Random::get(1, 9); // invoke 'get' method to generate  a pseudo-random integer between 1 and 9
   // yep, that's all.
 ```
 * Advantages
