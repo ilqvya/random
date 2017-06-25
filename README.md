@@ -11,20 +11,16 @@
 - [Examples](#examples)
 ## Design goals
 There are a few ways to get working with random in C++:
-- **C style**
-```cpp
-#include <time.h>
-#include <stdlib.h>
 
-int main() {
-  srand(time(NULL));   // should specify seed before using rand() function
-  
-  // returns a pseudo-random integer between 1 and 9
-  return rand() % (9 - 1)) + 1;// should write your own distribution algorihtm
-}
+ **C style**
+```cpp
+  srand(time(NULL));
+  rand() % (9 - 1)) + 1; // returns a pseudo-random integer between 1 and 9
 ```
-#### Problem
-[There are no guarantees as to the quality of the random sequence produced.](http://en.cppreference.com/w/cpp/numeric/random/rand#Notes)
+* Problems
+  * should specify seed before using rand() function
+  * should write your own distribution algorihtm
+  * [There are no guarantees as to the quality of the random sequence produced.](http://en.cppreference.com/w/cpp/numeric/random/rand#Notes)
 - **C++11 style**
 ```cpp
 #include <random>
