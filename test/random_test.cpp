@@ -337,7 +337,6 @@ TEST_CASE( "Random bool values" ) {
 
     SECTION( "generate true and false" ) {
         while( Random DOT get<bool>( ) == Random DOT get<bool>( ) );
-        // May fail but very rarely
         REQUIRE( true == true );
     }
 
@@ -346,4 +345,63 @@ TEST_CASE( "Random bool values" ) {
         // Random DOT get<bool>( -1.1 );
         // assert occurred!
     }
+}
+
+TEST_CASE( "Random value from initilizer list by value" ) {
+    bool is1{ false }, is2{ false }, is3{ false };
+    while( !is1 && !is2 && !is3 ) {
+        switch( Random DOT get( { 1, 2, 3 } ) ) {
+            case 1: is1 = true; break;
+            case 2: is2 = true; break;
+            case 3: is3 = true; break;
+        }
+    }
+    REQUIRE( true == true );
+    //Random DOT get<int>( {  } ); assertion occurred
+
+
+    class NoexceptCopy {
+    public:
+        NoexceptCopy( ) = default;
+        NoexceptCopy( const NoexceptCopy& ) noexcept( true ) { };
+    };
+
+    class NotNoexceptCopy {
+    public:
+        NotNoexceptCopy( ) = default;
+        NotNoexceptCopy( const NotNoexceptCopy& ) noexcept( false ) { };
+    };
+
+    class NotNoexceptCopyButNoexceptMove {
+    public:
+        NotNoexceptCopyButNoexceptMove( ) = default;
+        NotNoexceptCopyButNoexceptMove( const NotNoexceptCopyButNoexceptMove& ) noexcept( false ) { };
+        NotNoexceptCopyButNoexceptMove( NotNoexceptCopyButNoexceptMove&& ) noexcept( true ) { };
+    };
+
+    class NotNoexceptMoveButNoexceptCopy {
+    public:
+        NotNoexceptMoveButNoexceptCopy( ) = default;
+        NotNoexceptMoveButNoexceptCopy( const NotNoexceptMoveButNoexceptCopy& ) noexcept( true ) { };
+        NotNoexceptMoveButNoexceptCopy( NotNoexceptMoveButNoexceptCopy&& ) noexcept( false ) { };
+    };
+
+    class NoDefaultConstructorNoexcept {
+    public:
+        NoDefaultConstructorNoexcept( ) = delete;
+        NoDefaultConstructorNoexcept( int ) noexcept { }
+    };
+
+    class NoDefaultConstructorNotNoexcept {
+    public:
+        NoDefaultConstructorNotNoexcept( ) = delete;
+        NoDefaultConstructorNotNoexcept( int ) noexcept( false ) { }
+    };
+
+    static_assert( noexcept( Random DOT get( { NoexceptCopy{ } } ) ), " " );
+    static_assert( !noexcept( Random DOT get( { NotNoexceptCopy{ } } ) ), " " );
+    static_assert( noexcept( Random DOT get( { NotNoexceptCopyButNoexceptMove{ } } ) ), " " );
+    static_assert( !noexcept( Random DOT get( { NotNoexceptMoveButNoexceptCopy{ } } ) ), " " );
+    static_assert( noexcept( Random DOT get( { NoDefaultConstructorNoexcept{ 1 } } ) ), " " );
+    static_assert( !noexcept( Random DOT get( { NoDefaultConstructorNotNoexcept{ 1 } } ) ), " " );
 }

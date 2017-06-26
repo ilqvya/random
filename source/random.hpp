@@ -4,6 +4,9 @@
 #include <random>
 #include <type_traits>
 #include <cassert>
+#include <initializer_list>
+#include <iterator> // std::next
+#include <utility> // std::declval
 
 namespace effolkronium {
 
@@ -157,6 +160,20 @@ namespace effolkronium {
             , bool>::type get( const double probability = 0.5 ) noexcept {
             assert( 0 <= probability && 1 >= probability ); // out of [0; 1] range
             return std::bernoulli_distribution{ probability }( engine );
+        }
+
+        /**
+        * \param init_list initilizer_list with values
+        * \return Random value from initilizer_list by value
+        * \note Should be 1 or more elements in initilizer_list
+        */
+        template<typename T>
+        static T get( std::initializer_list<T> init_list ) 
+                noexcept( noexcept( T{ std::declval<T>( ) } ) ) {
+            assert( 0 != init_list.size( ) );
+            return *std::next( init_list.begin( ),
+                get<typename std::initializer_list<T>::size_type>(
+                    0, init_list.size( ) - 1 ) );
         }
     private:
         /// The random number engine
