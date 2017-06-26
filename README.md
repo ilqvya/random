@@ -1,6 +1,6 @@
 # Random for modern C++ with convenient API
 [![Build Status](https://travis-ci.org/effolkronium/random.svg?branch=develop)](https://travis-ci.org/effolkronium/random)
-[![Build status](https://ci.appveyor.com/api/projects/status/xv0aq60p91j1jnjr/branch/develop?svg=true)](https://ci.appveyor.com/project/effolkronium/random/branch/develop)
+[![Build status](https://ci.appveyor.com/api/projects/status/vq1kodqqxwx16rfv/branch/develop?svg=true)](https://ci.appveyor.com/project/effolkronium/random/branch/develop)
 [![Coverage Status](https://coveralls.io/repos/github/effolkronium/random/badge.svg?branch=develop)](https://coveralls.io/github/effolkronium/random?branch=develop)
 <a href="https://scan.coverity.com/projects/effolkronium-random">
   <img alt="Coverity Scan Build Status"
