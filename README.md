@@ -9,12 +9,14 @@
 - [Design goals](#design-goals)
 - [Integration](#integration)
 - [Examples](#examples)
+  - [Range](#range)
+  - [Common type range](#common-type-range)
 ## Design goals
 There are few ways to get working with random in C++:
 - **C style**
 ```cpp
   srand( time(NULL) ); // seed with time since epoch
-  rand() % (9 - 1)) + 1; // get a pseudo-random integer between 1 and 9
+  auto random_number = rand() % (9 - 1)) + 1; // get a pseudo-random integer between 1 and 9
 ```
 * Problems
   * should specify seed before using rand() function
@@ -25,7 +27,7 @@ There are few ways to get working with random in C++:
   std::random_device random_device; // create object for seeding
   std::mt19937 engine{random_device()}; // create engine and seed it
   std::uniform_int_distribution<> dist(1,9); // create distribution for integers with [1, 9] range
-  dist(engine); // finally get a random number
+  auto random_number = dist(engine); // finally get a random number
 ```
 * Problems
   * should specify seed
@@ -35,7 +37,7 @@ There are few ways to get working with random in C++:
 - **effolkronium random style**
 ```cpp
   // auto seeded
-  Random::get(1, 9); // invoke 'get' method to generate  a pseudo-random integer between 1 and 9
+  auto random_number = Random::get(1, 9); // invoke 'get' method to generate  a pseudo-random integer between 1 and 9
   // yep, that's all.
 ```
 * Advantages
@@ -56,9 +58,14 @@ using Random = effolkronium::random_static;
 ```
 to the files you want to use effolkronium random class. That's it. Do not forget to set the necessary switches to enable C++11 (e.g., `-std=c++11` for GCC and Clang).
 ## Examples
-### Getting simple numbers
+### Range
+Returns random number between first and second argument.
 ```cpp
 auto val = Random::get(-10, 10) //decltype(val) is int
+```
+```cpp
+// specify explicit type
+auto val = Random::get<uint8_t>(-10, 10) //decltype(val) is uint8_t
 ```
 ```cpp
 // you able to use range from greater to lower
@@ -66,4 +73,18 @@ auto val = Random::get(10.l, -10.l) // decltype(val) is long double
 ```
 ```cpp
 auto val = Random::get(10u, -10.5) // COMPILE ERROR: Implicit conversions are not allowed here.
+```
+### Common type range
+Choose common type of two range arguments by std::common_type.
+```cpp
+auto val = Random::get<Random::common>(10, 10.f) //decltype(val) is float
+```
+```cpp
+auto val = Random::get<Random::common>(10ul, 10ull) //decltype(val) is unsigned long long
+```
+```cpp
+auto val = Random::get<Random::common>(10.l, 10.f) //decltype(val) is long double
+```
+```cpp
+auto val = Random::get<Random::common>(10u, 10) // Error: prevent conversion from signed to unsigned
 ```
