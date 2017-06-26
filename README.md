@@ -43,7 +43,7 @@ There are few ways to get working with random in C++:
 * Advantages
   * **Intuitive syntax**. You can do almost everything with random by simple 'get' method, like getting simple numbers, bools, random object from given set or using custom distribution.
   * **Trivial integration**. All code consists of a single header file [`random.hpp`](https://github.com/effolkronium/random/blob/develop/source/random.hpp). Tahat's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
-  * **Usability**. There is a 3 versions of random: 
+  * **Usability**. There is 3 versions of random: 
     * *random_static* which has static methods and static internal state. It's not thread safe but more efficient
     * *random_thread_local* which has static methods and [thread_local](http://en.cppreference.com/w/cpp/keyword/thread_local) internal state. It's thread safe but less efficient
     * *random_local* which has non static methods and local internal state. It can be created at local scope
