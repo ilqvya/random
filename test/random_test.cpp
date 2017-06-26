@@ -266,7 +266,7 @@ TEST_CASE( "Range overflow for random common_type numbers" ) {
         const auto randomNumber = Random DOT get<Random::common>( 
                                            1ull, 0u );
 
-        isRangeOverflow = randomNumber < 0. || randomNumber > 1.;
+        isRangeOverflow = randomNumber < 0 || randomNumber > 1;
     }
     REQUIRE( !isRangeOverflow );
 
@@ -277,7 +277,7 @@ TEST_CASE( "Range overflow for random common_type numbers" ) {
         const auto randomNumber = Random DOT get<Random::common>(
                                                 static_cast<signed char>( 0 ),
                                                 0ll );
-        isRangeOverflow = randomNumber != 0.;
+        isRangeOverflow = randomNumber != 0;
     }
     REQUIRE( !isRangeOverflow );
 }
