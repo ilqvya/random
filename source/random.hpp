@@ -3,6 +3,7 @@
 
 #include <random>
 #include <type_traits>
+#include <cassert>
 
 namespace effolkronium {
 
@@ -65,11 +66,11 @@ namespace effolkronium {
         using common = details::common;
 
         /**
-        * \brief Generate a random integer number in a [from, to] range
+        * \brief Generate a random integer number in a [from; to] range
         *        by std::uniform_int_distribution
         * \param from The first limit number of a random range
         * \param to The second limit number of a random range
-        * \return A random integer number in a [from, to] range
+        * \return A random integer number in a [from; to] range
         * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
 		* \note Prevent implicit type conversion
         */
@@ -82,11 +83,11 @@ namespace effolkronium {
         }
 
         /**
-        * \brief Generate a random real number in a [from, to] range
+        * \brief Generate a random real number in a [from; to] range
         *        by std::uniform_real_distribution
         * \param from The first limit number of a random range
         * \param to The second limit number of a random range
-        * \return A random real number in a [from, to] range
+        * \return A random real number in a [from; to] range
         * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
         * \note Prevent implicit type conversion
         */
@@ -99,10 +100,10 @@ namespace effolkronium {
         }
 
         /**
-        * \brief Generate a random byte number in a [from, to] range
+        * \brief Generate a random byte number in a [from; to] range
         * \param from The first limit number of a random range
         * \param to The second limit number of a random range
-        * \return A random byte number in a [from, to] range
+        * \return A random byte number in a [from; to] range
         * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
         * \note Prevent implicit type conversion
         */
@@ -118,12 +119,12 @@ namespace effolkronium {
         }
 
         /**
-        * \brief Generate a random common_type number in a [from, to] range
+        * \brief Generate a random common_type number in a [from; to] range
         * \param Key The Key type for this version of 'get' method
         *        Type should be '(THIS_TYPE)::common' struct
         * \param from The first limit number of a random range
         * \param to The second limit number of a random range
-        * \return A random common_type number in a [from, to] range
+        * \return A random common_type number in a [from; to] range
         * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
         * \note Allow implicit type conversion
         * \note Prevent implicit type conversion from singed to unsigned types
@@ -143,6 +144,20 @@ namespace effolkronium {
             , C>::type get( A from, B to ) noexcept {
             return get( static_cast<C>( from ), static_cast<C>( to ) );
         }
+
+        /**
+        * \brief Generate a bool value with specific probability
+        *                         by std::bernoulli_distribution
+        * \param probability The probability of generating true in [0; 1] range
+        *        0 means always false, 1 means always true
+        * \return 'true' with 'probability' probability ('false' otherwise)
+        */
+        template<typename T>
+        static typename std::enable_if<std::is_same<T, bool>::value
+            , bool>::type get( const double probability = 0.5 ) noexcept {
+            assert( 0 <= probability && 1 >= probability ); // out of [0; 1] range
+            return std::bernoulli_distribution{ probability }( engine );
+        }
     private:
         /// The random number engine
         static Engine engine;
@@ -160,4 +175,4 @@ namespace effolkronium {
 
 } // namespace effolkronium
 
-#endif // #ifndef RANDOM_HPP
+#endif // #ifndef EFFOLKRONIUM_RANDOM_HPP

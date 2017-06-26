@@ -46,7 +46,6 @@ if(NOT MSVC)
 		-Woverloaded-virtual # warn if you overload (not override) a virtual function
 		-Wconversion # warn on type conversions that may lose data
 		-Wsign-conversion # warn on sign conversions
-		-Wmisleading-indentation # warn if identation implies blocks where blocks do not exist
 	)
 else()
 	target_compile_options(${PROJECT_NAME} PRIVATE 

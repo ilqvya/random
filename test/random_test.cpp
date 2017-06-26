@@ -325,3 +325,36 @@ TEST_CASE( "Random common type numbres is truly random" ) {
     // May fail but very rarely
     CHECK( isDifferentNumber );
 }
+
+TEST_CASE( "Random bool values" ) {
+    SECTION( "probability = 1" ) {
+        REQUIRE( Random DOT get<bool>( 1 ) );
+    }
+
+    SECTION( "probability = 0" ) {
+        REQUIRE( !Random DOT get<bool>( 0 ) );
+    }
+
+    SECTION( "probability = 0.5" ) {
+        bool is_false_occurred{ false };
+        bool is_true_occurred{ false };
+
+        for( std::uint8_t i{ 0u };
+                i < std::numeric_limits<decltype( i )>::max( ) 
+             && !is_false_occurred 
+             && !is_true_occurred;
+             ++i ) {
+            is_false_occurred = !Random DOT get<bool>( 0.5 );
+            is_true_occurred  =  Random DOT get<bool>( 0.5 );
+        }
+        // May fail but very rarely
+        CHECK( true == is_false_occurred );
+        CHECK( true == is_true_occurred );
+    }
+
+    SECTION( "out of range argument" ) {
+        // Random DOT get<bool>( 1.1 );
+        // Random DOT get<bool>( -1.1 );
+        // assert occurred!
+    }
+}
