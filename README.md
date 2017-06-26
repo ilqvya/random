@@ -11,6 +11,7 @@
 - [Examples](#examples)
   - [Range](#range)
   - [Common type range](#common-type-range)
+  - [Bool](#bool)
 ## Design goals
 There are few ways to get working with random in C++:
 - **C style**
@@ -87,4 +88,15 @@ auto val = Random::get<Random::common>(10.l, 10.f) // decltype(val) is long doub
 ```
 ```cpp
 auto val = Random::get<Random::common>(10u, 10) // Error: prevent conversion from signed to unsigned
+```
+### Bool
+Generate bool with [0; 1] probability
+```cpp
+auto val = Random::get<bool>(0.7) // true with 70% probability
+```
+```cpp
+auto val = Random::get<bool>() // true with 50% probability by default
+```
+```cpp
+auto val = Random::get<bool>(-1) // Error: assert occurred! Out of [0; 1] range
 ```
