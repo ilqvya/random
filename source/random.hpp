@@ -5,18 +5,10 @@
 #include <type_traits>
 
 namespace effolkronium {
-    /**
-    * \brief Base template class for random
-    * \param Engine A random engine with interface like in the std::mt19937
-    */
-    template<typename Engine>
-    class basic_random_static {
-    public:
-        /// Type of used random number engine
-        using engine_type = Engine;
 
-        /// Key type for getting common_type numbers or objects
-        struct common { };
+    namespace details {
+        /// Key type for getting common type numbers or objects
+        struct common{ };
 
         /// True if type T is applicable by the std::uniform_int_distribution
         template<typename T>
@@ -57,6 +49,20 @@ namespace effolkronium {
                 || is_uniform_real<T>::value
                 || is_uniform_int <T>::value;
         };
+    }
+
+    /**
+    * \brief Base template class for random
+    * \param Engine A random engine with interface like in the std::mt19937
+    */
+    template<typename Engine>
+    class basic_random_static {
+    public:
+        /// Type of used random number engine
+        using engine_type = Engine;
+
+        /// Key type for getting common type numbers or objects
+        using common = details::common;
 
         /**
         * \brief Generate a random integer number in a [from, to] range
@@ -68,7 +74,7 @@ namespace effolkronium {
 		* \note Prevent implicit type conversion
         */
         template<typename A>
-        static typename std::enable_if<is_uniform_int<A>::value
+        static typename std::enable_if<details::is_uniform_int<A>::value
             , A>::type get( A from, A to ) noexcept {
             if( from < to ) // Allow range from higher to lower
                 return std::uniform_int_distribution<A>{ from, to }( engine );
@@ -85,7 +91,7 @@ namespace effolkronium {
         * \note Prevent implicit type conversion
         */
         template<typename A>
-        static typename std::enable_if<is_uniform_real<A>::value
+        static typename std::enable_if<details::is_uniform_real<A>::value
             , A>::type get( A from, A to ) noexcept {
             if( from < to ) // Allow range from higher to lower
                 return std::uniform_real_distribution<A>{ from, to }( engine );
@@ -101,7 +107,7 @@ namespace effolkronium {
         * \note Prevent implicit type conversion
         */
         template<typename A>
-        static typename std::enable_if<is_byte<A>::value
+        static typename std::enable_if<details::is_byte<A>::value
             , A>::type get( A from, A to ) noexcept {
             // Choose between short and unsigned short for byte conversion
             using short_t = typename std::conditional<
@@ -130,8 +136,8 @@ namespace effolkronium {
                  typename C = typename std::common_type<A, B>::type>
         static typename std::enable_if<
                std::is_same<Key, common>::value
-            && is_supported_number<A>::value
-            && is_supported_number<B>::value
+            && details::is_supported_number<A>::value
+            && details::is_supported_number<B>::value
             // Prevent implicit type conversion from singed to unsigned types
             && std::is_signed<A>::value != std::is_unsigned<B>::value
             , C>::type get( A from, B to ) noexcept {
