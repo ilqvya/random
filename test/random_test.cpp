@@ -335,21 +335,10 @@ TEST_CASE( "Random bool values" ) {
         REQUIRE( !Random DOT get<bool>( 0 ) );
     }
 
-    SECTION( "probability = 0.5" ) {
-        bool is_false_occurred{ false };
-        bool is_true_occurred{ false };
-
-        for( std::uint8_t i{ 0u };
-                i < std::numeric_limits<decltype( i )>::max( ) 
-             && !is_false_occurred 
-             && !is_true_occurred;
-             ++i ) {
-            is_false_occurred = !Random DOT get<bool>( 0.5 );
-            is_true_occurred  =  Random DOT get<bool>( 0.5 );
-        }
+    SECTION( "generate true and false" ) {
+        while( Random DOT get<bool>( ) == Random DOT get<bool>( ) );
         // May fail but very rarely
-        CHECK( true == is_false_occurred );
-        CHECK( true == is_true_occurred );
+        REQUIRE( true == true );
     }
 
     SECTION( "out of range argument" ) {
