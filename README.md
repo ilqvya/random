@@ -59,31 +59,31 @@ using Random = effolkronium::random_static;
 to the files you want to use effolkronium random class. That's it. Do not forget to set the necessary switches to enable C++11 (e.g., `-std=c++11` for GCC and Clang).
 ## Examples
 ### Range
-Returns random number between first and second argument.
+Returns a random number between first and second argument.
 ```cpp
-auto val = Random::get(-10, 10) //decltype(val) is int
+auto val = Random::get(-1, 1) // decltype(val) is int
 ```
 ```cpp
 // specify explicit type
-auto val = Random::get<uint8_t>(-10, 10) //decltype(val) is uint8_t
+auto val = Random::get<uint8_t>(-1, 1) // decltype(val) is uint8_t
 ```
 ```cpp
 // you able to use range from greater to lower
-auto val = Random::get(10.l, -10.l) // decltype(val) is long double
+auto val = Random::get(1.l, -1.l) // decltype(val) is long double
 ```
 ```cpp
-auto val = Random::get(10u, -10.5) // COMPILE ERROR: Implicit conversions are not allowed here.
+auto val = Random::get(1.f, -1) // Error: implicit conversions are not allowed here.
 ```
 ### Common type range
 Choose common type of two range arguments by std::common_type.
 ```cpp
-auto val = Random::get<Random::common>(10, 10.f) //decltype(val) is float
+auto val = Random::get<Random::common>(1, 1.f) // decltype(val) is float
 ```
 ```cpp
-auto val = Random::get<Random::common>(10ul, 10ull) //decltype(val) is unsigned long long
+auto val = Random::get<Random::common>(10ul, 10ull) // decltype(val) is unsigned long long
 ```
 ```cpp
-auto val = Random::get<Random::common>(10.l, 10.f) //decltype(val) is long double
+auto val = Random::get<Random::common>(10.l, 10.f) // decltype(val) is long double
 ```
 ```cpp
 auto val = Random::get<Random::common>(10u, 10) // Error: prevent conversion from signed to unsigned
