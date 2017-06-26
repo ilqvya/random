@@ -1,5 +1,5 @@
-﻿#ifndef RANDOM_HPP
-#define RANDOM_HPP
+﻿#ifndef EFFOLKRONIUM_RANDOM_HPP
+#define EFFOLKRONIUM_RANDOM_HPP
 
 #include <random>
 #include <type_traits>
