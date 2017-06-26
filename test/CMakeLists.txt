@@ -50,6 +50,7 @@ if(NOT MSVC)
 	)
 else()
 	target_compile_options(${PROJECT_NAME} PRIVATE 
+		/EHsc # Warning fix!
 		/W4 
 		/WX # Treats all compilers warnings as errors
 		/w14242 # 'identfier': conversion from 'type1' to 'type1', possible loss of data
