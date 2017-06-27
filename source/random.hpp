@@ -171,11 +171,12 @@ namespace effolkronium {
         static T get( std::initializer_list<T> init_list ) 
                 noexcept( noexcept( T{ std::declval<T>( ) } ) ) {
             assert( 0u != init_list.size( ) );
-            return *std::next( init_list.begin( ),
-                get<typename std::initializer_list<T>::size_type>(
-                    0u, typename std::iterator_traits<
-                    decltype( init_list.begin( ) )>::difference_type( 
-                init_list.size( ) - 1u ) ) );
+            return *std::next( 
+                init_list.begin( ),
+                typename std::iterator_traits<
+                decltype( init_list.begin( ) )>::difference_type(
+                    get<typename std::initializer_list<T>::size_type>(
+                    0u, init_list.size( ) - 1u ) ) );
         }
     private:
         /// The random number engine
