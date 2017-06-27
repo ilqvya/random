@@ -9,9 +9,10 @@
 - [Design goals](#design-goals)
 - [Integration](#integration)
 - [Examples](#examples)
-  - [Range](#range)
-  - [Common type range](#common-type-range)
+  - [Number range](#number-range)
+  - [Common type number range](#common-type-number-range)
   - [Bool](#bool)
+  - [Random value from std::initilizer_list](#random-value-from std::initilizer_list)
 ## Design goals
 There are few ways to get working with random in C++:
 - **C style**
@@ -59,7 +60,7 @@ using Random = effolkronium::random_static;
 ```
 to the files you want to use effolkronium random class. That's it. Do not forget to set the necessary switches to enable C++11 (e.g., `-std=c++11` for GCC and Clang).
 ## Examples
-### Range
+### Number range
 Returns a random number between first and second argument.
 ```cpp
 auto val = Random::get(-1, 1) // decltype(val) is int
@@ -75,7 +76,7 @@ auto val = Random::get(1.l, -1.l) // decltype(val) is long double
 ```cpp
 auto val = Random::get(1.f, -1) // Error: implicit conversions are not allowed here.
 ```
-### Common type range
+### Common type number range
 Choose common type of two range arguments by std::common_type.
 ```cpp
 auto val = Random::get<Random::common>(1, 1.f) // decltype(val) is float
@@ -99,4 +100,8 @@ auto val = Random::get<bool>() // true with 50% probability by default
 ```
 ```cpp
 auto val = Random::get<bool>(-1) // Error: assert occurred! Out of [0; 1] range
+```
+### Random value from std::initilizer_list
+```cpp
+auto val = Random::get({1, 2, 3}) // val = 1 or 2 or 3
 ```
