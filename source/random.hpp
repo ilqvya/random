@@ -170,10 +170,10 @@ namespace effolkronium {
         template<typename T>
         static T get( std::initializer_list<T> init_list ) 
                 noexcept( noexcept( T{ std::declval<T>( ) } ) ) {
-            assert( 0 != init_list.size( ) );
+            assert( 0u != init_list.size( ) );
             return *std::next( init_list.begin( ),
                 get<typename std::initializer_list<T>::size_type>(
-                    0, init_list.size( ) - 1 ) );
+                    0u, init_list.size( ) - 1u ) );
         }
     private:
         /// The random number engine
