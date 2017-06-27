@@ -5,7 +5,7 @@
 #include <type_traits>
 #include <cassert>
 #include <initializer_list>
-#include <iterator> // std::advance
+#include <iterator> // std::next
 #include <utility> // std::declval
 
 namespace effolkronium {
@@ -163,19 +163,23 @@ namespace effolkronium {
         }
 
         /**
+        * \brief
         * \param init_list initilizer_list with values
         * \return Random value from initilizer_list by value
         * \note Should be 1 or more elements in initilizer_list
+        * \note Warning! Elements in initilizer_list can't be moved:
+        *       https://stackoverflow.com/a/8193157/5734836
         */
         template<typename T>
         static T get( std::initializer_list<T> init_list ) 
                 noexcept( noexcept( T{ std::declval<T>( ) } ) ) {
             assert( 0 != init_list.size( ) );
-            auto random_it = init_list.begin( );
-            std::advance( random_it,
-                          get<typename std::initializer_list<T>::size_type>(
-                              0, init_list.size( ) - 1 ) );
-            return *random_it;
+            return *std::next( 
+                init_list.begin( ), static_cast< // fix conversion warning
+                typename std::iterator_traits<
+                decltype( init_list.begin( ) )>::difference_type>( get<
+                typename std::initializer_list<T>::size_type>(
+                    0, init_list.size( ) - 1 ) ) );
         }
     private:
         /// The random number engine

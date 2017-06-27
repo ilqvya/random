@@ -358,8 +358,9 @@ TEST_CASE( "Random value from initilizer list by value" ) {
     }
     REQUIRE( true == true );
     //Random DOT get<int>( {  } ); assertion occurred
+}
 
-
+TEST_CASE( "Noexcept deduction in get from initilizer list by value" ) {
     class NoexceptCopy {
     public:
         NoexceptCopy( ) = default;
@@ -375,15 +376,19 @@ TEST_CASE( "Random value from initilizer list by value" ) {
     class NotNoexceptCopyButNoexceptMove {
     public:
         NotNoexceptCopyButNoexceptMove( ) = default;
-        NotNoexceptCopyButNoexceptMove( const NotNoexceptCopyButNoexceptMove& ) noexcept( false ) { };
-        NotNoexceptCopyButNoexceptMove( NotNoexceptCopyButNoexceptMove&& ) noexcept( true ) { };
+        NotNoexceptCopyButNoexceptMove( 
+            const NotNoexceptCopyButNoexceptMove& ) noexcept( false ) { };
+        NotNoexceptCopyButNoexceptMove( 
+            NotNoexceptCopyButNoexceptMove&& ) noexcept( true ) { };
     };
 
     class NotNoexceptMoveButNoexceptCopy {
     public:
         NotNoexceptMoveButNoexceptCopy( ) = default;
-        NotNoexceptMoveButNoexceptCopy( const NotNoexceptMoveButNoexceptCopy& ) noexcept( true ) { };
-        NotNoexceptMoveButNoexceptCopy( NotNoexceptMoveButNoexceptCopy&& ) noexcept( false ) { };
+        NotNoexceptMoveButNoexceptCopy( 
+            const NotNoexceptMoveButNoexceptCopy& ) noexcept( true ) { };
+        NotNoexceptMoveButNoexceptCopy(
+            NotNoexceptMoveButNoexceptCopy&& ) noexcept( false ) { };
     };
 
     class NoDefaultConstructorNoexcept {
@@ -398,10 +403,40 @@ TEST_CASE( "Random value from initilizer list by value" ) {
         NoDefaultConstructorNotNoexcept( int ) noexcept( false ) { }
     };
 
-    static_assert( noexcept( Random DOT get( { NoexceptCopy{ } } ) ), " " );
-    static_assert( !noexcept( Random DOT get( { NotNoexceptCopy{ } } ) ), " " );
-    static_assert( noexcept( Random DOT get( { NotNoexceptCopyButNoexceptMove{ } } ) ), " " );
-    static_assert( !noexcept( Random DOT get( { NotNoexceptMoveButNoexceptCopy{ } } ) ), " " );
-    static_assert( noexcept( Random DOT get( { NoDefaultConstructorNoexcept{ 1 } } ) ), " " );
-    static_assert( !noexcept( Random DOT get( { NoDefaultConstructorNotNoexcept{ 1 } } ) ), " " );
+    static_assert( noexcept( 
+        Random DOT get( { NoexceptCopy{ } } ) ), " " );
+
+    static_assert( !noexcept( 
+        Random DOT get( { NotNoexceptCopy{ } } ) ), " " );
+
+    static_assert( noexcept( 
+        Random DOT get( { NotNoexceptCopyButNoexceptMove{ } } ) ), " " );
+
+    static_assert( !noexcept( 
+        Random DOT get( { NotNoexceptMoveButNoexceptCopy{ } } ) ), " " );
+
+    static_assert( noexcept(
+        Random DOT get( { NoDefaultConstructorNoexcept{ 1 } } ) ), " " );
+
+    static_assert( !noexcept(
+        Random DOT get( { NoDefaultConstructorNotNoexcept{ 1 } } ) ), " " );
+}
+
+TEST_CASE( "Move constructor usage in get from initilizer list by value" ) { 
+    class NoexceptMoveNoexceptCopy {
+    public:
+        NoexceptMoveNoexceptCopy( ) = default;
+        NoexceptMoveNoexceptCopy(
+            const NoexceptMoveNoexceptCopy& ) noexcept  { ++copied_num; };
+        NoexceptMoveNoexceptCopy(
+            NoexceptMoveNoexceptCopy&& ) noexcept { ++moved_num; };
+
+        std::size_t moved_num{ 0u };
+        std::size_t copied_num{ 0u };
+    };
+
+    auto val = Random DOT get( { NoexceptMoveNoexceptCopy{ } } );
+
+    REQUIRE( 1 == val.copied_num );
+    REQUIRE( 0 == val.moved_num );
 }
