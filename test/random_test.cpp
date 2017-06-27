@@ -1,4 +1,4 @@
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
+﻿#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 #include "catch.hpp"
 #include "random.hpp"
 #include <limits>
@@ -266,7 +266,7 @@ TEST_CASE( "Range overflow for random common_type numbers" ) {
         const auto randomNumber = Random DOT get<Random::common>( 
                                            1ull, 0u );
 
-        isRangeOverflow = randomNumber < 0 || randomNumber > 1;
+        isRangeOverflow = 1 < randomNumber;
     }
     REQUIRE( !isRangeOverflow );
 
