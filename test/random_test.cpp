@@ -373,24 +373,6 @@ TEST_CASE( "Noexcept deduction in get from initilizer list by value" ) {
         NotNoexceptCopy( const NotNoexceptCopy& ) noexcept( false ) { };
     };
 
-    class NotNoexceptCopyButNoexceptMove {
-    public:
-        NotNoexceptCopyButNoexceptMove( ) = default;
-        NotNoexceptCopyButNoexceptMove( 
-            const NotNoexceptCopyButNoexceptMove& ) noexcept( false ) { };
-        NotNoexceptCopyButNoexceptMove( 
-            NotNoexceptCopyButNoexceptMove&& ) noexcept( true ) { };
-    };
-
-    class NotNoexceptMoveButNoexceptCopy {
-    public:
-        NotNoexceptMoveButNoexceptCopy( ) = default;
-        NotNoexceptMoveButNoexceptCopy( 
-            const NotNoexceptMoveButNoexceptCopy& ) noexcept( true ) { };
-        NotNoexceptMoveButNoexceptCopy(
-            NotNoexceptMoveButNoexceptCopy&& ) noexcept( false ) { };
-    };
-
     class NoDefaultConstructorNoexcept {
     public:
         NoDefaultConstructorNoexcept( ) = delete;
@@ -408,12 +390,6 @@ TEST_CASE( "Noexcept deduction in get from initilizer list by value" ) {
 
     static_assert( !noexcept( 
         Random DOT get( { NotNoexceptCopy{ } } ) ), " " );
-
-    static_assert( noexcept( 
-        Random DOT get( { NotNoexceptCopyButNoexceptMove{ } } ) ), " " );
-
-    static_assert( !noexcept( 
-        Random DOT get( { NotNoexceptMoveButNoexceptCopy{ } } ) ), " " );
 
     static_assert( noexcept(
         Random DOT get( { NoDefaultConstructorNoexcept{ 1 } } ) ), " " );
@@ -437,6 +413,7 @@ TEST_CASE( "Move constructor usage in get from initilizer list by value" ) {
 
     auto val = Random DOT get( { NoexceptMoveNoexceptCopy{ } } );
 
+    // Bad world! std::initilizer_list don't support move semantic }:
     REQUIRE( 1 == val.copied_num );
     REQUIRE( 0 == val.moved_num );
 }

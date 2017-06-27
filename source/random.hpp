@@ -163,7 +163,7 @@ namespace effolkronium {
         }
 
         /**
-        * \brief
+        * \brief Return random value from initilizer_list by value
         * \param init_list initilizer_list with values
         * \return Random value from initilizer_list by value
         * \note Should be 1 or more elements in initilizer_list
@@ -172,14 +172,19 @@ namespace effolkronium {
         */
         template<typename T>
         static T get( std::initializer_list<T> init_list ) 
-                noexcept( noexcept( T{ std::declval<T>( ) } ) ) {
+                noexcept( noexcept( T{ std::declval<const T>( ) } ) ) {
             assert( 0 != init_list.size( ) );
-            return *std::next( 
-                init_list.begin( ), static_cast< // fix conversion warning
-                typename std::iterator_traits<
-                decltype( init_list.begin( ) )>::difference_type>( get<
-                typename std::initializer_list<T>::size_type>(
-                    0, init_list.size( ) - 1 ) ) );
+            // can't use std next or std advance 
+            // ( warning errors of type conversion )
+            auto beg_it = init_list.begin( );
+            auto random_position = get<
+                typename std::initializer_list<T>::size_type>( 
+                    0, init_list.size( ) - 1 );
+            while( 0 != random_position ) {
+                ++beg_it;
+                --random_position;
+            }
+            return *beg_it;
         }
     private:
         /// The random number engine
