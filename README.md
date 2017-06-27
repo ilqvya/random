@@ -12,7 +12,7 @@
   - [Number range](#number-range)
   - [Common type number range](#common-type-number-range)
   - [Bool](#bool)
-  - [Random value from std::initilizer_list](#random-value-from std::initilizer_list)
+  - [Random value from std::initilizer_list](#random-value-from-stdinitilizer_list)
 ## Design goals
 There are few ways to get working with random in C++:
 - **C style**
