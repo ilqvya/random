@@ -79,16 +79,16 @@ auto val = Random::get(1.f, -1) // Error: implicit conversions are not allowed h
 ### Common type number range
 Choose common type of two range arguments by std::common_type.
 ```cpp
-auto val = Random::get<Random::common>(1, 1.f) // decltype(val) is float
+auto val = Random::get<Random::common>(1, 0.f) // decltype(val) is float
 ```
 ```cpp
-auto val = Random::get<Random::common>(10ul, 10ull) // decltype(val) is unsigned long long
+auto val = Random::get<Random::common>(0ul, 1ull) // decltype(val) is unsigned long long
 ```
 ```cpp
-auto val = Random::get<Random::common>(10.l, 10.f) // decltype(val) is long double
+auto val = Random::get<Random::common>(1.2l, 1.5f) // decltype(val) is long double
 ```
 ```cpp
-auto val = Random::get<Random::common>(10u, 10) // Error: prevent conversion from signed to unsigned
+auto val = Random::get<Random::common>(1u, -1) // Error: prevent conversion from signed to unsigned
 ```
 ### Bool
 Generate bool with [0; 1] probability
