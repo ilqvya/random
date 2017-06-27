@@ -73,17 +73,20 @@ matrix:
       env: COMPILER=g++-6
       
     # linux clang
-    - os: linux
-      env: LLVM_VERSION=3.6.0
-      compiler: clang
+    
+    # Strange 'Exception: SegFault' on 3.6.X clang
+    # (Other compilers and clang 3.7.0+ are OK)
+    #- os: linux
+    #  env: LLVM_VERSION=3.6.0
+    #  compiler: clang
 
-    - os: linux
-      env: LLVM_VERSION=3.6.1
-      compiler: clang
+    #- os: linux
+    #  env: LLVM_VERSION=3.6.1
+    #  compiler: clang
 
-    - os: linux
-      env: LLVM_VERSION=3.6.2
-      compiler: clang
+    #- os: linux
+    #  env: LLVM_VERSION=3.6.2
+    # compiler: clang
 
     - os: linux
       env: LLVM_VERSION=3.7.0
