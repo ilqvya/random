@@ -5,7 +5,7 @@
 #include <type_traits>
 #include <cassert>
 #include <initializer_list>
-#include <iterator> // std::next
+#include <iterator> // std::advance
 #include <utility> // std::declval
 
 namespace effolkronium {
@@ -171,10 +171,11 @@ namespace effolkronium {
         static T get( std::initializer_list<T> init_list ) 
                 noexcept( noexcept( T{ std::declval<T>( ) } ) ) {
             assert( 0 != init_list.size( ) );
-            return *std::next( 
-                init_list.begin( ), get<typename std::iterator_traits<
-                decltype( init_list.begin( ) )>::difference_type>(
-                    0, init_list.size( ) - 1 ) );
+            auto random_it = init_list.begin( );
+            std::advance( random_it,
+                          get<typename std::initializer_list<T>::size_type>(
+                              0, init_list.size( ) - 1 ) );
+            return *random_it;
         }
     private:
         /// The random number engine
