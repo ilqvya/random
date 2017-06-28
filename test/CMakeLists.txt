@@ -77,17 +77,17 @@ endfunction(set_compiler_flags)
 add_executable("random_static_test" random_test.cpp)
 set_compiler_flags("random_static_test")
 target_compile_definitions("random_static_test" PRIVATE "RANDOM_STATIC")
-target_include_directories("random_static_test" PRIVATE "../source")
+target_include_directories("random_static_test" PRIVATE "../include")
 
 add_executable("random_thread_local_test" random_test.cpp)
 set_compiler_flags("random_thread_local_test")
 target_compile_definitions("random_thread_local_test" PRIVATE "RANDOM_THREAD_LOCAL")
-target_include_directories("random_thread_local_test" PRIVATE "../source")
+target_include_directories("random_thread_local_test" PRIVATE "../include")
 
 add_executable("random_local_test" random_test.cpp)
 set_compiler_flags("random_local_test")
 target_compile_definitions("random_local_test" PRIVATE "RANDOM_LOCAL")
-target_include_directories("random_local_test" PRIVATE "../source")
+target_include_directories("random_local_test" PRIVATE "../include")
 
 set_target_properties("random_static_test" PROPERTIES
     CXX_STANDARD 11
