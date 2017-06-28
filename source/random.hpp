@@ -10,6 +10,7 @@
 #include <iterator> // std::begin, std::end
 
 namespace effolkronium {
+
     namespace details {
         /// Key type for getting common type numbers or objects
         struct common{ }; 
@@ -57,25 +58,13 @@ namespace effolkronium {
     } // namespace details
 
     /**
-    * \brief The default seeder for random classes
-    */
-    class seeder_default final {
-    public:
-
-        /// return seed number
-        std::random_device::result_type operator() ( ) const noexcept {
-            return std::random_device{ }( );
-        }
-    };
-
-    /**
     * \brief Base template class for random 
     *        with static API and static internal member storage
     * \param Engine A random engine with interface like in the std::mt19937
     * \param Seeder A seeder for random class, 
     *        from which will be seeded internal random_engine
     */
-    template<typename Engine, typename Seeder = seeder_default>
+    template<typename Engine>
     class basic_random_static final {
     public:
         /// Type of used random number engine
@@ -226,12 +215,8 @@ namespace effolkronium {
     };
    
     /// Seed random number engine by Seeder
-    template<typename Engine, typename Seeder>
-    Engine basic_random_static<Engine, Seeder>::engine( [ & ] {
-        Seeder seeder{ };
-
-        return seeder( );
-    }( ) );
+    template<typename Engine>
+    Engine basic_random_static<Engine>::engine( std::random_device{ }( ) );
 
     /** 
     * \brief The basic static random alias based on a std::default_random_engine
