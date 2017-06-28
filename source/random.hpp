@@ -5,7 +5,6 @@
 #include <type_traits>
 #include <cassert>
 #include <initializer_list>
-#include <iterator> // std::next
 #include <utility> // std::declval
 
 namespace effolkronium {
@@ -13,6 +12,15 @@ namespace effolkronium {
     namespace details {
         /// Key type for getting common type numbers or objects
         struct common{ };
+
+        /// Key type for methods which operates references
+        struct ref { };
+
+        /// Key type for methods which operates pointers
+        struct ptr { };
+
+        /// Key type for methods which operates variadic template arguments
+        struct variadic { };
 
         /// True if type T is applicable by the std::uniform_int_distribution
         template<typename T>
@@ -56,7 +64,8 @@ namespace effolkronium {
     }
 
     /**
-    * \brief Base template class for random
+    * \brief Base template class for random 
+    *        with static API and static internal member storage
     * \param Engine A random engine with interface like in the std::mt19937
     */
     template<typename Engine>
@@ -67,6 +76,15 @@ namespace effolkronium {
 
         /// Key type for getting common type numbers or objects
         using common = details::common;
+
+        /// Key type for methods which operates references
+        using ref = details::ref;
+
+        /// Key type for methods which operates pointers
+        using ptr = details::ptr;
+
+        /// Key type for methods which operates variadic template arguments
+        using variadic = details::variadic;
 
         /**
         * \brief Generate a random integer number in a [from; to] range
@@ -174,12 +192,23 @@ namespace effolkronium {
         static T get( std::initializer_list<T> init_list ) 
                 noexcept( noexcept( T{ std::declval<const T>( ) } ) ) {
             assert( 0 != init_list.size( ) );
-            return *std::next( 
-                init_list.begin( ), static_cast< // fix conversion warning
-                typename std::iterator_traits<
-                decltype( init_list.begin( ) )>::difference_type>( get<
-                typename std::initializer_list<T>::size_type>(
-                    0, init_list.size( ) - 1 ) ) );
+
+            // std::next and std::advance generating conversion warning
+            // so there used low level 'while' cycle
+
+            // get random position of element in init_list
+            auto val_pos = get<typename 
+                std::initializer_list<T>::size_type>(
+                0, init_list.size( ) - 1 );
+
+            auto iter = init_list.begin( );
+
+            while( val_pos != 0 ) {
+                ++iter;
+                --val_pos;
+            }
+
+            return *iter;
         }
     private:
         /// The random number engine

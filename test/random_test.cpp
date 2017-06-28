@@ -414,6 +414,24 @@ TEST_CASE( "Move constructor usage in get from initilizer list by value" ) {
     auto val = Random DOT get( { NoexceptMoveNoexceptCopy{ } } );
 
     // Bad world! std::initilizer_list don't support move semantic }:
-    REQUIRE( 1 == val.copied_num );
-    REQUIRE( 0 == val.moved_num );
+    if( 1 == val.moved_num ) {
+        // WoW, C++ can move from std::initilizer_list, good days have now come"
+    } else {
+        REQUIRE( 1 == val.copied_num );
+        REQUIRE( 0 == val.moved_num );
+    }
+}
+
+TEST_CASE( "Random value from initilizer list by reference" ) {
+    int i{ 1 };
+    auto val = Random DOT get( { std::ref( i ) } );
+    val.get( ) = 5;
+    REQUIRE( 5 == i );
+}
+
+TEST_CASE( "Random value from initilizer list by pointer" ) {
+    int i{ 1 };
+    auto val = Random DOT get( { &i } );
+    *val = 5;
+    REQUIRE( 5 == i );
 }
