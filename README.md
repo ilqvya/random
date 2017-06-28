@@ -15,6 +15,7 @@
   - [Bool](#bool)
   - [Random value from std::initilizer_list](#random-value-from-stdinitilizer_list)
   - [Shuffle](#shuffle)
+  - [Custom distribution](#custom-distribution)
   - [Seeding](#seeding)
   - [min-value](#min-value)
   - [max-value](#max-value)
@@ -136,6 +137,8 @@ Random::shuffle( array.begin( ), array.end( ) )
 // or just
 Random::shuffle( array )
 ```
+### Custom distribution
+TODO
 ### Seeding
 [ref](http://en.cppreference.com/w/cpp/numeric/random/mersenne_twister_engine/seed)
 
