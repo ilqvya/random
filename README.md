@@ -138,7 +138,10 @@ Random::shuffle( array.begin( ), array.end( ) )
 Random::shuffle( array )
 ```
 ### Custom distribution
-TODO
+```cpp
+// 1.f and 2.f will be forwarded to std::gamma_distribution constructor
+Random::get<std::gamma_distribution<>>( 1.f, 2.f ); // return value from operator( ) with internal engine argument
+```
 ### Seeding
 [ref](http://en.cppreference.com/w/cpp/numeric/random/mersenne_twister_engine/seed)
 
