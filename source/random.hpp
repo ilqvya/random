@@ -124,7 +124,8 @@ namespace effolkronium {
         }
 
         /**
-        * \brief Compares two pseudo-random number engines.
+        * \brief Compares internal pseudo-random number engine
+        *        with 'other' pseudo-random number engine.
         *        Two engines are equal, if their internal states
         *        are equivalent, that is, if they would generate
         *        equivalent values for any number of calls of operator()
@@ -137,7 +138,7 @@ namespace effolkronium {
 
         /**
         * \brief Serializes the internal state of the
-        *        pseudo-random number engine e as a sequence
+        *        internal pseudo-random number engine as a sequence
         *        of decimal numbers separated by one or more spaces,
         *        and inserts it to the stream ost. The fill character
         *        and the formatting flags of the stream are
@@ -151,7 +152,7 @@ namespace effolkronium {
 
         /**
         * \brief Restores the internal state of the
-        *        pseudo-random number engine e from
+        *        internal pseudo-random number engine from
         *        the serialized representation, which
         *        was created by an earlier call to 'serialize'
         *        using a stream with the same imbued locale and
