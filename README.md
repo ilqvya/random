@@ -17,13 +17,13 @@
   - [Seeding](#seeding)
   - [min-value](#min-value)
   - [max-value](#max-value)
-  - ['get' without arguments](get-without-arguments)
-  - [Discard](discard)
-  - [isEqual](isequal)
-  - [Serialize](serialize)
-  - [Deserialize](deserialize)
-  - [Thread local random](thread-local-random)
-  - [Local random](local-random)
+  - ['get' without arguments](#get-without-arguments)
+  - [Discard](#discard)
+  - [isEqual](#isequal)
+  - [Serialize](#serialize)
+  - [Deserialize](#deserialize)
+  - [Thread local random](#thread-local-random)
+  - [Local random](#local-random)
 ## Design goals
 There are few ways to get working with random in C++:
 - **C style**
@@ -64,7 +64,7 @@ There are few ways to get working with random in C++:
 The single required source, file `random.hpp` is in the `source` directory.
 All you need to do is add
 ```cpp
-#include "random.hpp"
+#include "effolkronium/random.hpp"
 
 // get base random alias which is auto seeded and has static API and internal state
 using Random = effolkronium::random_static;
