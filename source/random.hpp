@@ -225,9 +225,11 @@ namespace effolkronium {
 
     /// Seed random number engine by Seeder
     template<typename Engine, typename Seeder>
-    Engine basic_random_static<Engine, Seeder>::engine( [ ] {
-        Seeder seeder;
-        return static_cast<typename Engine::result_type>( seeder( ) );
+    Engine basic_random_static<Engine, Seeder>::engine( [ & ] {
+        Seeder seeder{ };
+        return static_cast<typename Engine::result_type>( 
+            static_cast<Seeder>(seeder)( )
+            );
     }( ) );
 
     /** 
