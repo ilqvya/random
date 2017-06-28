@@ -6,6 +6,8 @@
 #include <cassert>
 #include <initializer_list>
 #include <utility> // std::declval
+#include <algorithm> // std::shuffle
+#include <iterator> // std::begin, std::end
 
 namespace effolkronium {
     namespace details {
@@ -184,9 +186,9 @@ namespace effolkronium {
         }
 
         /**
-        * \brief Return random value from initilizer_list by value
+        * \brief Return random value from initilizer_list
         * \param init_list initilizer_list with values
-        * \return Random value from initilizer_list by value
+        * \return Random value from initilizer_list
         * \note Should be 1 or more elements in initilizer_list
         * \note Warning! Elements in initilizer_list can't be moved:
         *               https://stackoverflow.com/a/8193157/5734836
@@ -199,6 +201,28 @@ namespace effolkronium {
             return *( init_list.begin( ) +
                       get<typename std::initializer_list<T>::size_type>(
                           0, init_list.size( ) - 1 ) );
+        }
+
+        /**
+        * \brief Reorders the elements in the given range [first, last)
+        *        such that each possible permutation of those elements
+        *        has equal probability of appearance.
+        * \param first, last - the range of elements to shuffle randomly       
+        */
+        template<class RandomIt>
+        static void shuffle( RandomIt first, RandomIt last ) noexcept {
+            std::shuffle( first, last, engine );
+        }
+
+        /**
+        * \brief Reorders the elements in the given container
+        *        such that each possible permutation of those elements
+        *        has equal probability of appearance.
+        * \param container - the container with elements to shuffle randomly
+        */
+        template<class Container>
+        static void shuffle( Container& container ) noexcept {
+            shuffle( std::begin( container ), std::end( container ) );
         }
     private:
         /// The random number engine

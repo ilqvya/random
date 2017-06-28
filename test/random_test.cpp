@@ -2,6 +2,7 @@
 #include "catch.hpp"
 #include "random.hpp"
 #include <limits>
+#include <array>
 
 using Random = effolkronium::random_static;
 
@@ -399,27 +400,26 @@ TEST_CASE( "Noexcept deduction in get from initilizer list" ) {
 }
 
 TEST_CASE( "Move constructor usage in get from initilizer list" ) { 
+    static size_t copied_num{ 0u };
+    static size_t moved_num{ 0u };
     class NoexceptMoveNoexceptCopy {
     public:
         NoexceptMoveNoexceptCopy( ) = default;
         NoexceptMoveNoexceptCopy(
-            const NoexceptMoveNoexceptCopy& ) noexcept  { ++copied_num; };
+            const NoexceptMoveNoexceptCopy& ) noexcept  { 
+            ++copied_num;
+        };
         NoexceptMoveNoexceptCopy(
-            NoexceptMoveNoexceptCopy&& ) noexcept { ++moved_num; };
-
-        std::size_t moved_num{ 0u };
-        std::size_t copied_num{ 0u };
+            NoexceptMoveNoexceptCopy&& ) noexcept {
+            ++moved_num;
+        };
     };
 
-    auto val = Random DOT get( { NoexceptMoveNoexceptCopy{ } } );
+    NoexceptMoveNoexceptCopy instance{ };
+    auto val = Random DOT get( { std::move( instance ) } );
 
-    // Bad world! std::initilizer_list don't support move semantic }:
-    if( 1 == val.moved_num ) {
-        // WoW, C++ can move from std::initilizer_list
-    } else {
-        REQUIRE( 1 == val.copied_num );
-        REQUIRE( 0 == val.moved_num );
-    }
+    REQUIRE( 1 == copied_num );
+    REQUIRE( 1 == moved_num );
 }
 
 TEST_CASE( "Random value from initilizer list by reference" ) {
@@ -434,4 +434,17 @@ TEST_CASE( "Random value from initilizer list by pointer" ) {
     auto val = Random DOT get( { &i } );
     *val = 5;
     REQUIRE( 5 == i );
+}
+
+
+#include <string>
+
+TEST_CASE( "Shuffle" ) {
+    std::array<int, 3> arr = { 1, 2, 3 };
+    const auto arr_copy = arr;
+    do {
+        Random DOT shuffle( arr );
+    } while( arr_copy == arr );
+
+    REQUIRE( true == true );
 }
