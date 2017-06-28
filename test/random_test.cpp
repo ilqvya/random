@@ -1,11 +1,9 @@
 ﻿#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 #include "catch.hpp"
-#include "random.hpp"
+#include "effolkronium/random.hpp"
 #include <limits>
 #include <sstream>
 #include <array>
-
-//using Random = effolkronium::random_thread_local;
 
 #ifdef RANDOM_LOCAL
 auto Random = effolkronium::random_local{ };
