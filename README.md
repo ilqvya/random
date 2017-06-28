@@ -210,9 +210,11 @@ Random::deserialize( strStream ); // Restore internal state of internal Random e
 ### Thread local random
 It uses static methods API and data with thread_local storage which is fully **thread safe** (but less perfomance)
 ```cpp
-using effolkronium::random_thread_local
+using Random = effolkronium::random_thread_local
 
-// use in the same way as random_static
+// use in the same way as random_static. Thread safe
+std::thread first{ [ ] { Random::get( ); } };
+std::thread second{ [ ] { Random::get( ); } };
 ```
 ### Local random
 It uses non static methods API and data with auto storage which can be created on the stack at local scope
