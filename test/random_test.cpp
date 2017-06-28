@@ -416,8 +416,7 @@ TEST_CASE( "Move constructor usage in get from initilizer list" ) {
     };
 
     NoexceptMoveNoexceptCopy instance{ };
-    auto val = Random DOT get( { std::move( instance ) } );
-
+    Random DOT get( { std::move( instance ) } );
     REQUIRE( 1 == copied_num );
     REQUIRE( 1 == moved_num );
 }
@@ -447,4 +446,22 @@ TEST_CASE( "Shuffle" ) {
     } while( arr_copy == arr );
 
     REQUIRE( true == true );
+}
+
+TEST_CASE( "Custom Seeder" ) {
+    static bool isCustomSeeded{ false };
+    struct seeder_custom final {
+        size_t operator() ( ) const noexcept {
+            isCustomSeeded = true;
+            return 2;
+        }
+    };
+
+    using RandomCustomSeeded = 
+        effolkronium::basic_random_static<std::mt19937, seeder_custom>;
+
+    volatile auto val = RandomCustomSeeded::get( 1, 2 );
+
+    REQUIRE( val >= 1 );
+    REQUIRE( true == isCustomSeeded );
 }

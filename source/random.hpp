@@ -12,16 +12,7 @@
 namespace effolkronium {
     namespace details {
         /// Key type for getting common type numbers or objects
-        struct common{ };
-
-        /// Key type for methods which operates references
-        struct ref{ };
-
-        /// Key type for methods which operates pointers
-        struct ptr{ };
-
-        /// Key type for methods which operates variadic template arguments
-        struct variadic { };
+        struct common{ }; 
 
         /// True if type T is applicable by the std::uniform_int_distribution
         template<typename T>
@@ -66,27 +57,30 @@ namespace effolkronium {
     } // namespace details
 
     /**
+    * \brief The default seeder for random classes
+    */
+    struct seeder_default final {
+        /// return seed number
+        std::random_device::result_type operator() ( ) const noexcept {
+            return std::random_device{ }( );
+        }
+    };
+
+    /**
     * \brief Base template class for random 
     *        with static API and static internal member storage
     * \param Engine A random engine with interface like in the std::mt19937
+    * \param Seeder A seeder for random class, 
+    *        from which will be seeded internal random_engine
     */
-    template<typename Engine>
-    class basic_random_static {
+    template<typename Engine, typename Seeder = seeder_default>
+    class basic_random_static final {
     public:
         /// Type of used random number engine
         using engine_type = Engine;
 
         /// Key type for getting common type numbers or objects
         using common = details::common;
-
-        /// Key type for methods which operates references
-        using ref = details::ref;
-
-        /// Key type for methods which operates pointers
-        using ptr = details::ptr;
-
-        /// Key type for methods which operates variadic template arguments
-        using variadic = details::variadic;
 
         /**
         * \brief Generate a random integer number in a [from; to] range
@@ -229,8 +223,12 @@ namespace effolkronium {
         static Engine engine;
     };
 
-    template<typename Engine>
-    Engine basic_random_static<Engine>::engine( std::random_device{ }( ) );
+    /// Seed random number engine by Seeder
+    template<typename Engine, typename Seeder = seeder_default>
+    Engine basic_random_static<Engine, Seeder>::engine( [ ] {
+        Seeder seeder;
+        return static_cast<typename Engine::result_type>( seeder( ) );
+    }( ) );
 
     /** 
     * \brief The basic static random alias based on a std::default_random_engine
