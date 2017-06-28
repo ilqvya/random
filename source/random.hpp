@@ -574,8 +574,6 @@ namespace effolkronium {
     template<typename Engine>
     class basic_random_local final {
     public:
-        basic_random_local( ) noexcept = default;
-
         /// Type of used random number engine
         using engine_type = Engine;
 

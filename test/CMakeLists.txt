@@ -74,44 +74,44 @@ else()
 endif()
 endfunction(set_compiler_flags)
 
-add_executable("random_static" random_test.cpp)
-set_compiler_flags("random_static")
-target_compile_definitions("random_static" PRIVATE "RANDOM_STATIC")
-target_include_directories("random_static" PRIVATE "../source")
+add_executable("random_static_test" random_test.cpp)
+set_compiler_flags("random_static_test")
+target_compile_definitions("random_static_test" PRIVATE "random_static_test")
+target_include_directories("random_static_test" PRIVATE "../source")
 
-add_executable("random_thread_local" random_test.cpp)
-set_compiler_flags("random_thread_local")
-target_compile_definitions("random_thread_local" PRIVATE "RANDOM_THREAD_LOCAL")
-target_include_directories("random_thread_local" PRIVATE "../source")
+add_executable("random_thread_local_test" random_test.cpp)
+set_compiler_flags("random_thread_local_test")
+target_compile_definitions("random_thread_local_test" PRIVATE "random_thread_local_test")
+target_include_directories("random_thread_local_test" PRIVATE "../source")
 
-add_executable("random_local" random_test.cpp)
-set_compiler_flags("random_local")
-target_compile_definitions("random_local" PRIVATE "RANDOM_LOCAL")
-target_include_directories("random_local" PRIVATE "../source")
+add_executable("random_local_test" random_test.cpp)
+set_compiler_flags("random_local_test")
+target_compile_definitions("random_local_test" PRIVATE "random_local_test")
+target_include_directories("random_local_test" PRIVATE "../source")
 
-set_target_properties("random_static" PROPERTIES
+set_target_properties("random_static_test" PROPERTIES
     CXX_STANDARD 11
     CXX_STANDARD_REQUIRED ON
 )
 
-set_target_properties("random_thread_local" PROPERTIES
+set_target_properties("random_thread_local_test" PROPERTIES
     CXX_STANDARD 11
     CXX_STANDARD_REQUIRED ON
 )
 
-set_target_properties("random_local" PROPERTIES
+set_target_properties("random_local_test" PROPERTIES
     CXX_STANDARD 11
     CXX_STANDARD_REQUIRED ON
 )
 
-add_test( NAME "random_static"
-          COMMAND ${PROJECT_NAME}
+add_test( NAME "random_static_test"
+          COMMAND "random_static_test"
 )
 
-add_test( NAME "random_thread_local"
-          COMMAND ${PROJECT_NAME}
+add_test( NAME "random_thread_local_test"
+          COMMAND "random_thread_local_test"
 )
 
-add_test( NAME "random_local"
-          COMMAND ${PROJECT_NAME}
+add_test( NAME "random_local_test"
+          COMMAND "random_local_test"
 )
