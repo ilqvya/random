@@ -2,6 +2,7 @@
 #include "catch.hpp"
 #include "random.hpp"
 #include <limits>
+#include <sstream>
 #include <array>
 
 using Random = effolkronium::random_static;
@@ -435,9 +436,6 @@ TEST_CASE( "Random value from initilizer list by pointer" ) {
     REQUIRE( 5 == i );
 }
 
-
-#include <string>
-
 TEST_CASE( "Shuffle" ) {
     std::array<int, 3> arr = { { 1, 2, 3 } };
     const auto arr_copy = arr;
@@ -446,4 +444,83 @@ TEST_CASE( "Shuffle" ) {
     } while( arr_copy == arr );
 
     REQUIRE( true == true );
+}
+
+TEST_CASE( "Get without arguments" ) {
+    auto val = Random DOT get( );
+    REQUIRE( val <= Random DOT max( ) );
+}
+
+TEST_CASE( "discard" ) {
+    std::stringstream strStream;
+
+    Random DOT serialize( strStream );
+    Random DOT discard( 500 );
+    auto firstVal = Random DOT get( );
+
+    Random DOT deserialize( strStream );
+    Random DOT discard( 500 );
+    auto secondVal = Random DOT get( );
+
+    REQUIRE( firstVal == secondVal );
+}
+
+TEST_CASE( "Not equal" ) {
+    std::stringstream strStream;
+
+    Random DOT serialize( strStream );
+    Random DOT discard( 1 );
+
+    Random::engine_type engine;
+    strStream >> engine;
+
+    bool isEqual = Random DOT isEqual( engine );
+
+    REQUIRE( false == isEqual );
+}
+
+TEST_CASE( "Equal" ) {
+    std::stringstream strStream;
+
+    Random DOT serialize( strStream );
+
+    Random::engine_type engine;
+    strStream >> engine;
+
+    bool isEqual = Random DOT isEqual( engine );
+
+    REQUIRE( true == isEqual );
+}
+
+TEST_CASE( "seed" ) {
+    Random DOT seed( 500 );
+    auto firstVal = Random DOT get( );
+
+    Random DOT seed( 500 );
+    auto secondVal = Random DOT get( );
+
+    REQUIRE( firstVal == secondVal );
+}
+
+TEST_CASE( "seed_seq" ) {
+    std::seed_seq sseq{ {1,2,3,4} };
+    Random DOT seed( sseq );
+    auto firstVal = Random DOT get( );
+
+    Random DOT seed( sseq );
+    auto secondVal = Random DOT get( );
+
+    REQUIRE( firstVal == secondVal );
+}
+
+TEST_CASE( "serialize & deserialize" ) {
+    std::stringstream strStream;
+    
+    Random DOT serialize( strStream );
+    auto firstVal = Random DOT get( );
+    
+    Random DOT deserialize( strStream );
+    auto secondVal = Random DOT get( );
+    
+    REQUIRE( firstVal == secondVal );
 }
