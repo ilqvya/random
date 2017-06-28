@@ -66,11 +66,11 @@ namespace effolkronium {
     */
     template<
         typename Engine,
-        template<typename...> typename IntegerDist = std::uniform_int_distribution,
-        template<typename...> typename RealDist = std::uniform_real_distribution,
+        template<typename...> class IntegerDist = std::uniform_int_distribution,
+        template<typename...> class RealDist = std::uniform_real_distribution,
         typename BoolDist = std::bernoulli_distribution
     >
-    class basic_random_static final {
+    class basic_random_static {
     public:
         basic_random_static( ) = delete;
 
@@ -328,8 +328,8 @@ namespace effolkronium {
     /// Seed random number engine by std::random_device{ }( )
     template<
         typename Engine,
-        template<typename...> typename IntegerDist,
-        template<typename...> typename RealDist,
+        template<typename...> class IntegerDist,
+        template<typename...> class RealDist,
         typename BoolDist
         >
     Engine basic_random_static<
@@ -344,11 +344,11 @@ namespace effolkronium {
     */
     template<
         typename Engine,
-        template<typename...> typename IntegerDist = std::uniform_int_distribution,
-        template<typename...> typename RealDist = std::uniform_real_distribution,
+        template<typename...> class IntegerDist = std::uniform_int_distribution,
+        template<typename...> class RealDist = std::uniform_real_distribution,
         typename BoolDist = std::bernoulli_distribution
     >
-    class basic_random_thread_local final {
+    class basic_random_thread_local  {
     public:
         basic_random_thread_local( ) = delete;
 
@@ -606,8 +606,8 @@ namespace effolkronium {
     /// Seed random number engine by std::random_device{ }( )
     template<
         typename Engine,
-        template<typename...> typename IntegerDist,
-        template<typename...> typename RealDist,
+        template<typename...> class IntegerDist,
+        template<typename...> class RealDist,
         typename BoolDist
     >
     thread_local Engine basic_random_thread_local<
@@ -622,11 +622,11 @@ namespace effolkronium {
     */
     template<
         typename Engine,
-        template<typename...> typename IntegerDist = std::uniform_int_distribution,
-        template<typename...> typename RealDist = std::uniform_real_distribution,
+        template<typename...> class IntegerDist = std::uniform_int_distribution,
+        template<typename...> class RealDist = std::uniform_real_distribution,
         typename BoolDist = std::bernoulli_distribution
     >
-    class basic_random_local final {
+    class basic_random_local {
     public:
         /// Type of used random number engine
         using engine_type = Engine;
