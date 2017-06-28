@@ -556,3 +556,7 @@ TEST_CASE( "serialize & deserialize" ) {
     
     REQUIRE( firstVal == secondVal );
 }
+
+TEST_CASE( "custom distribution" ) {
+    Random DOT get<std::gamma_distribution<>>( 1. );
+}

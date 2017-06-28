@@ -5,7 +5,7 @@
 #include <type_traits>
 #include <cassert>
 #include <initializer_list>
-#include <utility> // std::declval
+#include <utility> // std::declval, std::forward
 #include <algorithm> // std::shuffle
 #include <iterator> // std::begin, std::end
 #include <ostream>
@@ -282,6 +282,19 @@ namespace effolkronium {
         }
 
         /**
+        * \brief Return value from custom Dist distribution
+        *        seeded by internal random engine
+        * \param Dist The type of custom distribution with next concept:
+        *        http://en.cppreference.com/w/cpp/concept/RandomNumberDistribution
+        * \param args The arguments which will be forwarded to Dist constructor
+        * \return Value from custom 'dist' distribution
+        */
+        template<typename Dist, typename... Args>
+        static typename Dist::result_type get( Args&&... args ) noexcept {
+            return Dist{ std::forward<Args>( args )... }( engine );
+        }
+
+        /**
         * \brief Reorders the elements in the given range [first, last)
         *        such that each possible permutation of those elements
         *        has equal probability of appearance.
@@ -535,6 +548,19 @@ namespace effolkronium {
         }
 
         /**
+        * \brief Return value from custom Dist distribution
+        *        seeded by internal random engine
+        * \param Dist The type of custom distribution with next concept:
+        *        http://en.cppreference.com/w/cpp/concept/RandomNumberDistribution
+        * \param args The arguments which will be forwarded to Dist constructor
+        * \return Value from custom 'dist' distribution
+        */
+        template<typename Dist, typename... Args>
+        static typename Dist::result_type get( Args&&... args ) noexcept {
+            return Dist{ std::forward<Args>( args )... }( engine );
+        }
+
+        /**
         * \brief Reorders the elements in the given range [first, last)
         *        such that each possible permutation of those elements
         *        has equal probability of appearance.
@@ -784,6 +810,19 @@ namespace effolkronium {
             return *( init_list.begin( ) +
                       get<typename std::initializer_list<T>::size_type>(
                           0, init_list.size( ) - 1 ) );
+        }
+
+        /**
+        * \brief Return value from custom Dist distribution
+        *        seeded by internal random engine
+        * \param Dist The type of custom distribution with next concept:
+        *        http://en.cppreference.com/w/cpp/concept/RandomNumberDistribution
+        * \param args The arguments which will be forwarded to Dist constructor
+        * \return Value from custom 'dist' distribution
+        */
+        template<typename Dist, typename... Args>
+        typename Dist::result_type get( Args&&... args ) noexcept {
+            return Dist{ std::forward<Args>( args )... }( engine );
         }
 
         /**
