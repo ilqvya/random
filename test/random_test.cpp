@@ -439,7 +439,7 @@ TEST_CASE( "Random value from initilizer list by pointer" ) {
 #include <string>
 
 TEST_CASE( "Shuffle" ) {
-    std::array<int, 3> arr = { 1, 2, 3 };
+    std::array<int, 3> arr = { { 1, 2, 3 } };
     const auto arr_copy = arr;
     do {
         Random DOT shuffle( arr );
@@ -458,6 +458,25 @@ TEST_CASE( "Custom Seeder" ) {
     };
 
     using RandomCustomSeeded = 
+        effolkronium::basic_random_static<std::mt19937, seeder_custom>;
+
+    volatile auto val = RandomCustomSeeded::get( 1, 2 );
+
+    REQUIRE( val >= 1 );
+    REQUIRE( true == isCustomSeeded );
+}
+
+TEST_CASE( "Custom Seeder seed_seq" ) {
+    static bool isCustomSeeded{ false };
+
+    struct seeder_custom final {
+        std::seed_seq& operator() ( ) noexcept {
+            return seed_seq;
+        }
+        std::seed_seq seed_seq{ { 1, 2, 3 } };
+    };
+
+    using RandomCustomSeeded =
         effolkronium::basic_random_static<std::mt19937, seeder_custom>;
 
     volatile auto val = RandomCustomSeeded::get( 1, 2 );

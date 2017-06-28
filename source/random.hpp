@@ -59,7 +59,9 @@ namespace effolkronium {
     /**
     * \brief The default seeder for random classes
     */
-    struct seeder_default final {
+    class seeder_default final {
+    public:
+
         /// return seed number
         std::random_device::result_type operator() ( ) const noexcept {
             return std::random_device{ }( );
@@ -222,14 +224,13 @@ namespace effolkronium {
         /// The random number engine
         static Engine engine;
     };
-
+   
     /// Seed random number engine by Seeder
     template<typename Engine, typename Seeder>
     Engine basic_random_static<Engine, Seeder>::engine( [ & ] {
         Seeder seeder{ };
-        return static_cast<typename Engine::result_type>( 
-            static_cast<Seeder>(seeder)( )
-            );
+
+        return seeder( );
     }( ) );
 
     /** 
