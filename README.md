@@ -214,7 +214,7 @@ using effolkronium::random_thread_local
 ### Local random
 It uses non static methods API and data with auto storage which can be created on the stack at local scope
 ```cpp
-#include "effolkronium/random.hpp>
+#include "effolkronium/random.hpp"
 
 using Random_t = effolkronium::random_local
 
