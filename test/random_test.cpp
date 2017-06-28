@@ -5,9 +5,27 @@
 #include <sstream>
 #include <array>
 
-using Random = effolkronium::random_static;
+//using Random = effolkronium::random_thread_local;
 
+#ifdef RANDOM_LOCAL
+auto Random = effolkronium::random_local{ };
+#endif
+
+#ifdef RANDOM_STATIC
+using Random = effolkronium::random_static;
+#endif
+
+#ifdef RANDOM_THREAD_LOCAL
+using Random = effolkronium::random_thread_local;
+#endif
+
+#ifndef RANDOM_LOCAL
+using Random_t = Random;
 #define DOT ::
+#else
+using Random_t = effolkronium::random_local;
+#define DOT .
+#endif
 
 TEST_CASE( "Range overflow for random integer numbers" ) {
     bool isRangeOverflow = false;
@@ -253,7 +271,7 @@ TEST_CASE( "Range overflow for random common_type numbers" ) {
          i < std::numeric_limits<std::uint8_t>::max( )
          && !isRangeOverflow;
          ++i ) {
-        const auto randomNumber = Random DOT get<Random::common>( 
+        const auto randomNumber = Random DOT get<Random_t::common>(
                                                  static_cast<signed char>( -1 ),
                                                  short{ 1 } );
 
@@ -265,7 +283,7 @@ TEST_CASE( "Range overflow for random common_type numbers" ) {
     for( std::uint8_t i{ 0u };
          i < std::numeric_limits<std::uint8_t>::max( );
          ++i ) {
-        const auto randomNumber = Random DOT get<Random::common>( 
+        const auto randomNumber = Random DOT get<Random_t::common>(
                                            1ull, 0u );
 
         isRangeOverflow = 1 < randomNumber;
@@ -276,7 +294,7 @@ TEST_CASE( "Range overflow for random common_type numbers" ) {
     for( std::uint8_t i{ 0u };
          i < std::numeric_limits<std::uint8_t>::max( );
          ++i ) {
-        const auto randomNumber = Random DOT get<Random::common>(
+        const auto randomNumber = Random DOT get<Random_t::common>(
                                                 static_cast<signed char>( 0 ),
                                                 0ll );
         isRangeOverflow = randomNumber != 0;
@@ -287,21 +305,21 @@ TEST_CASE( "Range overflow for random common_type numbers" ) {
 TEST_CASE( "Type deduction for random common_type numbers" ) {
     // signed char
     static_assert( std::is_same<signed char,
-                   decltype( Random DOT get<Random::common>(
+                   decltype( Random DOT get<Random_t::common>(
                        static_cast<signed char>( 0 ),
                        static_cast<signed char>( 0 ) ) ) > ::value, "" );
     // unsigned long
     static_assert( std::is_same<unsigned long,
-                   decltype( Random DOT get<Random::common>(
+                   decltype( Random DOT get<Random_t::common>(
                        static_cast<unsigned char>( 0u ), 0ul ) ) > ::value, "" );
     // double
     static_assert( std::is_same<double,
-                   decltype( Random DOT get<Random::common>(
+                   decltype( Random DOT get<Random_t::common>(
                        0.,
                        std::int8_t{ 0 } ) ) > ::value, "" );
     // long double
     static_assert( std::is_same<long double,
-                   decltype( Random DOT get<Random::common>(
+                   decltype( Random DOT get<Random_t::common>(
                        0.f, 0.l ) ) > ::value, "" );
 }
 
@@ -313,11 +331,11 @@ TEST_CASE( "Random common type numbres is truly random" ) {
          && !isDifferentNumber;
          ++i ) {
 
-        const auto firstRandomNumber = Random DOT get<Random::common>(
+        const auto firstRandomNumber = Random DOT get<Random_t::common>(
             std::numeric_limits<float>::min( ),
             std::numeric_limits<signed char>::max( ) );
 
-        const auto secondRandomNumber = Random DOT get<Random::common>(
+        const auto secondRandomNumber = Random DOT get<Random_t::common>(
             std::numeric_limits<signed char>::min( ),
             std::numeric_limits<float>::max( ) );
 
@@ -487,7 +505,7 @@ TEST_CASE( "Not equal" ) {
     Random DOT serialize( strStream );
     Random DOT discard( 1 );
 
-    Random::engine_type engine;
+    Random_t::engine_type engine;
     strStream >> engine;
 
     bool isEqual = Random DOT isEqual( engine );
@@ -500,7 +518,7 @@ TEST_CASE( "Equal" ) {
 
     Random DOT serialize( strStream );
 
-    Random::engine_type engine;
+    Random_t::engine_type engine;
     strStream >> engine;
 
     bool isEqual = Random DOT isEqual( engine );

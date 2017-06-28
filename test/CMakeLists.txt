@@ -28,10 +28,9 @@ if(COVERAGE_ENABLED)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage") # enabling coverage
 endif()
 
-add_executable(${PROJECT_NAME} random_test.cpp)
-
+function( set_compiler_flags TARGET ) 
 if(NOT MSVC)
-	target_compile_options(${PROJECT_NAME} PRIVATE 
+	target_compile_options(${TARGET} PRIVATE 
 		-Wall -Wextra # reasonable and standard
 		-Werror # Make all warnings into errors.
 		-Wshadow # warn the user if a variable declaration shadows one from a
@@ -48,7 +47,7 @@ if(NOT MSVC)
 		-Wsign-conversion # warn on sign conversions
 	)
 else()
-	target_compile_options(${PROJECT_NAME} PRIVATE 
+	target_compile_options(${TARGET} PRIVATE 
 		/EHsc # Warning fix!
 		/W4 
 		/WX # Treats all compilers warnings as errors
@@ -73,14 +72,46 @@ else()
 		/w14928 # illegal copy-initialization; more than one user-defined conversion has been implicitly applied
 	)
 endif()
+endfunction(set_compiler_flags)
 
-set_target_properties(${PROJECT_NAME} PROPERTIES
+add_executable("random_static" random_test.cpp)
+set_compiler_flags("random_static")
+target_compile_definitions("random_static" PRIVATE "RANDOM_STATIC")
+target_include_directories("random_static" PRIVATE "../source")
+
+add_executable("random_thread_local" random_test.cpp)
+set_compiler_flags("random_thread_local")
+target_compile_definitions("random_thread_local" PRIVATE "RANDOM_THREAD_LOCAL")
+target_include_directories("random_thread_local" PRIVATE "../source")
+
+add_executable("random_local" random_test.cpp)
+set_compiler_flags("random_local")
+target_compile_definitions("random_local" PRIVATE "RANDOM_LOCAL")
+target_include_directories("random_local" PRIVATE "../source")
+
+set_target_properties("random_static" PROPERTIES
     CXX_STANDARD 11
     CXX_STANDARD_REQUIRED ON
 )
 
-target_include_directories(${PROJECT_NAME} PRIVATE "../source")
+set_target_properties("random_thread_local" PROPERTIES
+    CXX_STANDARD 11
+    CXX_STANDARD_REQUIRED ON
+)
 
-add_test( NAME ${PROJECT_NAME}
+set_target_properties("random_local" PROPERTIES
+    CXX_STANDARD 11
+    CXX_STANDARD_REQUIRED ON
+)
+
+add_test( NAME "random_static"
+          COMMAND ${PROJECT_NAME}
+)
+
+add_test( NAME "random_thread_local"
+          COMMAND ${PROJECT_NAME}
+)
+
+add_test( NAME "random_local"
           COMMAND ${PROJECT_NAME}
 )
