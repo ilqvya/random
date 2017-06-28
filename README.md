@@ -216,7 +216,7 @@ It uses non static methods API and data with auto storage which can be created o
 ```cpp
 #include "effolkronium/random.hpp>
 
-using Random_t effolkronium::random_local
+using Random_t = effolkronium::random_local
 
 int main( ) {
   Random_t localRandom{ }; // Construct on the stack
