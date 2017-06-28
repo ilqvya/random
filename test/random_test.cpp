@@ -437,24 +437,28 @@ TEST_CASE( "Random value from initilizer list by pointer" ) {
 }
 
 TEST_CASE( "Shuffle" ) {
-    SECTION( "Range" ) {
-        std::array<int, 3> arr = { { 1, 2, 3 } };
-        const auto arr_copy = arr;
-        do {
-            Random DOT shuffle( arr );
-        } while( arr_copy == arr );
+    {
+        SECTION( "Range" ) {
+            std::array<int, 3> arr = { { 1, 2, 3 } };
+            const auto arr_copy = arr;
+            do {
+                Random DOT shuffle( arr );
+            } while( arr_copy == arr );
 
-        REQUIRE( true == true );
+            REQUIRE( true == true );
+        }
     }
 
-    SECTION( "Container" ) {
-        std::array<int, 3> arr = { { 1, 2, 3 } };
-        const auto arr_copy = arr;
-        do {
-            Random DOT shuffle( std::begin( arr ), std::end( arr ) );
-        } while( arr_copy == arr );
+    {
+        SECTION( "Container" ) {
+            std::array<int, 3> arr = { { 1, 2, 3 } };
+            const auto arr_copy = arr;
+            do {
+                Random DOT shuffle( std::begin( arr ), std::end( arr ) );
+            } while( arr_copy == arr );
 
-        REQUIRE( true == true );
+            REQUIRE( true == true );
+        }
     }
 }
 
