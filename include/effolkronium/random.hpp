@@ -880,25 +880,25 @@ namespace effolkronium {
     };
 
     /** 
-    * \brief The basic static random alias based on a std::default_random_engine
+    * \brief The basic static random alias based on a std::mt19937
     * \note It uses static methods API and data with static storage
     * \note Not thread safe but more prefomance
     */
-    using random_static = basic_random_static<std::default_random_engine>;
+    using random_static = basic_random_static<std::mt19937>;
 
     /**
-    * \brief The basic static random alias based on a std::default_random_engine
+    * \brief The basic static random alias based on a std::mt19937
     * \note It uses static methods API and data with thread_local storage
     * \note Thread safe but less perfomance
     */
-    using random_thread_local = basic_random_thread_local<std::default_random_engine>;
+    using random_thread_local = basic_random_thread_local<std::mt19937>;
 
     /**
-    * \brief The basic static random alias based on a std::default_random_engine
+    * \brief The basic static random alias based on a std::mt19937
     * \note It uses non static methods API and data with auto storage
     * \note Not thread safe. Should construct on the stack at local scope
     */
-    using random_local = basic_random_local<std::default_random_engine>;
+    using random_local = basic_random_local<std::mt19937>;
 
 } // namespace effolkronium
 
