@@ -64,7 +64,12 @@ namespace effolkronium {
     *        with static API and static internal member storage
     * \param Engine A random engine with interface like in the std::mt19937
     */
-    template<typename Engine>
+    template<
+        typename Engine,
+        template<typename...> typename IntegerDist = std::uniform_int_distribution,
+        template<typename...> typename RealDist = std::uniform_real_distribution,
+        typename BoolDist = std::bernoulli_distribution
+    >
     class basic_random_static final {
     public:
         basic_random_static( ) = delete;
@@ -179,8 +184,8 @@ namespace effolkronium {
         static typename std::enable_if<details::is_uniform_int<A>::value
             , A>::type get( A from, A to ) noexcept {
             if( from < to ) // Allow range from higher to lower
-                return std::uniform_int_distribution<A>{ from, to }( engine );
-            return std::uniform_int_distribution<A>{ to, from }( engine );
+                return IntegerDist<A>{ from, to }( engine );
+            return IntegerDist<A>{ to, from }( engine );
         }
 
         /**
@@ -196,8 +201,8 @@ namespace effolkronium {
         static typename std::enable_if<details::is_uniform_real<A>::value
             , A>::type get( A from, A to ) noexcept {
             if( from < to ) // Allow range from higher to lower
-                return std::uniform_real_distribution<A>{ from, to }( engine );
-            return std::uniform_real_distribution<A>{ to, from }( engine );
+                return RealDist<A>{ from, to }( engine );
+            return RealDist<A>{ to, from }( engine );
         }
 
         /**
@@ -260,7 +265,7 @@ namespace effolkronium {
         static typename std::enable_if<std::is_same<T, bool>::value
             , bool>::type get( const double probability = 0.5 ) noexcept {
             assert( 0 <= probability && 1 >= probability ); // out of [0; 1] range
-            return std::bernoulli_distribution{ probability }( engine );
+            return BoolDist{ probability }( engine );
         }
 
         /**
@@ -321,8 +326,15 @@ namespace effolkronium {
     };
 
     /// Seed random number engine by std::random_device{ }( )
-    template<typename Engine>
-    Engine basic_random_static<Engine>::engine( std::random_device{ }( ) );
+    template<
+        typename Engine,
+        template<typename...> typename IntegerDist,
+        template<typename...> typename RealDist,
+        typename BoolDist
+        >
+    Engine basic_random_static<
+        Engine, IntegerDist, RealDist, BoolDist
+    >::engine( std::random_device{ }( ) );
 
     /**
     * \brief Base template class for random
@@ -330,7 +342,12 @@ namespace effolkronium {
     * \note Thread safe
     * \param Engine A random engine with interface like in the std::mt19937
     */
-    template<typename Engine>
+    template<
+        typename Engine,
+        template<typename...> typename IntegerDist = std::uniform_int_distribution,
+        template<typename...> typename RealDist = std::uniform_real_distribution,
+        typename BoolDist = std::bernoulli_distribution
+    >
     class basic_random_thread_local final {
     public:
         basic_random_thread_local( ) = delete;
@@ -587,9 +604,15 @@ namespace effolkronium {
     };
    
     /// Seed random number engine by std::random_device{ }( )
-    template<typename Engine>
-    thread_local Engine basic_random_thread_local<Engine>::engine( 
-        std::random_device{ }( ) );
+    template<
+        typename Engine,
+        template<typename...> typename IntegerDist,
+        template<typename...> typename RealDist,
+        typename BoolDist
+    >
+    thread_local Engine basic_random_thread_local<
+        Engine, IntegerDist, RealDist, BoolDist
+    >::engine( std::random_device{ }( ) );
 
     /**
     * \brief Base template class for random
@@ -597,7 +620,12 @@ namespace effolkronium {
     * \note Thread safe
     * \param Engine A random engine with interface like in the std::mt19937
     */
-    template<typename Engine>
+    template<
+        typename Engine,
+        template<typename...> typename IntegerDist = std::uniform_int_distribution,
+        template<typename...> typename RealDist = std::uniform_real_distribution,
+        typename BoolDist = std::bernoulli_distribution
+    >
     class basic_random_local final {
     public:
         /// Type of used random number engine
