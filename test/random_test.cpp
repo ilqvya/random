@@ -347,7 +347,7 @@ TEST_CASE( "Random bool values" ) {
     }
 }
 
-TEST_CASE( "Random value from initilizer list by value" ) {
+TEST_CASE( "Random value from initilizer list" ) {
     bool is1{ false }, is2{ false }, is3{ false };
     while( !is1 && !is2 && !is3 ) {
         switch( Random DOT get( { 1, 2, 3 } ) ) {
@@ -360,7 +360,7 @@ TEST_CASE( "Random value from initilizer list by value" ) {
     //Random DOT get<int>( {  } ); assertion occurred
 }
 
-TEST_CASE( "Noexcept deduction in get from initilizer list by value" ) {
+TEST_CASE( "Noexcept deduction in get from initilizer list" ) {
     class NoexceptCopy {
     public:
         NoexceptCopy( ) = default;
@@ -398,7 +398,7 @@ TEST_CASE( "Noexcept deduction in get from initilizer list by value" ) {
         Random DOT get( { NoDefaultConstructorNotNoexcept{ 1 } } ) ), " " );
 }
 
-TEST_CASE( "Move constructor usage in get from initilizer list by value" ) { 
+TEST_CASE( "Move constructor usage in get from initilizer list" ) { 
     class NoexceptMoveNoexceptCopy {
     public:
         NoexceptMoveNoexceptCopy( ) = default;
@@ -415,7 +415,7 @@ TEST_CASE( "Move constructor usage in get from initilizer list by value" ) {
 
     // Bad world! std::initilizer_list don't support move semantic }:
     if( 1 == val.moved_num ) {
-        // WoW, C++ can move from std::initilizer_list, good days have now come"
+        // WoW, C++ can move from std::initilizer_list
     } else {
         REQUIRE( 1 == val.copied_num );
         REQUIRE( 0 == val.moved_num );

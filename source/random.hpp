@@ -8,16 +8,15 @@
 #include <utility> // std::declval
 
 namespace effolkronium {
-
     namespace details {
         /// Key type for getting common type numbers or objects
         struct common{ };
 
         /// Key type for methods which operates references
-        struct ref { };
+        struct ref{ };
 
         /// Key type for methods which operates pointers
-        struct ptr { };
+        struct ptr{ };
 
         /// Key type for methods which operates variadic template arguments
         struct variadic { };
@@ -61,7 +60,8 @@ namespace effolkronium {
                 || is_uniform_real<T>::value
                 || is_uniform_int <T>::value;
         };
-    }
+
+    } // namespace details
 
     /**
     * \brief Base template class for random 
@@ -132,11 +132,10 @@ namespace effolkronium {
         static typename std::enable_if<details::is_byte<A>::value
             , A>::type get( A from, A to ) noexcept {
             // Choose between short and unsigned short for byte conversion
-            using short_t = typename std::conditional<
-                std::is_signed<A>::value, short, unsigned short>::type;
+            using short_t = typename std::conditional<std::is_signed<A>::value,
+                short, unsigned short>::type;
 
-            return static_cast<A>( get( static_cast<short_t>( from ),
-                                        static_cast<short_t>( to ) ) );
+            return static_cast<A>( get<short_t>( from, to ) );
         }
 
         /**
@@ -154,8 +153,12 @@ namespace effolkronium {
         *                       which gives us a wrong range for random values.
         *                           https://stackoverflow.com/a/5416498/5734836
         */
-        template<typename Key, typename A, typename B, 
-                 typename C = typename std::common_type<A, B>::type>
+        template<
+            typename Key,
+            typename A,
+            typename B, 
+            typename C = typename std::common_type<A, B>::type
+        >
         static typename std::enable_if<
                std::is_same<Key, common>::value
             && details::is_supported_number<A>::value
@@ -193,22 +196,9 @@ namespace effolkronium {
                 noexcept( noexcept( T{ std::declval<const T>( ) } ) ) {
             assert( 0 != init_list.size( ) );
 
-            // std::next and std::advance generating conversion warning
-            // so there used low level 'while' cycle
-
-            // get random position of element in init_list
-            auto val_pos = get<typename 
-                std::initializer_list<T>::size_type>(
-                0, init_list.size( ) - 1 );
-
-            auto iter = init_list.begin( );
-
-            while( val_pos != 0 ) {
-                ++iter;
-                --val_pos;
-            }
-
-            return *iter;
+            return *( init_list.begin( ) +
+                      get<typename std::initializer_list<T>::size_type>(
+                          0, init_list.size( ) - 1 ) );
         }
     private:
         /// The random number engine
