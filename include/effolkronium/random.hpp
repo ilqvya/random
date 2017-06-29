@@ -292,11 +292,24 @@ namespace effolkronium {
         * \param Dist The type of custom distribution with next concept:
         *        http://en.cppreference.com/w/cpp/concept/RandomNumberDistribution
         * \param args The arguments which will be forwarded to Dist constructor
-        * \return Value from custom 'dist' distribution
+        * \return Value from custom distribution
         */
         template<typename Dist, typename... Args>
         static typename Dist::result_type get( Args&&... args ) noexcept {
             return Dist{ std::forward<Args>( args )... }( engine );
+        }
+
+        /**
+        * \brief Return value from custom 'dist' distribution
+        *        seeded by internal random engine
+        * \param dist The custom distribution with next concept:
+        *        http://en.cppreference.com/w/cpp/concept/RandomNumberDistribution
+        * \param args The arguments which will be forwarded to Dist constructor
+        * \return Value from custom 'dist' distribution
+        */
+        template<typename Dist>
+        static typename Dist::result_type get( Dist& dist ) noexcept {
+            return dist( engine );
         }
 
         /**
@@ -523,7 +536,7 @@ namespace effolkronium {
             typename C = typename std::common_type<A, B>::type
         >
             static typename std::enable_if<
-            std::is_same<Key, common>::value
+               std::is_same<Key, common>::value
             && details::is_supported_number<A>::value
             && details::is_supported_number<B>::value
             // Prevent implicit type conversion from singed to unsigned types
@@ -575,6 +588,19 @@ namespace effolkronium {
         template<typename Dist, typename... Args>
         static typename Dist::result_type get( Args&&... args ) noexcept {
             return Dist{ std::forward<Args>( args )... }( engine );
+        }
+
+        /**
+        * \brief Return value from custom 'dist' distribution
+        *        seeded by internal random engine
+        * \param dist The custom distribution with next concept:
+        *        http://en.cppreference.com/w/cpp/concept/RandomNumberDistribution
+        * \param args The arguments which will be forwarded to Dist constructor
+        * \return Value from custom 'dist' distribution
+        */
+        template<typename Dist>
+        static typename Dist::result_type get( Dist& dist ) noexcept {
+            return dist( engine );
         }
 
         /**
@@ -851,6 +877,19 @@ namespace effolkronium {
         template<typename Dist, typename... Args>
         typename Dist::result_type get( Args&&... args ) noexcept {
             return Dist{ std::forward<Args>( args )... }( engine );
+        }
+
+        /**
+        * \brief Return value from custom 'dist' distribution
+        *        seeded by internal random engine
+        * \param dist The custom distribution with next concept:
+        *        http://en.cppreference.com/w/cpp/concept/RandomNumberDistribution
+        * \param args The arguments which will be forwarded to Dist constructor
+        * \return Value from custom 'dist' distribution
+        */
+        template<typename Dist>
+        typename Dist::result_type get( Dist& dist ) noexcept {
+            return dist( engine );
         }
 
         /**

@@ -560,3 +560,8 @@ TEST_CASE( "serialize & deserialize" ) {
 TEST_CASE( "custom distribution" ) {
     Random DOT get<std::gamma_distribution<>>( 1. );
 }
+
+TEST_CASE( "custom distribution by argument" ) {
+    std::gamma_distribution<> gamma{ };
+    Random DOT get( gamma );
+}
