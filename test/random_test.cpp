@@ -91,10 +91,7 @@ TEST_CASE( "Type deduction for random integer numbers" ) {
 TEST_CASE( "Random integer numbres is truly random" ) {
     bool isDifferentNumber{ false };
 
-    for( std::uint8_t i{ 0u };
-         i < std::numeric_limits<std::uint8_t>::max( )
-         && !isDifferentNumber;
-         ++i ) {
+    do {
 
         const auto firstRandomNumber = Random DOT get(
             std::numeric_limits<long long>::min( ),
@@ -105,9 +102,8 @@ TEST_CASE( "Random integer numbres is truly random" ) {
             std::numeric_limits<long long>::max( ) );
 
         isDifferentNumber = firstRandomNumber != secondRandomNumber;
-    }
+    } while ( !isDifferentNumber );
 
-    // May fail but very rarely
     CHECK( isDifferentNumber );
 }
 
@@ -160,11 +156,7 @@ TEST_CASE( "Type deduction for random real numbers" ) {
 TEST_CASE( "Random real numbres is truly random" ) {
     bool isDifferentNumber{ false };
 
-    for( std::uint8_t i{ 0u };
-         i < std::numeric_limits<std::uint8_t>::max( )
-         && !isDifferentNumber;
-         ++i ) {
-
+    do {
         const auto firstRandomNumber = Random DOT get(
             std::numeric_limits<long double>::min( ),
             std::numeric_limits<long double>::max( ) );
@@ -174,9 +166,8 @@ TEST_CASE( "Random real numbres is truly random" ) {
             std::numeric_limits<long double>::max( ) );
 
         isDifferentNumber = firstRandomNumber != secondRandomNumber;
-    }
+    } while( !isDifferentNumber );
 
-    // May fail but very rarely
     CHECK( isDifferentNumber );
 }
 
@@ -241,11 +232,7 @@ TEST_CASE( "Type deduction for random byte numbers" ) {
 TEST_CASE( "Random byte numbres is truly random" ) {
     bool isDifferentNumber{ false };
 
-    for( std::uint8_t i{ 0u };
-         i < std::numeric_limits<std::uint8_t>::max( )
-         && !isDifferentNumber;
-         ++i ) {
-
+    do {
         const auto firstRandomNumber = Random DOT get(
             std::numeric_limits<signed char>::min( ),
             std::numeric_limits<signed char>::max( ) );
@@ -255,9 +242,8 @@ TEST_CASE( "Random byte numbres is truly random" ) {
             std::numeric_limits<signed char>::max( ) );
 
         isDifferentNumber = firstRandomNumber != secondRandomNumber;
-    }
+    } while( !isDifferentNumber );
 
-    // May fail but very rarely
     CHECK( isDifferentNumber );
 }
 
@@ -324,10 +310,7 @@ TEST_CASE( "Type deduction for random common_type numbers" ) {
 TEST_CASE( "Random common type numbres is truly random" ) {
     bool isDifferentNumber{ false };
 
-    for( std::uint8_t i{ 0u };
-         i < std::numeric_limits<std::uint8_t>::max( )
-         && !isDifferentNumber;
-         ++i ) {
+    do {
 
         const auto firstRandomNumber = Random DOT get<Random_t::common>(
             std::numeric_limits<float>::min( ),
@@ -338,9 +321,8 @@ TEST_CASE( "Random common type numbres is truly random" ) {
             std::numeric_limits<float>::max( ) );
 
         isDifferentNumber = firstRandomNumber != secondRandomNumber;
-    }
+    } while( !isDifferentNumber );
 
-    // May fail but very rarely
     CHECK( isDifferentNumber );
 }
 
