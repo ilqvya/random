@@ -169,6 +169,9 @@ TEST_CASE( "Random real numbres is truly random" ) {
         isDifferentNumber = firstRandomNumber != secondRandomNumber;
     } while( !isDifferentNumber && count-- );
 
+    auto x = new int;
+    CHECK( x );
+
     CHECK( isDifferentNumber );
 }
 
