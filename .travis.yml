@@ -77,7 +77,7 @@ matrix:
         - sudo make -C lcov-1.11/ install
         - gem install coveralls-lcov
         - pip install --user cpp-coveralls
-      after_success:
+      after_script:
         - make clean
         - cmake -DCOVERAGE_ENABLED=1 -DCMAKE_CXX_COMPILER=$COMPILER ..
         - make -j4
