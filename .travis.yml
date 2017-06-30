@@ -188,6 +188,7 @@ script:
   - test/random_static_test
   - test/random_thread_local_test
   - test/random_local_test
+  - [ -z "$SPECIAL" ] && { if [ "$SPECIAL" = "valgrind" ] && { echo "LALALALALLALAALLA" } }
 
 install:
   # create deps dir if not existing
