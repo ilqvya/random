@@ -4,6 +4,50 @@ language: cpp
 
 matrix:
   include:
+        
+    # cLang sanitizer
+    #- os: linux
+    #env:
+    #  - LLVM_VERSION=3.8.1
+    #  - SPECIAL=sanitizer
+    #addons:
+    #  apt:
+    #    sources: ['ubuntu-toolchain-r-test']
+    #    packages: g++-6
+    #compiler: clang
+    #before_script:
+    #  - make clang_sanitize
+        
+    # cppcheck
+    #- os: linux
+    #  compiler: gcc
+    #  env:
+    #    - COMPILER=g++-4.9
+    #    - SPECIAL=cppcheck
+    #  addons:
+    #    apt:
+    #      sources: ['ubuntu-toolchain-r-test']
+    #      packages: [g++-4.9, cppcheck]
+    #  after_success:
+    #    - make cppcheck
+    
+    # Coverity (only for branch coverity_scan)
+    #- os: linux
+    #  compiler: clang
+    #  before_install: echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-certificates.crt
+    #  addons:
+    #    coverity_scan:
+    #      project:
+    #        name: "effolkronium/random"
+    #        description: "Build submitted via Travis CI"
+    #      notification_email: effolkronium@gmail.com
+    #      build_command_prepend: "make clean"
+    #      build_command: "make"
+    #      branch_pattern: develop
+    #  env:
+    #    - LLVM_VERSION=3.6.0
+    #    - SPECIAL=coverity
+    
     # Valgrind
     - os: linux
       compiler: gcc
@@ -18,49 +62,6 @@ matrix:
         - valgrind -h
         - valgrind --error-exitcode=1 --leak-check=full PROGRAM_NAME
         
-    # cLang sanitizer
-    - os: linux
-    env:
-      - LLVM_VERSION=3.8.1
-      - SPECIAL=sanitizer
-    addons:
-      apt:
-        sources: ['ubuntu-toolchain-r-test']
-        packages: g++-6
-    compiler: clang
-    before_script:
-      - make clang_sanitize
-        
-    # cppcheck
-    - os: linux
-      compiler: gcc
-      env:
-        - COMPILER=g++-4.9
-        - SPECIAL=cppcheck
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test']
-          packages: [g++-4.9, cppcheck]
-      after_success:
-        - make cppcheck
-    
-    # Coverity (only for branch coverity_scan)
-    - os: linux
-      compiler: clang
-      before_install: echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-certificates.crt
-      addons:
-        coverity_scan:
-          project:
-            name: "effolkronium/random"
-            description: "Build submitted via Travis CI"
-          notification_email: effolkronium@gmail.com
-          build_command_prepend: "make clean"
-          build_command: "make"
-          branch_pattern: develop
-      env:
-        - LLVM_VERSION=3.6.0
-        - SPECIAL=coverity
-    
     # coveralls
     - os: linux
       compiler: gcc
