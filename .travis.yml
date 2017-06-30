@@ -60,8 +60,9 @@ matrix:
           packages: [g++-6, valgrind]
       after_success:
         - valgrind -h
-        - valgrind --error-exitcode=1 --leak-check=full PROGRAM_NAME
-        
+        - valgrind --error-exitcode=1 --leak-check=full random_static_test
+        - valgrind --error-exitcode=1 --leak-check=full random_thread_local_test
+        - valgrind --error-exitcode=1 --leak-check=full random_local_test
     # coveralls
     - os: linux
       compiler: gcc
