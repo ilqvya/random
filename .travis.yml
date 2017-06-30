@@ -187,6 +187,9 @@ script:
   - cmake -DCMAKE_CXX_COMPILER=$COMPILER ..
   - make -j4
   - ctest
+  - test/random_static_test
+  - test/random_thread_local_test
+  - test/random_local_test
 
 install:
   # create deps dir if not existing
