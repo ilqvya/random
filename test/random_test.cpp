@@ -155,6 +155,7 @@ TEST_CASE( "Type deduction for random real numbers" ) {
 
 TEST_CASE( "Random real numbres is truly random" ) {
     bool isDifferentNumber{ false };
+    auto count = std::numeric_limits<std::uintmax_t>::min( );
 
     do {
         const auto firstRandomNumber = Random DOT get(
@@ -166,7 +167,7 @@ TEST_CASE( "Random real numbres is truly random" ) {
             std::numeric_limits<long double>::max( ) );
 
         isDifferentNumber = firstRandomNumber != secondRandomNumber;
-    } while( !isDifferentNumber );
+    } while( !isDifferentNumber && count-- );
 
     CHECK( isDifferentNumber );
 }
