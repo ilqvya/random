@@ -159,12 +159,12 @@ TEST_CASE( "Random real numbres is truly random" ) {
 
     do {
         const auto firstRandomNumber = Random DOT get(
-            std::numeric_limits<long double>::min( ),
-            std::numeric_limits<long double>::max( ) );
+            std::numeric_limits<float>::min( ),
+            std::numeric_limits<float>::max( ) );
 
         const auto secondRandomNumber = Random DOT get(
-            std::numeric_limits<long double>::min( ),
-            std::numeric_limits<long double>::max( ) );
+            std::numeric_limits<float>::min( ),
+            std::numeric_limits<float>::max( ) );
 
         isDifferentNumber = firstRandomNumber != secondRandomNumber;
     } while( !isDifferentNumber && count-- );
