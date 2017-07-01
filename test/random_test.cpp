@@ -566,7 +566,9 @@ TEST_CASE( "seed by default seeder" ) {
     std::mt19937_64 engine{ 42 };
 
     tRandom DOT seed( 12345 );
-
+    
+    REQUIRE( tRandom DOT get(1, 2) > 0 );
+    
     REQUIRE( !tRandom DOT isEqual( engine ) );
 
     tRandom DOT reseed( );
