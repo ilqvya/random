@@ -513,12 +513,13 @@ TEST_CASE( "custom distribution by argument" ) {
 }
 
 TEST_CASE( "custom seeder" ) {
+    constexpr auto currentSeed = 42u;
     struct Seeder {
         unsigned operator() ( ) {
-            return 42u;
+            return currentSeed;
         }
     };
-    std::mt19937 mt{ 81u };
+    std::mt19937 mt{ currentSeed };
 
     #ifdef RANDOM_STATIC
 
