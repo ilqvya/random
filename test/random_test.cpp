@@ -543,7 +543,7 @@ TEST_CASE( "custom seeder" ) {
 TEST_CASE( "seed by default seeder" ) { 
     struct Seeder_42 {
         unsigned operator() ( ) {
-            return 42;
+            return 42u;
         }
     };
 
@@ -563,11 +563,12 @@ TEST_CASE( "seed by default seeder" ) {
 
     #endif
 
-    std::mt19937_64 engine{ 42 };
+    std::mt19937_64 engine{ 42u };
+    
+    REQUIRE( tRandom DOT isEqual( engine ) );
 
     tRandom DOT seed( 12345 );
-    
-    REQUIRE( tRandom DOT get(1, 2) > 0 );
+    tRandom DOT discard( 999999999 );
     
     REQUIRE( !tRandom DOT isEqual( engine ) );
 
