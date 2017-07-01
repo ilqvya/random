@@ -125,8 +125,8 @@ namespace effolkronium {
             engine.discard( z );
         }
 
-        /// Reseed from Seeder
-        static void seed( ) {
+        /// Reseed by Seeder
+        static void reseed( ) {
             Seeder seeder;
             seed( seeder( ) );
         }
@@ -450,8 +450,8 @@ namespace effolkronium {
             engine.discard( z );
         }
 
-        /// Reseed from Seeder
-        static void seed( ) {
+        /// Reseed by Seeder
+        static void reseed( ) {
             Seeder seeder;
             seed( seeder( ) );
         }
@@ -774,8 +774,8 @@ namespace effolkronium {
             engine.discard( z );
         }
 
-        /// Reseed from Seeder
-        void seed( ) {
+        /// Reseed by Seeder
+        void reseed( ) {
             Seeder seeder;
             seed( seeder( ) );
         }

@@ -540,6 +540,40 @@ TEST_CASE( "custom seeder" ) {
     REQUIRE( mt( ) == tRandom DOT get( ) );
 }
 
+TEST_CASE( "seed by default seeder" ) { 
+    struct Seeder {
+        unsigned operator() ( ) {
+            return 42;
+        }
+    };
+
+    #ifdef RANDOM_STATIC
+
+    using tRandom = effolkronium::basic_random_static<std::mt19937, Seeder>;
+
+    #endif
+    #ifdef RANDOM_THREAD_LOCAL
+
+    using tRandom = effolkronium::basic_random_thread_local<std::mt19937, Seeder>;
+
+    #endif
+    #ifdef RANDOM_LOCAL
+
+    effolkronium::basic_random_local<std::mt19937, Seeder> tRandom;
+
+    #endif
+
+    Random_t::engine_type engine{ 42 };
+
+    tRandom DOT seed( 43 );
+
+    REQUIRE( !tRandom DOT isEqual( engine ) );
+
+    tRandom DOT reseed( );
+
+    REQUIRE( tRandom DOT isEqual( engine ) );
+}
+
 TEST_CASE( "custom seeder with seedSeq" ) {
     struct Seeder {
         std::seed_seq& operator() ( ) {
