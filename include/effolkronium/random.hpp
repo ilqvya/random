@@ -5,7 +5,7 @@
 #include <type_traits>
 #include <cassert>
 #include <initializer_list>
-#include <utility> // std::declval, std::forward
+#include <utility> // std::forward
 #include <algorithm> // std::shuffle
 #include <iterator> // std::begin, std::end
 #include <ostream>
@@ -59,8 +59,9 @@ namespace effolkronium {
 
     } // namespace details
 
-    /// Default seeder for random classes
+    /// Default seeder for 'random' classes
     struct seeder_default {
+        /// return seed number from std::random_device
         std::random_device::result_type operator() ( ) const { 
             return std::random_device{ }( ); 
         }
@@ -69,9 +70,11 @@ namespace effolkronium {
     /**
     * \brief Base template class for random 
     *        with static API and static internal member storage
+    * \note it is NOT thread safe but more efficient then 
+    *                           basic_random_thread_local
     * \param Engine A random engine with interface like in the std::mt19937
     * \param Seeder A seeder type which return seed for internal engine 
-    *        throughout operator()
+    *                                             through operator()
     */
     template<
         typename Engine,
@@ -121,7 +124,7 @@ namespace effolkronium {
         }
 
         /// Advances the internal state by z times
-        static void discard( unsigned long long z ) {
+        static void discard( const unsigned long long z ) {
             engine.discard( z );
         }
 
@@ -393,10 +396,11 @@ namespace effolkronium {
 
     /**
     * \brief Base template class for random 
-    *        with static API and static internal member storage
+    *        with static API and thread_local internal member storage
+    * \note it's thread safe but less efficient then basic_random_static
     * \param Engine A random engine with interface like in the std::mt19937
     * \param Seeder A seeder type which return seed for internal engine 
-    *        throughout operator()
+    *                                                through operator()
     */
     template<
         typename Engine,
@@ -446,7 +450,7 @@ namespace effolkronium {
         }
 
         /// Advances the internal state by z times
-        static void discard( unsigned long long z ) {
+        static void discard( const unsigned long long z ) {
             engine.discard( z );
         }
 
@@ -719,10 +723,10 @@ namespace effolkronium {
 
     /**
     * \brief Base template class for random 
-    *        with static API and static internal member storage
+    *        with non static API and local (auto) internal member storage 
     * \param Engine A random engine with interface like in the std::mt19937
     * \param Seeder A seeder type which return seed for internal engine 
-    *        throughout operator()
+    *                                                through operator()
     */
     template<
         typename Engine,
@@ -770,7 +774,7 @@ namespace effolkronium {
         }
 
         /// Advances the internal state by z times
-        void discard( unsigned long long z ) {
+        void discard( const unsigned long long z ) {
             engine.discard( z );
         }
 
@@ -1018,7 +1022,7 @@ namespace effolkronium {
         }
     protected:
         /// return engine seeded by Seeder
-        Engine makeSeededEngine( ) const {
+        static Engine makeSeededEngine( ) {
             // Make seeder instance for seed return by reference like seed_seq
             Seeder seeder;
             return Engine{ seeder( ) };
