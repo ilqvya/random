@@ -22,6 +22,10 @@
 
 project(random_test)
 
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+find_package(Threads REQUIRED)
+
 if(COVERAGE_ENABLED)
 	message(STATUS "COVERAGE ENABLED")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0") # debug, no optimisation
@@ -75,16 +79,19 @@ endif()
 endfunction(set_compiler_flags)
 
 add_executable("random_static_test" random_test.cpp)
+target_link_libraries("random_static_test" Threads::Threads)
 set_compiler_flags("random_static_test")
 target_compile_definitions("random_static_test" PRIVATE "RANDOM_STATIC")
 target_include_directories("random_static_test" PRIVATE "../include")
 
 add_executable("random_thread_local_test" random_test.cpp)
+target_link_libraries("random_thread_local_test" Threads::Threads)
 set_compiler_flags("random_thread_local_test")
 target_compile_definitions("random_thread_local_test" PRIVATE "RANDOM_THREAD_LOCAL")
 target_include_directories("random_thread_local_test" PRIVATE "../include")
 
 add_executable("random_local_test" random_test.cpp)
+target_link_libraries("random_local_test" Threads::Threads)
 set_compiler_flags("random_local_test")
 target_compile_definitions("random_local_test" PRIVATE "RANDOM_LOCAL")
 target_include_directories("random_local_test" PRIVATE "../include")
