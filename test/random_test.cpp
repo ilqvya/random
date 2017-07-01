@@ -565,7 +565,7 @@ TEST_CASE( "seed by default seeder" ) {
 
     Random_t::engine_type engine{ 42 };
 
-    tRandom DOT seed( 43 );
+    tRandom DOT seed( 12345 );
 
     REQUIRE( !tRandom DOT isEqual( engine ) );
 
