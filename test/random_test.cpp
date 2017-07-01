@@ -541,7 +541,7 @@ TEST_CASE( "custom seeder" ) {
 }
 
 TEST_CASE( "seed by default seeder" ) { 
-    struct Seeder {
+    struct Seeder_42 {
         unsigned operator() ( ) {
             return 42;
         }
@@ -549,21 +549,21 @@ TEST_CASE( "seed by default seeder" ) {
 
     #ifdef RANDOM_STATIC
 
-    using tRandom = effolkronium::basic_random_static<std::mt19937, Seeder>;
+    using tRandom = effolkronium::basic_random_static<std::mt19937_64, Seeder_42>;
 
     #endif
     #ifdef RANDOM_THREAD_LOCAL
 
-    using tRandom = effolkronium::basic_random_thread_local<std::mt19937, Seeder>;
+    using tRandom = effolkronium::basic_random_thread_local<std::mt19937_64, Seeder_42>;
 
     #endif
     #ifdef RANDOM_LOCAL
 
-    effolkronium::basic_random_local<std::mt19937, Seeder> tRandom;
+    effolkronium::basic_random_local<std::mt19937_64, Seeder_42> tRandom;
 
     #endif
 
-    Random_t::engine_type engine{ 42 };
+    std::mt19937_64 engine{ 42 };
 
     tRandom DOT seed( 12345 );
 
