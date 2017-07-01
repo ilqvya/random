@@ -1,25 +1,9 @@
-sudo: required
+﻿sudo: required
 dist: trusty
 language: cpp
 
 matrix:
-  include:       
-    # Coverity (only for branch coverity_scan)
-    - os: linux
-      compiler: clang
-      before_install: echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-certificates.crt
-      addons:
-        coverity_scan:
-          project:
-            name: "effolkronium/random"
-            description: "Build submitted via Travis CI"
-          notification_email: effolkronium@gmail.com
-          build_command_prepend: "make clean"
-          build_command: "make"
-          branch_pattern: coverity_scan
-      env:
-        - LLVM_VERSION=3.6.0
-        - SPECIAL=coverity
+  include:
     # Valgrind
     - os: linux
       compiler: gcc

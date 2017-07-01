@@ -4,6 +4,7 @@
 #include <limits>
 #include <sstream>
 #include <array>
+#include <thread>
 
 #ifdef RANDOM_LOCAL
 auto Random = effolkronium::random_local{ };
@@ -361,44 +362,6 @@ TEST_CASE( "Random value from initilizer list" ) {
     //Random DOT get<int>( {  } ); assertion occurred
 }
 
-TEST_CASE( "Noexcept deduction in get from initilizer list" ) {
-    class NoexceptCopy {
-    public:
-        NoexceptCopy( ) = default;
-        NoexceptCopy( const NoexceptCopy& ) noexcept( true ) { };
-    };
-
-    class NotNoexceptCopy {
-    public:
-        NotNoexceptCopy( ) = default;
-        NotNoexceptCopy( const NotNoexceptCopy& ) noexcept( false ) { };
-    };
-
-    class NoDefaultConstructorNoexcept {
-    public:
-        NoDefaultConstructorNoexcept( ) = delete;
-        NoDefaultConstructorNoexcept( int ) noexcept { }
-    };
-
-    class NoDefaultConstructorNotNoexcept {
-    public:
-        NoDefaultConstructorNotNoexcept( ) = delete;
-        NoDefaultConstructorNotNoexcept( int ) noexcept( false ) { }
-    };
-
-    static_assert( noexcept( 
-        Random DOT get( { NoexceptCopy{ } } ) ), " " );
-
-    static_assert( !noexcept( 
-        Random DOT get( { NotNoexceptCopy{ } } ) ), " " );
-
-    static_assert( noexcept(
-        Random DOT get( { NoDefaultConstructorNoexcept{ 1 } } ) ), " " );
-
-    static_assert( !noexcept(
-        Random DOT get( { NoDefaultConstructorNotNoexcept{ 1 } } ) ), " " );
-}
-
 TEST_CASE( "Move constructor usage in get from initilizer list" ) { 
     static size_t copied_num{ 0u };
     static size_t moved_num{ 0u };
@@ -548,3 +511,115 @@ TEST_CASE( "custom distribution by argument" ) {
     std::gamma_distribution<> gamma{ };
     Random DOT get( gamma );
 }
+
+TEST_CASE( "custom seeder" ) {
+    struct Seeder {
+        unsigned operator() ( ) {
+            return 42u;
+        }
+    };
+    std::mt19937 mt{ 81u };
+
+    #ifdef RANDOM_STATIC
+
+    using tRandom = effolkronium::basic_random_static<std::mt19937, Seeder>;
+
+    #endif
+    #ifdef RANDOM_THREAD_LOCAL
+
+    using tRandom = effolkronium::basic_random_thread_local<std::mt19937, Seeder>;
+
+    #endif
+    #ifdef RANDOM_LOCAL
+
+    effolkronium::basic_random_local<std::mt19937, Seeder> tRandom;
+
+    #endif
+
+    REQUIRE( mt( ) == tRandom DOT get( ) );
+}
+
+TEST_CASE( "custom seeder with seedSeq" ) {
+    struct Seeder {
+        std::seed_seq& operator() ( ) {
+            return seed_seq_;
+        }
+
+        std::seed_seq seed_seq_{ { 1, 2, 3, 4, 5 } };
+    };
+
+    std::seed_seq seed_seq_{ { 1, 2, 3, 4, 5 } };
+    std::mt19937 mt{ seed_seq_ };
+
+    #ifdef RANDOM_STATIC
+
+    using tRandom = effolkronium::basic_random_static<std::mt19937, Seeder>;
+
+    #endif
+    #ifdef RANDOM_THREAD_LOCAL
+
+    using tRandom = effolkronium::basic_random_thread_local<std::mt19937, Seeder>;
+
+    #endif
+    #ifdef RANDOM_LOCAL
+
+    effolkronium::basic_random_local<std::mt19937, Seeder> tRandom;
+
+    #endif
+
+    REQUIRE( mt( ) == tRandom DOT get( ) );
+}
+
+TEST_CASE( "default Seeder generate random seed" ) {
+    effolkronium::seeder_default seeder;
+
+    std::uintmax_t counter = std::numeric_limits<decltype( counter )>::max( );
+
+    bool isSeedRandom{ false };
+
+    const auto firstSeed = seeder( );
+    do {
+        isSeedRandom = firstSeed != seeder( );
+    } while( !isSeedRandom && 0 != counter-- );
+
+    REQUIRE( seeder( ) != seeder( ) );
+}
+
+TEST_CASE( "get engine" ) {
+    auto engine = Random DOT getEngine( );
+    REQUIRE( Random DOT isEqual( engine ) );
+}
+
+#ifdef RANDOM_THREAD_LOCAL
+
+TEST_CASE( "is truly thread local" ) {
+    auto engine = Random DOT getEngine( );
+    REQUIRE( Random DOT isEqual( engine ) );
+
+    static std::uint8_t seedCount{ 0u };
+    static Random::engine_type::result_type 
+        firstThreadNumber, secondThreadNumber;
+
+    struct Seeder {
+        unsigned operator() ( ) {
+            ++seedCount;
+            return 42u;
+        }
+    };
+
+    using customRandom =
+        effolkronium::basic_random_thread_local<std::mt19937, Seeder>;
+
+    std::thread thread_t{ [ ] {
+        firstThreadNumber = customRandom::get( );
+    } };
+
+    secondThreadNumber = customRandom::get( );
+
+    thread_t.join( );
+
+    REQUIRE( 2 == seedCount );
+    REQUIRE( firstThreadNumber == secondThreadNumber );
+}
+
+#endif

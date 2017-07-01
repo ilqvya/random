@@ -1,4 +1,4 @@
-# Random for modern C++ with convenient API
+﻿# Random for modern C++ with convenient API
 [![Build Status](https://travis-ci.org/effolkronium/random.svg?branch=develop)](https://travis-ci.org/effolkronium/random)
 [![Build status](https://ci.appveyor.com/api/projects/status/vq1kodqqxwx16rfv/branch/develop?svg=true)](https://ci.appveyor.com/project/effolkronium/random/branch/develop)
 [![Coverage Status](https://coveralls.io/repos/github/effolkronium/random/badge.svg?branch=develop)](https://coveralls.io/github/effolkronium/random?branch=develop)
