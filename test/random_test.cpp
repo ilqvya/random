@@ -691,8 +691,11 @@ TEST_CASE( "return random iterator from container" ) {
 
     SECTION( "0 elems" ) {
         std::vector<int> vector;
-        REQUIRE( Random DOT get( vector )
-                 == vector.end( ) );
+
+        bool isEnd = Random DOT get( vector ) == vector.end( );
+        bool isZero = std::begin( vector ) == vector.end( );
+        REQUIRE( isZero );
+        REQUIRE( isEnd );
     }
 }
 
