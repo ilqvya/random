@@ -5,7 +5,7 @@
 #include <type_traits>
 #include <cassert>
 #include <initializer_list>
-#include <utility> // std::forward
+#include <utility> // std::forward, std::declval
 #include <algorithm> // std::shuffle, std::next, std::distance
 #include <iterator> // std::begin, std::end, std::iterator_traits
 #include <ostream>
@@ -74,6 +74,7 @@ namespace effolkronium {
             static constexpr bool value = std::is_same<
                 decltype( test( std::declval<T>( ) ) ), long>::value;
         };
+
     } // namespace details
 
     /// Default seeder for 'random' classes
@@ -344,10 +345,25 @@ namespace effolkronium {
         template<typename InputIt>
         static typename std::enable_if<details::is_iterator<InputIt>::value
             , InputIt>::type get( InputIt first, InputIt last ) {
+            if( first == last ) return first;
             const auto size = std::distance( first, last );
             using dif_t = typename std::iterator_traits<InputIt>::difference_type;
             std::advance( first, get<dif_t>( 0, size - 1 ) );
             return first;
+        }
+
+        /**
+        * \brief Return random iterator from Container
+        * \param container The container with elements
+        * \return Random iterator from container
+        * \note If container is empty return end iterator
+        */
+        template<typename Container>
+        static typename std::enable_if<details::is_iterator<
+            decltype( std::begin( std::declval<Container>( ) ) )>::value
+            , decltype( std::begin( std::declval<Container>( ) ) )
+        >::type get( Container& container ) {
+            return get( std::begin( container ), std::end( container ) );
         }
 
         /**
@@ -692,6 +708,20 @@ namespace effolkronium {
         }
 
         /**
+        * \brief Return random iterator from Container
+        * \param container The container with elements
+        * \return Random iterator from container
+        * \note If container is empty return end iterator
+        */
+        template<typename Container>
+        static typename std::enable_if<details::is_iterator<
+            decltype( std::begin( std::declval<Container>( ) ) )>::value
+            , decltype( std::begin( std::declval<Container>( ) ) )
+        >::type get( Container& container ) {
+            return get( std::begin( container ), std::end( container ) );
+        }
+
+        /**
         * \brief Return value from custom Dist distribution
         *        seeded by internal random engine
         * \param Dist The type of custom distribution with next concept:
@@ -1028,6 +1058,20 @@ namespace effolkronium {
             using dif_t = typename std::iterator_traits<InputIt>::difference_type;
             std::advance( first, get<dif_t>( 0, size - 1 ) );
             return first;
+        }
+
+        /**
+        * \brief Return random iterator from Container
+        * \param container The container with elements
+        * \return Random iterator from container
+        * \note If container is empty return end iterator
+        */
+        template<typename Container>
+        typename std::enable_if<details::is_iterator<
+            decltype( std::begin( std::declval<Container>( ) ) )>::value
+            , decltype( std::begin( std::declval<Container>( ) ) )
+        >::type get( Container& container ) {
+            return get( std::begin( container ), std::end( container ) );
         }
 
         /**
