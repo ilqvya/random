@@ -625,6 +625,38 @@ TEST_CASE( "get engine" ) {
     REQUIRE( Random DOT isEqual( engine ) );
 }
 
+TEST_CASE( "return random iterator from iterator range" ) {
+    SECTION( "Matches" ) {
+        std::array<int, 5> array = { 1, 2, 3, 4, 5 };
+        bool is1{ false }, is2{ false }, is3{ false },
+            is4{ false }, is5{ false }, isEnd{ false };
+        do {
+            auto it = Random DOT get( array.begin( ), array.end( ) );
+            if( it == array.end( ) ) {
+                isEnd = true;
+                break;
+            }
+            switch( *it ) {
+                case 1: is1 = true; break;
+                case 2: is2 = true; break;
+                case 3: is3 = true; break;
+                case 4: is4 = true; break;
+                case 5: is5 = true; break;
+            }
+        } while( !( is1 && is2 && is3 && is4 && is5 ) );
+
+        bool isAllMatches = is1 && is2 && is3 && is4 && is5;
+
+        REQUIRE( isAllMatches );
+        REQUIRE( false == isEnd );
+    }
+
+    SECTION( "0 elems" ) { 
+        std::array<int, 0> array = { };
+        REQUIRE( Random DOT get( array.begin( ), array.end( ) ) == array.end( ) );
+    }
+}
+
 #ifdef RANDOM_THREAD_LOCAL
 
 TEST_CASE( "is truly thread local" ) {

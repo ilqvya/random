@@ -6,8 +6,8 @@
 #include <cassert>
 #include <initializer_list>
 #include <utility> // std::forward
-#include <algorithm> // std::shuffle
-#include <iterator> // std::begin, std::end
+#include <algorithm> // std::shuffle, std::next, std::distance
+#include <iterator> // std::begin, std::end, std::iterator_traits
 #include <ostream>
 #include <istream>
 
@@ -57,6 +57,23 @@ namespace effolkronium {
                 || is_uniform_int <T>::value;
         };
 
+        /// True if type T is iterator
+        template<typename T>
+        struct is_iterator {
+        private:
+            static char test( ... );
+
+            template <typename U,
+                typename = typename std::iterator_traits<U>::difference_type,
+                typename = typename std::iterator_traits<U>::pointer,
+                typename = typename std::iterator_traits<U>::reference,
+                typename = typename std::iterator_traits<U>::value_type,
+                typename = typename std::iterator_traits<U>::iterator_category
+            > static long test( U&& );
+        public:
+            static constexpr bool value = std::is_same<
+                decltype( test( std::declval<T>( ) ) ), long>::value;
+        };
     } // namespace details
 
     /// Default seeder for 'random' classes
@@ -319,6 +336,21 @@ namespace effolkronium {
         }
 
         /**
+        * \brief Return random iterator from iterator range
+        * \param first, last - the range of elements
+        * \return Random iterator from [first, last) range
+        * \note If first == last, return that
+        */
+        template<typename InputIt>
+        static typename std::enable_if<details::is_iterator<InputIt>::value
+            , InputIt>::type get( InputIt first, InputIt last ) {
+            const auto size = std::distance( first, last );
+            using dif_t = typename std::iterator_traits<InputIt>::difference_type;
+            std::advance( first, get<dif_t>( 0, size - 1 ) );
+            return first;
+        }
+
+        /**
         * \brief Return value from custom Dist distribution
         *        seeded by internal random engine
         * \param Dist The type of custom distribution with next concept:
@@ -350,7 +382,7 @@ namespace effolkronium {
         *        has equal probability of appearance.
         * \param first, last - the range of elements to shuffle randomly       
         */
-        template<class RandomIt>
+        template<typename RandomIt>
         static void shuffle( RandomIt first, RandomIt last ) {
             std::shuffle( first, last, engine );
         }
@@ -361,7 +393,7 @@ namespace effolkronium {
         *        has equal probability of appearance.
         * \param container - the container with elements to shuffle randomly
         */
-        template<class Container>
+        template<typename Container>
         static void shuffle( Container& container ) {
             shuffle( std::begin( container ), std::end( container ) );
         }
@@ -645,6 +677,21 @@ namespace effolkronium {
         }
 
         /**
+        * \brief Return random iterator from iterator range
+        * \param first, last - the range of elements
+        * \return Random iterator from [first, last) range
+        * \note If first == last, return that
+        */
+        template<typename InputIt>
+        static typename std::enable_if<details::is_iterator<InputIt>::value
+            , InputIt>::type get( InputIt first, InputIt last ) {
+            const auto size = std::distance( first, last );
+            using dif_t = typename std::iterator_traits<InputIt>::difference_type;
+            std::advance( first, get<dif_t>( 0, size - 1 ) );
+            return first;
+        }
+
+        /**
         * \brief Return value from custom Dist distribution
         *        seeded by internal random engine
         * \param Dist The type of custom distribution with next concept:
@@ -676,7 +723,7 @@ namespace effolkronium {
         *        has equal probability of appearance.
         * \param first, last - the range of elements to shuffle randomly       
         */
-        template<class RandomIt>
+        template<typename RandomIt>
         static void shuffle( RandomIt first, RandomIt last ) {
             std::shuffle( first, last, engine );
         }
@@ -687,7 +734,7 @@ namespace effolkronium {
         *        has equal probability of appearance.
         * \param container - the container with elements to shuffle randomly
         */
-        template<class Container>
+        template<typename Container>
         static void shuffle( Container& container ) {
             shuffle( std::begin( container ), std::end( container ) );
         }
@@ -969,6 +1016,21 @@ namespace effolkronium {
         }
 
         /**
+        * \brief Return random iterator from iterator range
+        * \param first, last - the range of elements
+        * \return Random iterator from [first, last) range
+        * \note If first == last, return that
+        */
+        template<typename InputIt>
+        typename std::enable_if<details::is_iterator<InputIt>::value
+            , InputIt>::type get( InputIt first, InputIt last ) {
+            const auto size = std::distance( first, last );
+            using dif_t = typename std::iterator_traits<InputIt>::difference_type;
+            std::advance( first, get<dif_t>( 0, size - 1 ) );
+            return first;
+        }
+
+        /**
         * \brief Return value from custom Dist distribution
         *        seeded by internal random engine
         * \param Dist The type of custom distribution with next concept:
@@ -1000,7 +1062,7 @@ namespace effolkronium {
         *        has equal probability of appearance.
         * \param first, last - the range of elements to shuffle randomly       
         */
-        template<class RandomIt>
+        template<typename RandomIt>
         void shuffle( RandomIt first, RandomIt last ) {
             std::shuffle( first, last, engine );
         }
@@ -1011,7 +1073,7 @@ namespace effolkronium {
         *        has equal probability of appearance.
         * \param container - the container with elements to shuffle randomly
         */
-        template<class Container>
+        template<typename Container>
         void shuffle( Container& container ) {
             shuffle( std::begin( container ), std::end( container ) );
         }
