@@ -16,6 +16,7 @@
   - [Random value from std::initilizer_list](#random-value-from-stdinitilizer_list)
   - [Shuffle](#shuffle)
   - [Custom distribution](#custom-distribution)
+  - [Custom Seeder](#custom-seeder)
   - [Seeding](#seeding)
   - [min-value](#min-value)
   - [max-value](#max-value)
@@ -57,7 +58,7 @@ There are few ways to get working with random in C++:
 ```
 * Advantages
   * **Intuitive syntax**. You can do almost everything with random by simple 'get' method, like getting simple numbers, bools, random object from given set or using custom distribution.
-  * **Trivial integration**. All code consists of a single header file [`random.hpp`](https://github.com/effolkronium/random/blob/develop/source/random.hpp). Tahat's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
+  * **Trivial integration**. All code consists of a single header file [`random.hpp`](https://github.com/effolkronium/random/blob/develop/include/effolkronium/random.hpp). Tahat's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
   * **Usability**. There are 3 versions of random: 
     * *random_static* which has static methods and static internal state. It's not thread safe but more efficient
     * *random_thread_local* which has static methods and [thread_local](http://en.cppreference.com/w/cpp/keyword/thread_local) internal state. It's thread safe but less efficient
@@ -68,7 +69,7 @@ There are few ways to get working with random in C++:
 * Microsoft Visual C++ 2015
 * Microsoft Visual C++ 2017
 ## Integration
-The single required source, file `random.hpp` is in the `source` directory.
+The single required source, file [`random.hpp`](https://github.com/effolkronium/random/blob/develop/include/effolkronium/random.hpp) is in the [`include/effolkronium`](https://github.com/effolkronium/random/tree/develop/include/effolkronium) directory.
 All you need to do is add
 ```cpp
 #include "effolkronium/random.hpp"
@@ -147,6 +148,7 @@ Or throughout argument:
 std::gamma_distribution<> gamma{ };
 Random DOT get( gamma ); // return result of gamma( internalEngine )
 ```
+### Custom Seeder
 ### Seeding
 [ref](http://en.cppreference.com/w/cpp/numeric/random/mersenne_twister_engine/seed)
 
