@@ -340,7 +340,7 @@ namespace effolkronium {
         * \brief Return random iterator from iterator range
         * \param first, last - the range of elements
         * \return Random iterator from [first, last) range
-        * \note If first == last, return that
+        * \note If first == last, return last
         */
         template<typename InputIt>
         static typename std::enable_if<details::is_iterator<InputIt>::value
@@ -701,6 +701,7 @@ namespace effolkronium {
         template<typename InputIt>
         static typename std::enable_if<details::is_iterator<InputIt>::value
             , InputIt>::type get( InputIt first, InputIt last ) {
+            if( first == last ) return last;
             const auto size = std::distance( first, last );
             using dif_t = typename std::iterator_traits<InputIt>::difference_type;
             std::advance( first, get<dif_t>( 0, size - 1 ) );
@@ -1049,11 +1050,12 @@ namespace effolkronium {
         * \brief Return random iterator from iterator range
         * \param first, last - the range of elements
         * \return Random iterator from [first, last) range
-        * \note If first == last, return that
+        * \note If first == last, return last
         */
         template<typename InputIt>
         typename std::enable_if<details::is_iterator<InputIt>::value
             , InputIt>::type get( InputIt first, InputIt last ) {
+            if( first == last ) return last;
             const auto size = std::distance( first, last );
             using dif_t = typename std::iterator_traits<InputIt>::difference_type;
             std::advance( first, get<dif_t>( 0, size - 1 ) );
