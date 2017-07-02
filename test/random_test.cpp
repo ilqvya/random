@@ -5,6 +5,7 @@
 #include <sstream>
 #include <array>
 #include <thread>
+#include <vector>
 
 #ifdef RANDOM_LOCAL
 auto Random = effolkronium::random_local{ };
@@ -655,8 +656,9 @@ TEST_CASE( "return random iterator from iterator range" ) {
     }
 
     SECTION( "0 elems" ) { 
-        std::array<int, 0> array = { };
-        REQUIRE( Random DOT get( array.begin( ), array.end( ) ) == array.end( ) );
+        std::vector<int> vector;
+        REQUIRE( Random DOT get( vector.begin( ), vector.end( ) )
+                 == vector.end( ) );
     }
 }
 
