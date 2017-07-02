@@ -631,7 +631,7 @@ TEST_CASE( "get engine" ) {
 
 TEST_CASE( "return random iterator from iterator range" ) {
     SECTION( "Matches" ) {
-        std::array<int, 5> array = { 1, 2, 3, 4, 5 };
+        std::array<int, 5> array = { { 1, 2, 3, 4, 5 } };
         bool is1{ false }, is2{ false }, is3{ false },
             is4{ false }, is5{ false }, isEnd{ false };
         do {
