@@ -14,6 +14,8 @@
   - [Common type number range](#common-type-number-range)
   - [Bool](#bool)
   - [Random value from std::initilizer_list](#random-value-from-stdinitilizer_list)
+  - [Random iterator from iterator range](#random-iterator-from-iterator-range)
+  - [Random iterator from container](#random-iterator-from-container)
   - [Shuffle](#shuffle)
   - [Custom distribution](#custom-distribution)
   - [Custom Seeder](#custom-seeder)
@@ -21,6 +23,7 @@
   - [min-value](#min-value)
   - [max-value](#max-value)
   - ['get' without arguments](#get-without-arguments)
+  - [Get engine](#get-engine)
   - [Discard](#discard)
   - [isEqual](#isequal)
   - [Serialize](#serialize)
@@ -125,6 +128,8 @@ Return random value from values in std::initilizer_list
 ```cpp
 auto val = Random::get({1, 2, 3}) // val = 1 or 2 or 3
 ```
+### Random iterator from iterator range
+### Random iterator from container
 ### Shuffle
 [ref](http://en.cppreference.com/w/cpp/algorithm/random_shuffle)
 
@@ -181,6 +186,8 @@ Returns the random number in [ Random::min( ), Random::max ] range
 auto val = Random::get( );
 // val is rundom number in [ Random::min( ), Random::max ] range
 ```
+### Get engine
+
 ### Discard
 [ref](http://en.cppreference.com/w/cpp/numeric/random/mersenne_twister_engine/discard)
 
