@@ -14,8 +14,7 @@
   - [Common type number range](#common-type-number-range)
   - [Bool](#bool)
   - [Random value from std::initilizer_list](#random-value-from-stdinitilizer_list)
-  - [Random iterator from iterator range](#random-iterator-from-iterator-range)
-  - [Random iterator from container](#random-iterator-from-container)
+  - [Random iterator](#random-iterator)
   - [Shuffle](#shuffle)
   - [Custom distribution](#custom-distribution)
   - [Custom Seeder](#custom-seeder)
@@ -38,7 +37,7 @@ There are few ways to get working with random in C++:
   auto random_number = rand() % (9 - 1)) + 1; // get a pseudo-random integer between 1 and 9
 ```
 * Problems
-  * should specify seed before using rand() function
+  * should specify seed
   * should write your own distribution algorihtm
   * [There are no guarantees as to the quality of the random sequence produced.](http://en.cppreference.com/w/cpp/numeric/random/rand#Notes)
 - **C++11 style**
@@ -46,17 +45,17 @@ There are few ways to get working with random in C++:
   std::random_device random_device; // create object for seeding
   std::mt19937 engine{random_device()}; // create engine and seed it
   std::uniform_int_distribution<> dist(1,9); // create distribution for integers with [1, 9] range
-  auto random_number = dist(engine); // finally get a random number
+  auto random_number = dist(engine); // finally get a pseudo-randomrandom integer number
 ```
 * Problems
   * should specify seed
   * should choose, create and use a chain of various objects like engines and distributions
-  * mt19937 use 5000 bytes of memory for each creation
-  * Uncomfortable and not intuitively clear
+  * mt19937 use 5000 bytes of memory for each creation (which is bad for performance if we create it too frequently)
+  * uncomfortable and not intuitively clear usage
 - **effolkronium random style**
 ```cpp
   // auto seeded
-  auto random_number = Random::get(1, 9); // invoke 'get' method to generate  a pseudo-random integer between 1 and 9
+  auto random_number = Random::get(1, 9); // invoke 'get' method to generate a pseudo-random integer between 1 and 9
   // yep, that's all.
 ```
 * Advantages
@@ -72,6 +71,9 @@ There are few ways to get working with random in C++:
 * Microsoft Visual C++ 2015
 * Microsoft Visual C++ 2017
 ## Integration
+#### CMake
+TODO
+#### Manually
 The single required source, file [`random.hpp`](https://github.com/effolkronium/random/blob/develop/include/effolkronium/random.hpp) is in the [`include/effolkronium`](https://github.com/effolkronium/random/tree/develop/include/effolkronium) directory.
 All you need to do is add
 ```cpp
@@ -110,7 +112,7 @@ auto val = Random::get<Random::common>(0ul, 1ull) // decltype(val) is unsigned l
 auto val = Random::get<Random::common>(1.2l, 1.5f) // decltype(val) is long double
 ```
 ```cpp
-auto val = Random::get<Random::common>(1u, -1) // Error: prevent conversion from signed to unsigned
+auto val = Random::get<Random::common>(1u, -1) // Error: prevent conversion from signed to unsigned.
 ```
 ### Bool
 Generate bool with [0; 1] probability
@@ -128,19 +130,20 @@ Return random value from values in std::initilizer_list
 ```cpp
 auto val = Random::get({1, 2, 3}) // val = 1 or 2 or 3
 ```
-### Random iterator from iterator range
-### Random iterator from container
+### Random iterator
+* Iterator range
+* Container
 ### Shuffle
-[ref](http://en.cppreference.com/w/cpp/algorithm/random_shuffle)
-
-Reorders the elements in a given range or in all container
+Reorders the elements in a given range or in all container [ref](http://en.cppreference.com/w/cpp/algorithm/random_shuffle)
 ```cpp
 std::array<int, 3> array{ {1, 2, 3} };
 ```
+* Iterator range
 ```cpp
 Random::shuffle( array.begin( ), array.end( ) )
-
-// or just
+```
+* Container
+```cpp
 Random::shuffle( array )
 ```
 ### Custom distribution
@@ -151,7 +154,7 @@ Random::get<std::gamma_distribution<>>( 1.f, 2.f ); // return value from operato
 Or throughout argument:
 ```cpp
 std::gamma_distribution<> gamma{ };
-Random DOT get( gamma ); // return result of gamma( internalEngine )
+Random DOT get( gamma ); // return result of gamma.operator()( engine_ )
 ```
 ### Custom Seeder
 ### Seeding
