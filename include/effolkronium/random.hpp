@@ -97,8 +97,8 @@ namespace effolkronium {
     template<
         typename Engine,
         typename Seeder = seeder_default,
-        template<typename...> class IntegerDist = std::uniform_int_distribution,
-        template<typename...> class RealDist = std::uniform_real_distribution,
+        template<typename> class IntegerDist = std::uniform_int_distribution,
+        template<typename> class RealDist = std::uniform_real_distribution,
         typename BoolDist = std::bernoulli_distribution
     >
     class basic_random_static {
@@ -112,12 +112,12 @@ namespace effolkronium {
         using seeder_type = Seeder;
 
         /// Type of used integer distribution
-        template<typename... Types>
-        using integer_dist_t = IntegerDist<Types...>;
+        template<typename T>
+        using integer_dist_t = IntegerDist<T>;
 
         /// Type of used real distribution
-        template<typename... Types>
-        using real_dist_t = RealDist<Types...>;
+        template<typename T>
+        using real_dist_t = RealDist<T>;
 
         /// Type of used bool distribution
         using bool_dist_t = BoolDist;
@@ -188,7 +188,7 @@ namespace effolkronium {
         * \param other The engine, with which the internal engine will be compared
         * \return true, if other and internal engine are equal
         */
-        static bool isEqual( const Engine& other ) {
+        static bool is_equal( const Engine& other ) {
             return engine == other;
         }
 
@@ -231,12 +231,12 @@ namespace effolkronium {
         * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
 		* \note Prevent implicit type conversion
         */
-        template<typename A>
-        static typename std::enable_if<details::is_uniform_int<A>::value
-            , A>::type get( A from, A to ) {
+        template<typename T>
+        static typename std::enable_if<details::is_uniform_int<T>::value
+            , T>::type get( T from, T to ) {
             if( from < to ) // Allow range from higher to lower
-                return IntegerDist<A>{ from, to }( engine );
-            return IntegerDist<A>{ to, from }( engine );
+                return IntegerDist<T>{ from, to }( engine );
+            return IntegerDist<T>{ to, from }( engine );
         }
 
         /**
@@ -248,12 +248,12 @@ namespace effolkronium {
         * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
         * \note Prevent implicit type conversion
         */
-        template<typename A>
-        static typename std::enable_if<details::is_uniform_real<A>::value
-            , A>::type get( A from, A to ) {
+        template<typename T>
+        static typename std::enable_if<details::is_uniform_real<T>::value
+            , T>::type get( T from, T to ) {
             if( from < to ) // Allow range from higher to lower
-                return RealDist<A>{ from, to }( engine );
-            return RealDist<A>{ to, from }( engine );
+                return RealDist<T>{ from, to }( engine );
+            return RealDist<T>{ to, from }( engine );
         }
 
         /**
@@ -264,14 +264,14 @@ namespace effolkronium {
         * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
         * \note Prevent implicit type conversion
         */
-        template<typename A>
-        static typename std::enable_if<details::is_byte<A>::value
-            , A>::type get( A from, A to ) {
+        template<typename T>
+        static typename std::enable_if<details::is_byte<T>::value
+            , T>::type get( T from, T to ) {
             // Choose between short and unsigned short for byte conversion
-            using short_t = typename std::conditional<std::is_signed<A>::value,
+            using short_t = typename std::conditional<std::is_signed<T>::value,
                 short, unsigned short>::type;
 
-            return static_cast<A>( get<short_t>( from, to ) );
+            return static_cast<T>( get<short_t>( from, to ) );
         }
 
         /**
@@ -329,11 +329,8 @@ namespace effolkronium {
         */
         template<typename T>
         static T get( std::initializer_list<T> init_list ) {
-            assert( 0 != init_list.size( ) );
-
-            return *( init_list.begin( ) +
-                      get<typename std::initializer_list<T>::size_type>(
-                          0, init_list.size( ) - 1 ) );
+            assert( 0u != init_list.size( ) );
+            return *get( init_list.begin( ), init_list.end( ) );
         }
 
         /**
@@ -347,16 +344,15 @@ namespace effolkronium {
             , InputIt>::type get( InputIt first, InputIt last ) {
             if( first == last ) return last;
             const auto size = std::distance( first, last );
-            using dif_t = typename std::iterator_traits<InputIt>::difference_type;
-            std::advance( first, get<dif_t>( 0, size - 1 ) );
-            return first;
+            using diff_t = typename std::iterator_traits<InputIt>::difference_type;
+            return std::next( first, get<diff_t>( 0, size - 1 ) );
         }
 
         /**
         * \brief Return random iterator from Container
         * \param container The container with elements
         * \return Random iterator from container
-        * \note If container is empty return end iterator
+        * \note If container is empty return std::end( container ) iterator
         */
         template<typename Container>
         static typename std::enable_if<details::is_iterator<
@@ -415,13 +411,13 @@ namespace effolkronium {
         }
 
         /// return internal engine by copy
-        static Engine getEngine( ) {
+        static Engine get_engine( ) {
             return engine;
         }
     protected:
         /// return engine seeded by Seeder
-        static Engine makeSeededEngine( ) {
-            // Make seeder instance for seed return by reference like seed_seq
+        static Engine make_seeded_engine( ) {
+            // Make seeder instance for seed return by reference like std::seed_seq
             Seeder seeder;
             return Engine{ seeder( ) };
         }
@@ -430,31 +426,32 @@ namespace effolkronium {
         static Engine engine;
     };
 
-    /// Seed random number engine by std::random_device{ }( )
+    /// Seed random number engine by Seeder
     template<
         typename Engine,
         typename Seeder,
-        template<typename...> class IntegerDist,
-        template<typename...> class RealDist,
+        template<typename> class IntegerDist,
+        template<typename> class RealDist,
         typename BoolDist
         >
     Engine basic_random_static<Engine, Seeder, IntegerDist, RealDist, BoolDist
     // VS2017 issue, can't init by Seeder from lambda
-    >::engine( makeSeededEngine( ) );
+    >::engine( make_seeded_engine( ) );
 
     /**
     * \brief Base template class for random 
-    *        with static API and thread_local internal member storage
-    * \note it's thread safe but less efficient then basic_random_static
+    *        with thread_local API and thread_local internal member storage
+    * \note it IS thread safe but less efficient then 
+    *                           basic_random_static
     * \param Engine A random engine with interface like in the std::mt19937
     * \param Seeder A seeder type which return seed for internal engine 
-    *                                                through operator()
+    *                                             through operator()
     */
     template<
         typename Engine,
         typename Seeder = seeder_default,
-        template<typename...> class IntegerDist = std::uniform_int_distribution,
-        template<typename...> class RealDist = std::uniform_real_distribution,
+        template<typename> class IntegerDist = std::uniform_int_distribution,
+        template<typename> class RealDist = std::uniform_real_distribution,
         typename BoolDist = std::bernoulli_distribution
     >
     class basic_random_thread_local {
@@ -468,12 +465,12 @@ namespace effolkronium {
         using seeder_type = Seeder;
 
         /// Type of used integer distribution
-        template<typename... Types>
-        using integer_dist_t = IntegerDist<Types...>;
+        template<typename T>
+        using integer_dist_t = IntegerDist<T>;
 
         /// Type of used real distribution
-        template<typename... Types>
-        using real_dist_t = RealDist<Types...>;
+        template<typename T>
+        using real_dist_t = RealDist<T>;
 
         /// Type of used bool distribution
         using bool_dist_t = BoolDist;
@@ -544,7 +541,7 @@ namespace effolkronium {
         * \param other The engine, with which the internal engine will be compared
         * \return true, if other and internal engine are equal
         */
-        static bool isEqual( const Engine& other ) {
+        static bool is_equal( const Engine& other ) {
             return engine == other;
         }
 
@@ -587,12 +584,12 @@ namespace effolkronium {
         * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
 		* \note Prevent implicit type conversion
         */
-        template<typename A>
-        static typename std::enable_if<details::is_uniform_int<A>::value
-            , A>::type get( A from, A to ) {
+        template<typename T>
+        static typename std::enable_if<details::is_uniform_int<T>::value
+            , T>::type get( T from, T to ) {
             if( from < to ) // Allow range from higher to lower
-                return IntegerDist<A>{ from, to }( engine );
-            return IntegerDist<A>{ to, from }( engine );
+                return IntegerDist<T>{ from, to }( engine );
+            return IntegerDist<T>{ to, from }( engine );
         }
 
         /**
@@ -604,12 +601,12 @@ namespace effolkronium {
         * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
         * \note Prevent implicit type conversion
         */
-        template<typename A>
-        static typename std::enable_if<details::is_uniform_real<A>::value
-            , A>::type get( A from, A to ) {
+        template<typename T>
+        static typename std::enable_if<details::is_uniform_real<T>::value
+            , T>::type get( T from, T to ) {
             if( from < to ) // Allow range from higher to lower
-                return RealDist<A>{ from, to }( engine );
-            return RealDist<A>{ to, from }( engine );
+                return RealDist<T>{ from, to }( engine );
+            return RealDist<T>{ to, from }( engine );
         }
 
         /**
@@ -620,14 +617,14 @@ namespace effolkronium {
         * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
         * \note Prevent implicit type conversion
         */
-        template<typename A>
-        static typename std::enable_if<details::is_byte<A>::value
-            , A>::type get( A from, A to ) {
+        template<typename T>
+        static typename std::enable_if<details::is_byte<T>::value
+            , T>::type get( T from, T to ) {
             // Choose between short and unsigned short for byte conversion
-            using short_t = typename std::conditional<std::is_signed<A>::value,
+            using short_t = typename std::conditional<std::is_signed<T>::value,
                 short, unsigned short>::type;
 
-            return static_cast<A>( get<short_t>( from, to ) );
+            return static_cast<T>( get<short_t>( from, to ) );
         }
 
         /**
@@ -685,34 +682,30 @@ namespace effolkronium {
         */
         template<typename T>
         static T get( std::initializer_list<T> init_list ) {
-            assert( 0 != init_list.size( ) );
-
-            return *( init_list.begin( ) +
-                      get<typename std::initializer_list<T>::size_type>(
-                          0, init_list.size( ) - 1 ) );
+            assert( 0u != init_list.size( ) );
+            return *get( init_list.begin( ), init_list.end( ) );
         }
 
         /**
         * \brief Return random iterator from iterator range
         * \param first, last - the range of elements
         * \return Random iterator from [first, last) range
-        * \note If first == last, return that
+        * \note If first == last, return last
         */
         template<typename InputIt>
         static typename std::enable_if<details::is_iterator<InputIt>::value
             , InputIt>::type get( InputIt first, InputIt last ) {
             if( first == last ) return last;
             const auto size = std::distance( first, last );
-            using dif_t = typename std::iterator_traits<InputIt>::difference_type;
-            std::advance( first, get<dif_t>( 0, size - 1 ) );
-            return first;
+            using diff_t = typename std::iterator_traits<InputIt>::difference_type;
+            return std::next( first, get<diff_t>( 0, size - 1 ) );
         }
 
         /**
         * \brief Return random iterator from Container
         * \param container The container with elements
         * \return Random iterator from container
-        * \note If container is empty return end iterator
+        * \note If container is empty return std::end( container ) iterator
         */
         template<typename Container>
         static typename std::enable_if<details::is_iterator<
@@ -771,13 +764,13 @@ namespace effolkronium {
         }
 
         /// return internal engine by copy
-        static Engine getEngine( ) {
+        static Engine get_engine( ) {
             return engine;
         }
     protected:
         /// return engine seeded by Seeder
-        static Engine makeSeededEngine( ) {
-            // Make seeder instance for seed return by reference like seed_seq
+        static Engine make_seeded_engine( ) {
+            // Make seeder instance for seed return by reference like std::seed_seq
             Seeder seeder;
             return Engine{ seeder( ) };
         }
@@ -786,31 +779,32 @@ namespace effolkronium {
         static thread_local Engine engine;
     };
 
-    /// Seed random number engine by std::random_device{ }( )
+    /// Seed random number engine by Seeder
     template<
         typename Engine,
         typename Seeder,
-        template<typename...> class IntegerDist,
-        template<typename...> class RealDist,
+        template<typename> class IntegerDist,
+        template<typename> class RealDist,
         typename BoolDist
         >
-    thread_local Engine basic_random_thread_local<
-        Engine, Seeder, IntegerDist, RealDist, BoolDist
+    thread_local Engine basic_random_thread_local<Engine, Seeder, IntegerDist, RealDist, BoolDist
     // VS2017 issue, can't init by Seeder from lambda
-    >::engine( makeSeededEngine( ) );
+    >::engine( make_seeded_engine( ) );
 
     /**
     * \brief Base template class for random 
-    *        with non static API and local (auto) internal member storage 
+    *        with local API and local internal member storage
+    * \note it IS thread safe but less efficient then 
+    *                           basic_random_static
     * \param Engine A random engine with interface like in the std::mt19937
     * \param Seeder A seeder type which return seed for internal engine 
-    *                                                through operator()
+    *                                             through operator()
     */
     template<
         typename Engine,
         typename Seeder = seeder_default,
-        template<typename...> class IntegerDist = std::uniform_int_distribution,
-        template<typename...> class RealDist = std::uniform_real_distribution,
+        template<typename> class IntegerDist = std::uniform_int_distribution,
+        template<typename> class RealDist = std::uniform_real_distribution,
         typename BoolDist = std::bernoulli_distribution
     >
     class basic_random_local {
@@ -822,12 +816,12 @@ namespace effolkronium {
         using seeder_type = Seeder;
 
         /// Type of used integer distribution
-        template<typename... Types>
-        using integer_dist_t = IntegerDist<Types...>;
+        template<typename T>
+        using integer_dist_t = IntegerDist<T>;
 
         /// Type of used real distribution
-        template<typename... Types>
-        using real_dist_t = RealDist<Types...>;
+        template<typename T>
+        using real_dist_t = RealDist<T>;
 
         /// Type of used bool distribution
         using bool_dist_t = BoolDist;
@@ -898,7 +892,7 @@ namespace effolkronium {
         * \param other The engine, with which the internal engine will be compared
         * \return true, if other and internal engine are equal
         */
-        bool isEqual( const Engine& other ) const {
+        bool is_equal( const Engine& other ) {
             return engine == other;
         }
 
@@ -912,7 +906,7 @@ namespace effolkronium {
         * \param ost The output stream to insert the data to
         */
         template<typename CharT, typename Traits>
-        void serialize( std::basic_ostream<CharT, Traits>& ost ) const {
+        void serialize( std::basic_ostream<CharT, Traits>& ost ) {
             ost << engine;
         }
 
@@ -941,12 +935,12 @@ namespace effolkronium {
         * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
 		* \note Prevent implicit type conversion
         */
-        template<typename A>
-        typename std::enable_if<details::is_uniform_int<A>::value
-            , A>::type get( A from, A to ) {
+        template<typename T>
+        typename std::enable_if<details::is_uniform_int<T>::value
+            , T>::type get( T from, T to ) {
             if( from < to ) // Allow range from higher to lower
-                return IntegerDist<A>{ from, to }( engine );
-            return IntegerDist<A>{ to, from }( engine );
+                return IntegerDist<T>{ from, to }( engine );
+            return IntegerDist<T>{ to, from }( engine );
         }
 
         /**
@@ -958,12 +952,12 @@ namespace effolkronium {
         * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
         * \note Prevent implicit type conversion
         */
-        template<typename A>
-        typename std::enable_if<details::is_uniform_real<A>::value
-            , A>::type get( A from, A to ) {
+        template<typename T>
+        typename std::enable_if<details::is_uniform_real<T>::value
+            , T>::type get( T from, T to ) {
             if( from < to ) // Allow range from higher to lower
-                return RealDist<A>{ from, to }( engine );
-            return RealDist<A>{ to, from }( engine );
+                return RealDist<T>{ from, to }( engine );
+            return RealDist<T>{ to, from }( engine );
         }
 
         /**
@@ -974,14 +968,14 @@ namespace effolkronium {
         * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
         * \note Prevent implicit type conversion
         */
-        template<typename A>
-        typename std::enable_if<details::is_byte<A>::value
-            , A>::type get( A from, A to ) {
+        template<typename T>
+        typename std::enable_if<details::is_byte<T>::value
+            , T>::type get( T from, T to ) {
             // Choose between short and unsigned short for byte conversion
-            using short_t = typename std::conditional<std::is_signed<A>::value,
+            using short_t = typename std::conditional<std::is_signed<T>::value,
                 short, unsigned short>::type;
 
-            return static_cast<A>( get<short_t>( from, to ) );
+            return static_cast<T>( get<short_t>( from, to ) );
         }
 
         /**
@@ -1039,11 +1033,8 @@ namespace effolkronium {
         */
         template<typename T>
         T get( std::initializer_list<T> init_list ) {
-            assert( 0 != init_list.size( ) );
-
-            return *( init_list.begin( ) +
-                      get<typename std::initializer_list<T>::size_type>(
-                          0, init_list.size( ) - 1 ) );
+            assert( 0u != init_list.size( ) );
+            return *get( init_list.begin( ), init_list.end( ) );
         }
 
         /**
@@ -1057,16 +1048,15 @@ namespace effolkronium {
             , InputIt>::type get( InputIt first, InputIt last ) {
             if( first == last ) return last;
             const auto size = std::distance( first, last );
-            using dif_t = typename std::iterator_traits<InputIt>::difference_type;
-            std::advance( first, get<dif_t>( 0, size - 1 ) );
-            return first;
+            using diff_t = typename std::iterator_traits<InputIt>::difference_type;
+            return std::next( first, get<diff_t>( 0, size - 1 ) );
         }
 
         /**
         * \brief Return random iterator from Container
         * \param container The container with elements
         * \return Random iterator from container
-        * \note If container is empty return end iterator
+        * \note If container is empty return std::end( container ) iterator
         */
         template<typename Container>
         typename std::enable_if<details::is_iterator<
@@ -1125,19 +1115,19 @@ namespace effolkronium {
         }
 
         /// return internal engine by copy
-        Engine getEngine( ) const {
+        Engine get_engine( ) {
             return engine;
         }
     protected:
         /// return engine seeded by Seeder
-        static Engine makeSeededEngine( ) {
-            // Make seeder instance for seed return by reference like seed_seq
+        static Engine make_seeded_engine( ) {
+            // Make seeder instance for seed return by reference like std::seed_seq
             Seeder seeder;
             return Engine{ seeder( ) };
         }
     protected:
         /// The random number engine
-        Engine engine{ makeSeededEngine( ) };
+        Engine engine{ make_seeded_engine( ) };
     };
 
     /** 

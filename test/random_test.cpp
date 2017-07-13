@@ -453,7 +453,7 @@ TEST_CASE( "Not equal" ) {
     Random_t::engine_type engine;
     strStream >> engine;
 
-    bool isEqual = Random DOT isEqual( engine );
+    bool isEqual = Random DOT is_equal( engine );
 
     REQUIRE( false == isEqual );
 }
@@ -466,7 +466,7 @@ TEST_CASE( "Equal" ) {
     Random_t::engine_type engine;
     strStream >> engine;
 
-    bool isEqual = Random DOT isEqual( engine );
+    bool isEqual = Random DOT is_equal( engine );
 
     REQUIRE( true == isEqual );
 }
@@ -566,7 +566,7 @@ TEST_CASE( "seed by default seeder" ) {
 
     std::mt19937_64 engine{ 42u };
     
-    REQUIRE( tRandom DOT isEqual( engine ) );
+    REQUIRE( tRandom DOT is_equal( engine ) );
 
     tRandom DOT seed( 12345 );
     
@@ -574,7 +574,7 @@ TEST_CASE( "seed by default seeder" ) {
 
     tRandom DOT reseed( );
 
-    REQUIRE( tRandom DOT isEqual( engine ) );
+    REQUIRE( tRandom DOT is_equal( engine ) );
 }
 
 TEST_CASE( "custom seeder with seedSeq" ) {
@@ -624,8 +624,8 @@ TEST_CASE( "default Seeder generate random seed" ) {
 }
 
 TEST_CASE( "get engine" ) {
-    auto engine = Random DOT getEngine( );
-    REQUIRE( Random DOT isEqual( engine ) );
+    auto engine = Random DOT get_engine( );
+    REQUIRE( Random DOT is_equal( engine ) );
 }
 
 TEST_CASE( "return random iterator from iterator range" ) {
@@ -702,8 +702,8 @@ TEST_CASE( "return random iterator from container" ) {
 #ifdef RANDOM_THREAD_LOCAL
 
 TEST_CASE( "is truly thread local" ) {
-    auto engine = Random DOT getEngine( );
-    REQUIRE( Random DOT isEqual( engine ) );
+    auto engine = Random DOT get_engine( );
+    REQUIRE( Random DOT is_equal( engine ) );
 
     static std::uint8_t seedCount{ 0u };
     static Random::engine_type::result_type 
