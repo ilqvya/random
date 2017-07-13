@@ -131,8 +131,21 @@ Return random value from values in std::initilizer_list
 auto val = Random::get({1, 2, 3}) // val = 1 or 2 or 3
 ```
 ### Random iterator
+Returns random iterator from iterator range or container.
+Iterator must be at least [Input iterator](http://en.cppreference.com/w/cpp/concept/InputIterator).
+If 'first' iterator is equal 'last' iterator, returns 'last' iterator.
+If container is empty, returns std::end(container) iterator.
+```cpp
+std::array<int, 3> array{ {1, 2, 3} };
+```
 * Iterator range
+```cpp
+auto randomIt = Random::get( array.begin(), array.end() );
+```
 * Container
+```cpp
+auto randomIt = Random::get( array );
+```
 ### Shuffle
 Reorders the elements in a given range or in all container [ref](http://en.cppreference.com/w/cpp/algorithm/random_shuffle)
 ```cpp
@@ -215,7 +228,10 @@ auto val = Random::get( );
 // val is rundom number in [ Random::min( ), Random::max ] range
 ```
 ### Get engine
-
+Returns copy of internal engine.
+```cpp
+auto engine = Random::getEngine( );
+```
 ### Discard
 [ref](http://en.cppreference.com/w/cpp/numeric/random/mersenne_twister_engine/discard)
 
