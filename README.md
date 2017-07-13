@@ -230,7 +230,7 @@ auto val = Random::get( );
 ### Get engine
 Returns copy of internal engine.
 ```cpp
-auto engine = Random::getEngine( );
+auto engine = Random::get_engine( );
 ```
 ### Discard
 [ref](http://en.cppreference.com/w/cpp/numeric/random/mersenne_twister_engine/discard)
@@ -246,7 +246,7 @@ Random::discard( 500 );
 Compares internal pseudo-random number engine with other pseudo-random number engine.
 ```cpp
 Random::Engine otherEngine;
-bool isSame = Random::isEqual( otherEngine );
+bool isSame = Random::is_equal( otherEngine );
 ```
 ### Serialize
 [ref](http://en.cppreference.com/w/cpp/numeric/random/mersenne_twister_engine/operator_ltltgtgt)
