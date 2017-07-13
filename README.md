@@ -85,7 +85,7 @@ using Random = effolkronium::random_static;
 to the files you want to use effolkronium random class. That's it. Do not forget to set the necessary switches to enable C++11 (e.g., `-std=c++11` for GCC and Clang).
 ## Five-minute tutorial
 ### Number range
-Returns a random number between first and second argument.
+Returns a  pseudo-random number in a [first; second] range.
 ```cpp
 auto val = Random::get(-1, 1) // decltype(val) is int
 ```
@@ -115,7 +115,7 @@ auto val = Random::get<Random::common>(1.2l, 1.5f) // decltype(val) is long doub
 auto val = Random::get<Random::common>(1u, -1) // Error: prevent conversion from signed to unsigned.
 ```
 ### Bool
-Generate bool with [0; 1] probability
+Generate true with [0; 1] probability
 ```cpp
 auto val = Random::get<bool>(0.7) // true with 70% probability
 ```
