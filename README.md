@@ -157,6 +157,31 @@ std::gamma_distribution<> gamma{ };
 Random DOT get( gamma ); // return result of gamma.operator()( engine_ )
 ```
 ### Custom Seeder
+Specify seed by which random engine will be seeded at construction time:
+* Number
+```cpp
+struct MySeeder {
+    unsigned operator() () {
+        return 42u;
+    }
+};
+    
+// Seeded by 42
+using Random = effolkronium::basic_random_static<std::mt19937, MySeeder>;
+```
+* Seed sequence
+```cpp
+struct MySeeder {
+    // std::seed_seq isn't copyable
+    std::seed_seq& operator() () {
+        return seed_seq_;
+    }
+    std::seed_seq seed_seq_{ { 1, 2, 3, 4, 5 } };
+};
+    
+// Seeded by seed_seq_ from MySeeder
+using Random = effolkronium::basic_random_static<std::mt19937, MySeeder>;
+```
 ### Seeding
 [ref](http://en.cppreference.com/w/cpp/numeric/random/mersenne_twister_engine/seed)
 
