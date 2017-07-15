@@ -131,10 +131,10 @@ Return random value from values in std::initilizer_list
 auto val = Random::get({1, 2, 3}) // val = 1 or 2 or 3
 ```
 ### Random iterator
-Returns random iterator from iterator range or container.
+Return random iterator from iterator range or container.
 Iterator must be at least [Input iterator](http://en.cppreference.com/w/cpp/concept/InputIterator).
-If 'first' iterator is equal 'last' iterator, returns 'last' iterator.
-If container is empty, returns std::end(container) iterator.
+If 'first' iterator is equal to 'last' iterator, return 'last' iterator.
+If container is empty, return std::end(container) iterator.
 ```cpp
 std::array<int, 3> array{ {1, 2, 3} };
 ```
