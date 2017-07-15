@@ -160,14 +160,16 @@ Random::shuffle( array.begin( ), array.end( ) )
 Random::shuffle( array )
 ```
 ### Custom distribution
+Return result from operator() of a distribution with internal random engine of the Random class
+* Template argument
 ```cpp
 // 1.f and 2.f will be forwarded to std::gamma_distribution constructor
-Random::get<std::gamma_distribution<>>( 1.f, 2.f ); // return value from operator( ) with internal engine argument
+auto result = Random::get<std::gamma_distribution<>>( 1.f, 2.f );
 ```
-Or throughout argument:
+* Argument by reference
 ```cpp
-std::gamma_distribution<> gamma{ };
-Random DOT get( gamma ); // return result of gamma.operator()( engine_ )
+std::gamma_distribution<> gamma{ 1.f, 2.f };
+auto result = Random DOT get( gamma ); // return result of gamma.operator()( engine_ )
 ```
 ### Custom Seeder
 Specify seed by which random engine will be seeded at construction time:
