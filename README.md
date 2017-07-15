@@ -18,17 +18,17 @@
   - [Shuffle](#shuffle)
   - [Custom distribution](#custom-distribution)
   - [Custom Seeder](#custom-seeder)
+  - [Thread local random](#thread-local-random)
+  - [Local random](#local-random)
+  - [Get engine](#get-engine)
   - [Seeding](#seeding)
   - [min-value](#min-value)
   - [max-value](#max-value)
   - ['get' without arguments](#get-without-arguments)
-  - [Get engine](#get-engine)
   - [Discard](#discard)
-  - [isEqual](#isequal)
+  - [Is equal](#is-equal)
   - [Serialize](#serialize)
   - [Deserialize](#deserialize)
-  - [Thread local random](#thread-local-random)
-  - [Local random](#local-random)
 ## Design goals
 There are few ways to get working with random in C++:
 - **C style**
