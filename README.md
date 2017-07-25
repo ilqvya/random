@@ -20,6 +20,7 @@
   - [Custom Seeder](#custom-seeder)
   - [Thread local random](#thread-local-random)
   - [Local random](#local-random)
+  - [Buffered random](#buffered-random)
   - [Get engine](#get-engine)
   - [Seeding](#seeding)
   - [min-value](#min-value)
@@ -44,7 +45,7 @@ There are few ways to get working with random in C++:
 ```cpp
   std::random_device random_device; // create object for seeding
   std::mt19937 engine{random_device()}; // create engine and seed it
-  std::uniform_int_distribution<> dist(1,9); // create distribution for integers with [1, 9] range
+  std::uniform_int_distribution<> dist(1,9); // create distribution for integers with [1; 9] range
   auto random_number = dist(engine); // finally get a pseudo-randomrandom integer number
 ```
 * Problems
@@ -55,7 +56,7 @@ There are few ways to get working with random in C++:
 - **effolkronium random style**
 ```cpp
   // auto seeded
-  auto random_number = Random::get(1, 9); // invoke 'get' method to generate a pseudo-random integer between 1 and 9
+  auto random_number = Random::get(1, 9); // invoke 'get' method to generate a pseudo-random integer in [1; 9] range
   // yep, that's all.
 ```
 * Advantages
@@ -85,7 +86,7 @@ using Random = effolkronium::random_static;
 to the files you want to use effolkronium random class. That's it. Do not forget to set the necessary switches to enable C++11 (e.g., `-std=c++11` for GCC and Clang).
 ## Five-minute tutorial
 ### Number range
-Returns a  pseudo-random number in a [first; second] range.
+Returns a pseudo-random number in a [first; second] range.
 ```cpp
 auto val = Random::get(-1, 1) // decltype(val) is int
 ```
@@ -126,15 +127,15 @@ auto val = Random::get<bool>() // true with 50% probability by default
 auto val = Random::get<bool>(-1) // Error: assert occurred! Out of [0; 1] range
 ```
 ### Random value from std::initilizer_list
-Return random value from values in std::initilizer_list
+Return random value from values in a std::initilizer_list
 ```cpp
 auto val = Random::get({1, 2, 3}) // val = 1 or 2 or 3
 ```
 ### Random iterator
 Return random iterator from iterator range or container.
 Iterator must be at least [Input iterator](http://en.cppreference.com/w/cpp/concept/InputIterator).
-If 'first' iterator is equal to 'last' iterator, return 'last' iterator.
-If container is empty, return std::end(container) iterator.
+If a 'first' iterator is equal to a 'last' iterator, return the 'last' iterator.
+If container is empty, return [std::end](http://en.cppreference.com/w/cpp/iterator/end)(container) iterator.
 ```cpp
 std::array<int, 3> array{ {1, 2, 3} };
 ```
@@ -160,7 +161,7 @@ Random::shuffle( array.begin( ), array.end( ) )
 Random::shuffle( array )
 ```
 ### Custom distribution
-Return result from operator() of a distribution with internal random engine of the Random class
+Return result from operator() of a distribution with internal random engine argument
 * Template argument
 ```cpp
 // 1.f and 2.f will be forwarded to std::gamma_distribution constructor
@@ -185,6 +186,7 @@ struct MySeeder {
 using Random = effolkronium::basic_random_static<std::mt19937, MySeeder>;
 ```
 * Seed sequence
+Because we can't copy std::seed_seq, the 'random' library destroy seeder instance after engine seeding. So it's safe to return seed by reference.
 ```cpp
 struct MySeeder {
     // std::seed_seq isn't copyable
@@ -196,6 +198,30 @@ struct MySeeder {
     
 // Seeded by seed_seq_ from MySeeder
 using Random = effolkronium::basic_random_static<std::mt19937, MySeeder>;
+```
+### Thread local random
+It uses static methods API and data with thread_local storage which is fully **thread safe** (but less perfomance)
+```cpp
+using Random = effolkronium::random_thread_local
+
+// use in the same way as random_static. Thread safe
+std::thread first{ [ ] { Random::get( ); } };
+std::thread second{ [ ] { Random::get( ); } };
+```
+### Local random
+It uses non static methods API and data with auto storage which can be created on the stack at local scope
+```cpp
+#include "effolkronium/random.hpp"
+
+using Random_t = effolkronium::random_local
+
+int main( ) {
+  Random_t localRandom{ }; // Construct on the stack
+  
+  // access throughout dot
+  auto val = localRandom.get(-10, 10);
+  
+} // Destroy localRandom and free stack memory
 ```
 ### Seeding
 [ref](http://en.cppreference.com/w/cpp/numeric/random/mersenne_twister_engine/seed)
@@ -269,28 +295,4 @@ Random::serialize( strStream );
 // ...
 
 Random::deserialize( strStream ); // Restore internal state of internal Random engine
-```
-### Thread local random
-It uses static methods API and data with thread_local storage which is fully **thread safe** (but less perfomance)
-```cpp
-using Random = effolkronium::random_thread_local
-
-// use in the same way as random_static. Thread safe
-std::thread first{ [ ] { Random::get( ); } };
-std::thread second{ [ ] { Random::get( ); } };
-```
-### Local random
-It uses non static methods API and data with auto storage which can be created on the stack at local scope
-```cpp
-#include "effolkronium/random.hpp"
-
-using Random_t = effolkronium::random_local
-
-int main( ) {
-  Random_t localRandom{ }; // Construct on the stack
-  
-  // access throughout dot
-  auto val = localRandom.get(-10, 10);
-  
-} // Destroy localRandom and free stack memory
 ```
