@@ -186,6 +186,7 @@ struct MySeeder {
 using Random = effolkronium::basic_random_static<std::mt19937, MySeeder>;
 ```
 * Seed sequence
+
 Because we can't copy std::seed_seq, the 'random' library destroy seeder instance after engine seeding. So it's safe to return seed by reference.
 ```cpp
 struct MySeeder {
