@@ -1,13 +1,15 @@
 ﻿project(random_test LANGUAGES CXX)
 
+list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS c)
+
 include(set_up_warnings.cmake)
 function(add_main_test TARGET COMPILE_DEFS)
     add_executable(${TARGET} random_test.cpp)
     set_up_warnings(${TARGET})
     
     if(NOT MSVC)
-        set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
-        set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+        #set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+        #set(THREADS_PREFER_PTHREAD_FLAG TRUE)
         find_package(Threads REQUIRED)
         target_link_libraries(${TARGET} Threads::Threads)
     endif()
