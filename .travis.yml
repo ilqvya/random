@@ -142,10 +142,7 @@ script:
   - cd build
   - cmake -DCMAKE_CXX_COMPILER=$COMPILER ..
   - make -j4
-  - ctest
-  - test/random_static_test
-  - test/random_thread_local_test
-  - test/random_local_test
+  - ctest -j3 --output-on-failure
 install:
   # create deps dir if not existing
   - DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
