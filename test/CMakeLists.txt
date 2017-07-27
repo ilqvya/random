@@ -1,16 +1,13 @@
-﻿project(random_test)
+﻿project(effolkronium_random_test) # Enable C language support for pthread
 
+find_package(Threads REQUIRED)
 include(set_up_warnings.cmake)
+
 function(add_main_test TARGET COMPILE_DEFS)
     add_executable(${TARGET} random_test.cpp)
     set_up_warnings(${TARGET})
     
-    if(NOT MSVC)
-        #set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
-        #set(THREADS_PREFER_PTHREAD_FLAG TRUE)
-        find_package(Threads REQUIRED)
-        target_link_libraries(${TARGET} Threads::Threads)
-    endif()
+    target_link_libraries(${TARGET} Threads::Threads)
     target_compile_definitions(${TARGET} PRIVATE ${COMPILE_DEFS})
     target_include_directories(${TARGET} PRIVATE "../include")
     
