@@ -2,6 +2,7 @@
 #define EFFOLKRONIUM_RANDOM_HPP
 
 #include <random>
+#include <chrono> // for seeds
 #include <type_traits>
 #include <cassert>
 #include <initializer_list>
@@ -79,10 +80,18 @@ namespace effolkronium {
 
     /// Default seeder for 'random' classes
     struct seeder_default {
-        /// return seed number from std::random_device
-        std::random_device::result_type operator() ( ) const { 
-            return std::random_device{ }( ); 
+        /// return seed sequence
+        std::seed_seq& operator() ( ) {
+            // MinGW issue, std::random_device returns constant value
+            // Use std::seed_seq with additional seed from C++ chrono
+            return seed_seq;
         }
+    private:
+        std::seed_seq seed_seq{ {
+                static_cast<std::uintmax_t>( std::random_device{ }( ) ),
+                static_cast<std::uintmax_t>( std::chrono::steady_clock::now( )
+                                             .time_since_epoch( ).count( ) ),
+        } };
     };
 
     /**
