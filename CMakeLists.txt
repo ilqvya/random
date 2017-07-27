@@ -17,8 +17,8 @@ set(EFFOLKRONIUM_RANDOM_INCLUDE_DESTINATION "include")
 # create and configure the library target
 add_library(${EFFOLKRONIUM_RANDOM_TARGET_NAME} INTERFACE)
 target_include_directories(${EFFOLKRONIUM_RANDOM_TARGET_NAME} INTERFACE
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:${EFFOLKRONIUM_RANDOM_INCLUDE_DESTINATION}>)
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:${EFFOLKRONIUM_RANDOM_INCLUDE_DESTINATION}>)
 
 if(Random_BuildTests)
     enable_testing()
@@ -30,9 +30,9 @@ include(CMakePackageConfigHelpers)
 configure_package_config_file("cmake/config.cmake.in"
                               "${CMAKE_CURRENT_BINARY_DIR}/${EFFOLKRONIUM_RANDOM_CONFIG_FILENAME}"
                               INSTALL_DESTINATION ${EFFOLKRONIUM_RANDOM_CONFIG_DESTINATION}
-    PATH_VARS EFFOLKRONIUM_RANDOM_INCLUDE_DESTINATION)
+                              PATH_VARS EFFOLKRONIUM_RANDOM_INCLUDE_DESTINATION)
 write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/${EFFOLKRONIUM_RANDOM_CONFIGVERSION_FILENAME}"
-                                  COMPATIBILITY SameMajorVersion)
+                                 COMPATIBILITY SameMajorVersion)
     
 # export the library target and store build directory in package registry
 export(TARGETS ${EFFOLKRONIUM_RANDOM_TARGET_NAME}
