@@ -58,4 +58,4 @@ function(add_fail_tests TARGET TEST_SOURCES REG_EXP)
 endfunction(add_fail_tests)
 
 # Add fail to build tests
-add_fail_tests("SignedUnsigned" "fail_signed_unsigned_test.cpp" "(no matching)|(error)")
+add_fail_tests("SignedUnsigned" "fail_signed_unsigned_test.cpp" "(no matching)|(fail)|(function)|(overloaded)")
