@@ -1,31 +1,12 @@
 ﻿#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 #include "catch.hpp"
-#include "effolkronium/random.hpp"
 #include <limits>
 #include <sstream>
 #include <array>
 #include <thread>
 #include <vector>
 
-#ifdef RANDOM_LOCAL
-auto Random = effolkronium::random_local{ };
-#endif
-
-#ifdef RANDOM_STATIC
-using Random = effolkronium::random_static;
-#endif
-
-#ifdef RANDOM_THREAD_LOCAL
-using Random = effolkronium::random_thread_local;
-#endif
-
-#ifndef RANDOM_LOCAL
-using Random_t = Random;
-#define DOT ::
-#else
-using Random_t = effolkronium::random_local;
-#define DOT .
-#endif
+#include "current_random.hpp"
 
 TEST_CASE( "Range overflow for random integer numbers" ) {
     bool isRangeOverflow = false;
@@ -609,18 +590,21 @@ TEST_CASE( "custom seeder with seedSeq" ) {
 }
 
 TEST_CASE( "default Seeder generate random seed" ) {
-    effolkronium::seeder_default seeder;
-
-    std::uintmax_t counter = std::numeric_limits<decltype( counter )>::max( );
-
+    std::uint16_t counter = std::numeric_limits<decltype( counter )>::max( );
+    std::vector<std::seed_seq::result_type> seeds_first( 10u );
     bool isSeedRandom{ false };
 
-    const auto firstSeed = seeder( );
+    effolkronium::seeder_default{ }( ).generate( seeds_first.begin( ),
+                                                 seeds_first.end( ) );
     do {
-        isSeedRandom = firstSeed != seeder( );
+        std::vector<std::seed_seq::result_type> seeds_second( 10u );
+        effolkronium::seeder_default{ }( ).generate( seeds_second.begin( ),
+                                                     seeds_second.end( ) );
+        effolkronium::seeder_default seeder;
+        isSeedRandom = seeds_first != seeds_second;
     } while( !isSeedRandom && 0 != counter-- );
 
-    REQUIRE( seeder( ) != seeder( ) );
+    REQUIRE( isSeedRandom );
 }
 
 TEST_CASE( "get engine" ) {
