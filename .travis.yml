@@ -143,6 +143,7 @@ script:
   - cmake -DCMAKE_CXX_COMPILER=$COMPILER ..
   - make -j4
   - ctest -j3 --output-on-failure
+  - cmake --build . --target SignedUnsigned_static --config Debug
 install:
   # create deps dir if not existing
   - DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
