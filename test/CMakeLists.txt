@@ -1,6 +1,4 @@
-﻿project(random_test LANGUAGES CXX)
-
-list(APPEND CMAKE_CXX_SOURCE_FILE_EXTENSIONS c)
+﻿project(random_test)
 
 include(set_up_warnings.cmake)
 function(add_main_test TARGET COMPILE_DEFS)
