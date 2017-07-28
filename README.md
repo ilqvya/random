@@ -84,7 +84,11 @@ target_link_libraries(${TARGET} effolkronium_random) # add include path to a com
 First of all, build or|and install this project:
 ```cmd
 cd "path_to_root_of_the_library"
-cmake --build . --target install --config Debug
+mkdir build
+cd build
+cmake -G"Visual Studio 15 2017" ..
+cmake --build . --target install --config Release
+ctest -C Release
 ```
 Then, find the package by a cmake
 ```cmake
