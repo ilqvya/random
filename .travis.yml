@@ -141,8 +141,8 @@ script:
   - mkdir build
   - cd build
   - cmake -DCMAKE_CXX_COMPILER=$COMPILER ..
-  - make -j4
-  - ctest -j3 --output-on-failure
+  - cmake --build . --config Debug
+  - ctest -C Debug --output-on-failure
   - cmake --build . --target SignedUnsigned_static --config Debug
 install:
   # create deps dir if not existing
