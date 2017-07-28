@@ -73,9 +73,28 @@ There are few ways to get working with random in C++:
 * Microsoft Visual C++ 2017
 ## Integration
 #### CMake
-TODO
+* As subproject
+```cmake
+add_subdirectory(random) # path to the 'random' library root
+... # create target
+target_link_libraries(${TARGET} effolkronium_random) # add include path to a compiler
+```
+* As external project
+
+First of all, build or|and install this project:
+```cmd
+cd "path_to_root_of_the_library"
+cmake --build . --target install --config Debug
+```
+Then, find the package by a cmake
+```cmake
+find_package(effolkronium_random REQUIRED)
+... # create target
+target_link_libraries(${TARGET} effolkronium_random)
+```
 #### Manually
 The single required source, file [`random.hpp`](https://github.com/effolkronium/random/blob/develop/include/effolkronium/random.hpp) is in the [`include/effolkronium`](https://github.com/effolkronium/random/tree/develop/include/effolkronium) directory.
+#### Then
 All you need to do is add
 ```cpp
 #include "effolkronium/random.hpp"
