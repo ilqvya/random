@@ -277,7 +277,7 @@ auto maxVal = Random::max( );
 Returns the random number in [ Random::min( ), Random::max ] range
 ```cpp
 auto val = Random::get( );
-// val is rundom number in [ Random::min( ), Random::max ] range
+// val is random number in [ Random::min( ), Random::max ] range
 ```
 ### Get engine
 Returns copy of internal engine.
