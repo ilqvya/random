@@ -51,7 +51,7 @@ There are few ways to get working with random in C++:
 * Problems
   * should specify seed
   * should choose, create and use a chain of various objects like engines and distributions
-  * mt19937 use 5000 bytes of memory for each creation (which is bad for performance if we create it too frequently)
+  * [mt19937](http://en.cppreference.com/w/cpp/numeric/random/mersenne_twister_engine) use 5000 bytes of memory for each creation (which is bad for performance if we create it too frequently)
   * uncomfortable and not intuitively clear usage
 - **effolkronium random style**
 ```cpp
@@ -61,7 +61,7 @@ There are few ways to get working with random in C++:
 ```
 * Advantages
   * **Intuitive syntax**. You can do almost everything with random by simple 'get' method, like getting simple numbers, bools, random object from given set or using custom distribution.
-  * **Trivial integration**. All code consists of a single header file [`random.hpp`](https://github.com/effolkronium/random/blob/develop/include/effolkronium/random.hpp). Tahat's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
+  * **Trivial integration**. All code consists of a single header file [`random.hpp`](https://github.com/effolkronium/random/blob/develop/include/effolkronium/random.hpp). That's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
   * **Usability**. There are 3 versions of random: 
     * *random_static* which has static methods and static internal state. It's not thread safe but more efficient
     * *random_thread_local* which has static methods and [thread_local](http://en.cppreference.com/w/cpp/keyword/thread_local) internal state. It's thread safe but less efficient
@@ -224,7 +224,7 @@ struct MySeeder {
 using Random = effolkronium::basic_random_static<std::mt19937, MySeeder>;
 ```
 ### Thread local random
-It uses static methods API and data with thread_local storage which is fully **thread safe** (but less perfomance)
+It uses static methods API and data with [thread_local](http://en.cppreference.com/w/cpp/keyword/thread_local) storage which is fully **thread safe** (but less perfomance)
 ```cpp
 using Random = effolkronium::random_thread_local
 
@@ -250,7 +250,7 @@ int main( ) {
 ### Seeding
 [ref](http://en.cppreference.com/w/cpp/numeric/random/mersenne_twister_engine/seed)
 
-You able to reseed internal random engine.
+Set new seed for an internal random engine.
 ```cpp
 Random::seed( 10 ); // 10 is new seed number
 
