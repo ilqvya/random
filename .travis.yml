@@ -4,17 +4,6 @@ language: cpp
 
 matrix:
   include:
-    # Valgrind
-    - os: linux
-      compiler: gcc
-      env:
-        - COMPILER=g++-6
-        - SPECIAL=valgrind
-        - VALGRIND=valgrind
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test']
-          packages: [g++-6, valgrind]
     # coveralls
     - os: linux
       compiler: gcc
