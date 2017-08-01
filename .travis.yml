@@ -127,11 +127,6 @@ script:
   - cmake -DCMAKE_CXX_COMPILER=$COMPILER ..
   - cmake --build . --config Debug
   - ctest -C Debug --output-on-failure
-  - cd test
-  - valgrind --error-exitcode=1 --leak-check=full ./random_static_test;
-  - valgrind --error-exitcode=1 --leak-check=full ./random_thread_local_test;
-  - valgrind --error-exitcode=1 --leak-check=full ./random_local_test;
-  - cd ..
 install:
   # create deps dir if not existing
   - DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
