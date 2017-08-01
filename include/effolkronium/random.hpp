@@ -2,13 +2,14 @@
 #define EFFOLKRONIUM_RANDOM_HPP
 
 #include <random>
-#include <chrono> // for seeds
+#include <chrono> // timed seed
 #include <type_traits>
 #include <cassert>
 #include <initializer_list>
 #include <utility> // std::forward, std::declval
 #include <algorithm> // std::shuffle, std::next, std::distance
 #include <iterator> // std::begin, std::end, std::iterator_traits
+#include <limits> // std::numeric_limits
 #include <ostream>
 #include <istream>
 
@@ -18,7 +19,7 @@ namespace effolkronium {
         /// Key type for getting common type numbers or objects
         struct common{ }; 
 
-        /// True if type T is applicable by the std::uniform_int_distribution
+        /// True if type T is applicable by a std::uniform_int_distribution
         template<typename T>
         struct is_uniform_int {
             static constexpr bool value =
@@ -242,7 +243,8 @@ namespace effolkronium {
         */
         template<typename T>
         static typename std::enable_if<details::is_uniform_int<T>::value
-            , T>::type get( T from, T to ) {
+            , T>::type get( T from = std::numeric_limits<T>::min( ),
+                            T to = std::numeric_limits<T>::max( ) ) {
             if( from < to ) // Allow range from higher to lower
                 return IntegerDist<T>{ from, to }( engine );
             return IntegerDist<T>{ to, from }( engine );
@@ -259,7 +261,8 @@ namespace effolkronium {
         */
         template<typename T>
         static typename std::enable_if<details::is_uniform_real<T>::value
-            , T>::type get( T from, T to ) {
+            , T>::type get( T from = std::numeric_limits<T>::min( ),
+                            T to = std::numeric_limits<T>::max( ) ) {
             if( from < to ) // Allow range from higher to lower
                 return RealDist<T>{ from, to }( engine );
             return RealDist<T>{ to, from }( engine );
@@ -275,7 +278,8 @@ namespace effolkronium {
         */
         template<typename T>
         static typename std::enable_if<details::is_byte<T>::value
-            , T>::type get( T from, T to ) {
+            , T>::type get( T from = std::numeric_limits<T>::min( ),
+                            T to = std::numeric_limits<T>::max( ) ) {
             // Choose between short and unsigned short for byte conversion
             using short_t = typename std::conditional<std::is_signed<T>::value,
                 short, unsigned short>::type;
@@ -310,7 +314,8 @@ namespace effolkronium {
             && details::is_supported_number<B>::value
             // Prevent implicit type conversion from singed to unsigned types
             && std::is_signed<A>::value != std::is_unsigned<B>::value
-            , C>::type get( A from, B to ) {
+            , C>::type get( A from = std::numeric_limits<A>::min( ),
+                            B to = = std::numeric_limits<B>::max( ) ) {
             return get( static_cast<C>( from ), static_cast<C>( to ) );
         }
 
@@ -595,7 +600,8 @@ namespace effolkronium {
         */
         template<typename T>
         static typename std::enable_if<details::is_uniform_int<T>::value
-            , T>::type get( T from, T to ) {
+            , T>::type get( T from = std::numeric_limits<T>::min( ),
+                            T to = std::numeric_limits<T>::max( ) ) {
             if( from < to ) // Allow range from higher to lower
                 return IntegerDist<T>{ from, to }( engine );
             return IntegerDist<T>{ to, from }( engine );
@@ -612,7 +618,8 @@ namespace effolkronium {
         */
         template<typename T>
         static typename std::enable_if<details::is_uniform_real<T>::value
-            , T>::type get( T from, T to ) {
+            , T>::type get( T from = std::numeric_limits<T>::min( ),
+                            T to = std::numeric_limits<T>::max( ) ) {
             if( from < to ) // Allow range from higher to lower
                 return RealDist<T>{ from, to }( engine );
             return RealDist<T>{ to, from }( engine );
@@ -628,7 +635,8 @@ namespace effolkronium {
         */
         template<typename T>
         static typename std::enable_if<details::is_byte<T>::value
-            , T>::type get( T from, T to ) {
+            , T>::type get( T from = std::numeric_limits<T>::min( ),
+                            T to = std::numeric_limits<T>::max( ) ) {
             // Choose between short and unsigned short for byte conversion
             using short_t = typename std::conditional<std::is_signed<T>::value,
                 short, unsigned short>::type;
@@ -663,7 +671,8 @@ namespace effolkronium {
             && details::is_supported_number<B>::value
             // Prevent implicit type conversion from singed to unsigned types
             && std::is_signed<A>::value != std::is_unsigned<B>::value
-            , C>::type get( A from, B to ) {
+            , C>::type get( A from = std::numeric_limits<A>::min( ),
+                            B to = = std::numeric_limits<B>::max( ) ) {
             return get( static_cast<C>( from ), static_cast<C>( to ) );
         }
 
@@ -946,7 +955,8 @@ namespace effolkronium {
         */
         template<typename T>
         typename std::enable_if<details::is_uniform_int<T>::value
-            , T>::type get( T from, T to ) {
+            , T>::type get( T from = std::numeric_limits<T>::min( ),
+                            T to = std::numeric_limits<T>::max( ) ) {
             if( from < to ) // Allow range from higher to lower
                 return IntegerDist<T>{ from, to }( engine );
             return IntegerDist<T>{ to, from }( engine );
@@ -963,7 +973,8 @@ namespace effolkronium {
         */
         template<typename T>
         typename std::enable_if<details::is_uniform_real<T>::value
-            , T>::type get( T from, T to ) {
+            , T>::type get( T from = std::numeric_limits<T>::min( ),
+                            T to = std::numeric_limits<T>::max( ) ) {
             if( from < to ) // Allow range from higher to lower
                 return RealDist<T>{ from, to }( engine );
             return RealDist<T>{ to, from }( engine );
@@ -979,7 +990,8 @@ namespace effolkronium {
         */
         template<typename T>
         typename std::enable_if<details::is_byte<T>::value
-            , T>::type get( T from, T to ) {
+            , T>::type get( T from = std::numeric_limits<T>::min( ),
+                            T to = std::numeric_limits<T>::max( ) ) {
             // Choose between short and unsigned short for byte conversion
             using short_t = typename std::conditional<std::is_signed<T>::value,
                 short, unsigned short>::type;
@@ -1014,7 +1026,8 @@ namespace effolkronium {
             && details::is_supported_number<B>::value
             // Prevent implicit type conversion from singed to unsigned types
             && std::is_signed<A>::value != std::is_unsigned<B>::value
-            , C>::type get( A from, B to ) {
+            , C>::type get( A from = std::numeric_limits<A>::min( ),
+                            B to = = std::numeric_limits<B>::max( ) ) {
             return get( static_cast<C>( from ), static_cast<C>( to ) );
         }
 
@@ -1124,7 +1137,7 @@ namespace effolkronium {
         }
 
         /// return internal engine by copy
-        Engine get_engine( ) {
+        Engine get_engine( ) const {
             return engine;
         }
     protected:

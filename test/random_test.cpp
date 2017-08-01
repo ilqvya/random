@@ -683,6 +683,15 @@ TEST_CASE( "return random iterator from container" ) {
     }
 }
 
+TEST_CASE( "Random range with default arguments" ) {
+    Random DOT get<uint8_t>( );
+    Random DOT get<uint16_t>( );
+    Random DOT get<float>( );
+    Random DOT get( 1 );
+    Random DOT get( 1.f );
+    Random DOT get( uint8_t{ 0u } );
+}
+
 #ifdef RANDOM_THREAD_LOCAL
 
 TEST_CASE( "is truly thread local" ) {
