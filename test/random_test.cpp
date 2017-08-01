@@ -9,6 +9,7 @@
 #include "current_random.hpp"
 
 TEST_CASE( "Range overflow for random integer numbers" ) {
+    auto x = new int{5}
     bool isRangeOverflow = false;
 
     // From lower to greater
