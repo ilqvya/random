@@ -315,7 +315,7 @@ namespace effolkronium {
             // Prevent implicit type conversion from singed to unsigned types
             && std::is_signed<A>::value != std::is_unsigned<B>::value
             , C>::type get( A from = std::numeric_limits<A>::min( ),
-                            B to = = std::numeric_limits<B>::max( ) ) {
+                            B to = std::numeric_limits<B>::max( ) ) {
             return get( static_cast<C>( from ), static_cast<C>( to ) );
         }
 
@@ -672,7 +672,7 @@ namespace effolkronium {
             // Prevent implicit type conversion from singed to unsigned types
             && std::is_signed<A>::value != std::is_unsigned<B>::value
             , C>::type get( A from = std::numeric_limits<A>::min( ),
-                            B to = = std::numeric_limits<B>::max( ) ) {
+                            B to = std::numeric_limits<B>::max( ) ) {
             return get( static_cast<C>( from ), static_cast<C>( to ) );
         }
 
@@ -1027,7 +1027,7 @@ namespace effolkronium {
             // Prevent implicit type conversion from singed to unsigned types
             && std::is_signed<A>::value != std::is_unsigned<B>::value
             , C>::type get( A from = std::numeric_limits<A>::min( ),
-                            B to = = std::numeric_limits<B>::max( ) ) {
+                            B to = std::numeric_limits<B>::max( ) ) {
             return get( static_cast<C>( from ), static_cast<C>( to ) );
         }
 
