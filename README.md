@@ -1,7 +1,7 @@
 # Random for modern C++ with convenient API
-[![Build Status](https://travis-ci.org/effolkronium/random.svg?branch=develop)](https://travis-ci.org/effolkronium/random)
-[![Build status](https://ci.appveyor.com/api/projects/status/vq1kodqqxwx16rfv/branch/develop?svg=true)](https://ci.appveyor.com/project/effolkronium/random/branch/develop)
-[![Coverage Status](https://coveralls.io/repos/github/effolkronium/random/badge.svg?branch=develop)](https://coveralls.io/github/effolkronium/random?branch=develop)
+[![Build Status](https://travis-ci.org/effolkronium/random.svg?branch=master)](https://travis-ci.org/effolkronium/random)
+[![Build status](https://ci.appveyor.com/api/projects/status/vq1kodqqxwx16rfv/branch/master?svg=true)](https://ci.appveyor.com/project/effolkronium/random/branch/master)
+[![Coverage Status](https://coveralls.io/repos/github/effolkronium/random/badge.svg?branch=master)](https://coveralls.io/github/effolkronium/random?branch=master)
 <a href="https://scan.coverity.com/projects/effolkronium-random">
   <img alt="Coverity Scan Build Status"
        src="https://scan.coverity.com/projects/13062/badge.svg"/>
@@ -61,7 +61,7 @@ There are few ways to get working with random in C++:
 ```
 * Advantages
   * **Intuitive syntax**. You can do almost everything with random by simple 'get' method, like getting simple numbers, bools, random object from given set or using custom distribution.
-  * **Trivial integration**. All code consists of a single header file [`random.hpp`](https://github.com/effolkronium/random/blob/develop/include/effolkronium/random.hpp). That's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
+  * **Trivial integration**. All code consists of a single header file [`random.hpp`](https://github.com/effolkronium/random/blob/master/include/effolkronium/random.hpp). That's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
   * **Usability**. There are 3 versions of random: 
     * *random_static* which has static methods and static internal state. It's not thread safe but more efficient
     * *random_thread_local* which has static methods and [thread_local](http://en.cppreference.com/w/cpp/keyword/thread_local) internal state. It's thread safe but less efficient
@@ -97,7 +97,7 @@ find_package(effolkronium_random REQUIRED)
 target_link_libraries(${TARGET} effolkronium_random)
 ```
 #### Manually
-The single required source, file [`random.hpp`](https://github.com/effolkronium/random/blob/develop/include/effolkronium/random.hpp) is in the [`include/effolkronium`](https://github.com/effolkronium/random/tree/develop/include/effolkronium) directory.
+The single required source, file [`random.hpp`](https://github.com/effolkronium/random/blob/master/include/effolkronium/random.hpp) is in the [`include/effolkronium`](https://github.com/effolkronium/random/tree/master/include/effolkronium) directory.
 #### Then
 All you need to do is add
 ```cpp
