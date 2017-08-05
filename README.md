@@ -4,7 +4,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/effolkronium/random/badge.svg?branch=develop)](https://coveralls.io/github/effolkronium/random?branch=develop)
 <a href="https://scan.coverity.com/projects/effolkronium-random">
   <img alt="Coverity Scan Build Status"
-       src="https://scan.coverity.com/projects/12707/badge.svg"/>
+       src="https://scan.coverity.com/projects/13062/badge.svg"/>
 </a>
 - [Design goals](#design-goals)
 - [Supported compilers](#supported-compilers)
@@ -157,7 +157,7 @@ auto val = Random::get({1, 2, 3}) // val = 1 or 2 or 3
 ### Random iterator
 Return random iterator from iterator range or container.
 Iterator must be at least [Input iterator](http://en.cppreference.com/w/cpp/concept/InputIterator).
-If a 'first' iterator is equal to a 'last' iterator, return the 'last' iterator.
+If a std::distance(first, last) == 0, return the 'last' iterator.
 If container is empty, return [std::end](http://en.cppreference.com/w/cpp/iterator/end)(container) iterator.
 ```cpp
 std::array<int, 3> array{ {1, 2, 3} };
@@ -222,6 +222,12 @@ struct MySeeder {
     
 // Seeded by seed_seq_ from MySeeder
 using Random = effolkronium::basic_random_static<std::mt19937, MySeeder>;
+```
+* Reseed
+
+Seed an internal random engine by a newly created Seeder instance
+```cpp
+Random::reseed( );
 ```
 ### Thread local random
 It uses static methods API and data with [thread_local](http://en.cppreference.com/w/cpp/keyword/thread_local) storage which is fully **thread safe** (but less perfomance)
