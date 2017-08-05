@@ -4,7 +4,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/effolkronium/random/badge.svg?branch=develop)](https://coveralls.io/github/effolkronium/random?branch=develop)
 <a href="https://scan.coverity.com/projects/effolkronium-random">
   <img alt="Coverity Scan Build Status"
-       src="https://scan.coverity.com/projects/12707/badge.svg"/>
+       src="https://scan.coverity.com/projects/13062/badge.svg"/>
 </a>
 - [Design goals](#design-goals)
 - [Supported compilers](#supported-compilers)
