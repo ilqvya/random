@@ -1,4 +1,4 @@
-version: '{build}'
+﻿version: '{build}' 
 
 os: 
   - Visual Studio 2015
@@ -18,4 +18,6 @@ build_script:
   - IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2013" ( IF "%PLATFORM%" == "x86" ( SET GEN="Visual Studio 12 2013" ) ELSE ( SET GEN="Visual Studio 12 2013 Win64" ) )
   - echo %GEN%
   - cmake . -G%GEN% -DCMAKE_CXX_FLAGS="%additional_flags%"
-  - cmake --build . --config Release
+  - echo %CONFIGURATION%
+  - cmake --build . --config %CONFIGURATION%
+  - ctest -C %CONFIGURATION%

@@ -1,43 +1,39 @@
-# MIT License
+project(effolkronium_random_test) # Enable C language support for pthread
 
-# Copyright (c) 2017 effolkronium
+find_package(Threads REQUIRED)
+include(set_up_warnings.cmake)
 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
+#[[
+    \param IS_FAIL if TRUE then set up that test as
+           fail to build test which is static library
+    \param REG_EXP used in fail to build tests. Parse cmd output and find matches
+           if no matches found then test failed
+]]
+function(add_basic_test TARGET COMPILE_DEFS TEST_SOURCES)
+    add_executable(${TARGET} ${TEST_SOURCES})
+    
+    set_up_warnings(${TARGET})
+    target_link_libraries(${TARGET} Threads::Threads)
+    target_compile_definitions(${TARGET} PRIVATE ${COMPILE_DEFS})
+    target_include_directories(${TARGET} PRIVATE "../include" ${CMAKE_CURRENT_SOURCE_DIR})
+    
+    if(COVERAGE_ENABLED)
+        message(STATUS "COVERAGE ENABLED")
+        target_compile_options(${TARGET} PRIVATE -g -O0 --coverage)
+    endif()
+    
+    set_target_properties(${TARGET} PROPERTIES
+        CXX_STANDARD 11
+        CXX_STANDARD_REQUIRED ON
+    )
+    
+    add_test(NAME ${TARGET} COMMAND ${TARGET})
+endfunction(add_basic_test)
 
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
+function(add_main_test TARGET COMPILE_DEFS)
+    add_basic_test(${TARGET} ${COMPILE_DEFS} "random_test.cpp")
+endfunction(add_main_test)
 
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
-project(EasyRandomTest)
-
-if(COVERAGE_ENABLED)
-	message(STATUS "COVERAGE ENABLED")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0") # debug, no optimisation
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage") # enabling coverage
-endif()
-
-add_executable(${PROJECT_NAME} EasyRandomTest.cpp)
-
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    CXX_STANDARD 11
-    CXX_STANDARD_REQUIRED ON
-)
-
-target_include_directories(${PROJECT_NAME} PRIVATE "../source")
-
-add_test(NAME ${PROJECT_NAME}
-	COMMAND ${PROJECT_NAME}
-	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-)
+add_main_test("random_static_test" "RANDOM_STATIC")
+add_main_test("random_thread_local_test" "RANDOM_THREAD_LOCAL")
+add_main_test("random_local_test" "RANDOM_LOCAL")
