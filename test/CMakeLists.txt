@@ -1,6 +1,13 @@
 project(effolkronium_random_test) # Enable C language support for pthread
 
 find_package(Threads REQUIRED)
+
+if(COVERAGE_ENABLED)
+	message(STATUS "COVERAGE ENABLED")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0") # debug, no optimisation
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage") # enabling coverage
+endif()
+
 include(set_up_warnings.cmake)
 
 #[[
@@ -16,11 +23,6 @@ function(add_basic_test TARGET COMPILE_DEFS TEST_SOURCES)
     target_link_libraries(${TARGET} Threads::Threads)
     target_compile_definitions(${TARGET} PRIVATE ${COMPILE_DEFS})
     target_include_directories(${TARGET} PRIVATE "../include" ${CMAKE_CURRENT_SOURCE_DIR})
-    
-    if(COVERAGE_ENABLED)
-        message(STATUS "COVERAGE ENABLED")
-        target_compile_options(${TARGET} PRIVATE -g -O0 --coverage)
-    endif()
     
     set_target_properties(${TARGET} PROPERTIES
         CXX_STANDARD 11
