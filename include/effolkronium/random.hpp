@@ -356,8 +356,8 @@ namespace effolkronium {
         template<typename InputIt>
         static typename std::enable_if<details::is_iterator<InputIt>::value
             , InputIt>::type get( InputIt first, InputIt last ) {
-            if( first == last ) return last;
             const auto size = std::distance( first, last );
+            if( 0u == size ) return last;
             using diff_t = typename std::iterator_traits<InputIt>::difference_type;
             return std::next( first, get<diff_t>( 0, size - 1 ) );
         }
@@ -713,8 +713,8 @@ namespace effolkronium {
         template<typename InputIt>
         static typename std::enable_if<details::is_iterator<InputIt>::value
             , InputIt>::type get( InputIt first, InputIt last ) {
-            if( first == last ) return last;
             const auto size = std::distance( first, last );
+            if( 0u == size ) return last;
             using diff_t = typename std::iterator_traits<InputIt>::difference_type;
             return std::next( first, get<diff_t>( 0, size - 1 ) );
         }
@@ -1068,8 +1068,8 @@ namespace effolkronium {
         template<typename InputIt>
         typename std::enable_if<details::is_iterator<InputIt>::value
             , InputIt>::type get( InputIt first, InputIt last ) {
-            if( first == last ) return last;
             const auto size = std::distance( first, last );
+            if( 0u == size ) return last;
             using diff_t = typename std::iterator_traits<InputIt>::difference_type;
             return std::next( first, get<diff_t>( 0, size - 1 ) );
         }
