@@ -153,7 +153,7 @@ namespace effolkronium {
 
         /// Advances the internal state by z times
         static void discard( const unsigned long long z ) {
-            engine.discard( z );
+            engine_instance( ).discard( z );
         }
 
         /// Reseed by Seeder
@@ -170,7 +170,7 @@ namespace effolkronium {
         */
         static void seed( const typename Engine::result_type value =
                           Engine::default_seed ) {
-            engine.seed( value );
+            engine_instance( ).seed( value );
         }
 
         /**
@@ -181,12 +181,12 @@ namespace effolkronium {
         */
         template<typename Sseq>
         static void seed( Sseq& seq ) {
-            engine.seed( seq );
+            engine_instance( ).seed( seq );
         }
 
         /// return random number from engine in [min(), max()] range
         static typename Engine::result_type get( ) {
-            return engine( );
+            return engine_instance( )( );
         }
 
         /**
@@ -199,7 +199,7 @@ namespace effolkronium {
         * \return true, if other and internal engine are equal
         */
         static bool is_equal( const Engine& other ) {
-            return engine == other;
+            return engine_instance( ) == other;
         }
 
         /**
@@ -213,7 +213,7 @@ namespace effolkronium {
         */
         template<typename CharT, typename Traits>
         static void serialize( std::basic_ostream<CharT, Traits>& ost ) {
-            ost << engine;
+            ost << engine_instance( );
         }
 
         /**
@@ -229,7 +229,7 @@ namespace effolkronium {
         */
         template<typename CharT, typename Traits>
         static void deserialize( std::basic_istream<CharT, Traits>& ist ) {
-            ist >> engine;
+            ist >> engine_instance( );
         }
 
         /**
@@ -246,8 +246,8 @@ namespace effolkronium {
             , T>::type get( T from = std::numeric_limits<T>::min( ),
                             T to = std::numeric_limits<T>::max( ) ) {
             if( from < to ) // Allow range from higher to lower
-                return IntegerDist<T>{ from, to }( engine );
-            return IntegerDist<T>{ to, from }( engine );
+                return IntegerDist<T>{ from, to }( engine_instance( ) );
+            return IntegerDist<T>{ to, from }( engine_instance( ) );
         }
 
         /**
@@ -264,8 +264,8 @@ namespace effolkronium {
             , T>::type get( T from = std::numeric_limits<T>::min( ),
                             T to = std::numeric_limits<T>::max( ) ) {
             if( from < to ) // Allow range from higher to lower
-                return RealDist<T>{ from, to }( engine );
-            return RealDist<T>{ to, from }( engine );
+                return RealDist<T>{ from, to }( engine_instance( ) );
+            return RealDist<T>{ to, from }( engine_instance( ) );
         }
 
         /**
@@ -330,7 +330,7 @@ namespace effolkronium {
         static typename std::enable_if<std::is_same<T, bool>::value
             , bool>::type get( const double probability = 0.5 ) {
             assert( 0 <= probability && 1 >= probability ); // out of [0; 1] range
-            return BoolDist{ probability }( engine );
+            return BoolDist{ probability }( engine_instance( ) );
         }
 
         /**
@@ -386,7 +386,7 @@ namespace effolkronium {
         */
         template<typename Dist, typename... Args>
         static typename Dist::result_type get( Args&&... args ) {
-            return Dist{ std::forward<Args>( args )... }( engine );
+            return Dist{ std::forward<Args>( args )... }( engine_instance( ) );
         }
 
         /**
@@ -399,7 +399,7 @@ namespace effolkronium {
         */
         template<typename Dist>
         static typename Dist::result_type get( Dist& dist ) {
-            return dist( engine );
+            return dist( engine_instance( ) );
         }
 
         /**
@@ -410,7 +410,7 @@ namespace effolkronium {
         */
         template<typename RandomIt>
         static void shuffle( RandomIt first, RandomIt last ) {
-            std::shuffle( first, last, engine );
+            std::shuffle( first, last, engine_instance( ) );
         }
 
         /**
@@ -426,31 +426,15 @@ namespace effolkronium {
 
         /// return internal engine by copy
         static Engine get_engine( ) {
-            return engine;
+            return engine_instance( );
         }
     protected:
-        /// return engine seeded by Seeder
-        static Engine make_seeded_engine( ) {
-            // Make seeder instance for seed return by reference like std::seed_seq
-            Seeder seeder;
-            return Engine{ seeder( ) };
+        /// get reference to the static engine instance
+        static Engine& engine_instance( ) {
+            static Engine e{ Seeder{ }( ) };
+            return e;
         }
-    protected:
-        /// The random number engine
-        static Engine engine;
     };
-
-    /// Seed random number engine by Seeder
-    template<
-        typename Engine,
-        typename Seeder,
-        template<typename> class IntegerDist,
-        template<typename> class RealDist,
-        typename BoolDist
-        >
-    Engine basic_random_static<Engine, Seeder, IntegerDist, RealDist, BoolDist
-    // VS2017 issue, can't init by Seeder from lambda
-    >::engine( make_seeded_engine( ) );
 
     /**
     * \brief Base template class for random 
@@ -510,7 +494,7 @@ namespace effolkronium {
 
         /// Advances the internal state by z times
         static void discard( const unsigned long long z ) {
-            engine.discard( z );
+            engine_instance( ).discard( z );
         }
 
         /// Reseed by Seeder
@@ -527,7 +511,7 @@ namespace effolkronium {
         */
         static void seed( const typename Engine::result_type value =
                           Engine::default_seed ) {
-            engine.seed( value );
+            engine_instance( ).seed( value );
         }
 
         /**
@@ -538,12 +522,12 @@ namespace effolkronium {
         */
         template<typename Sseq>
         static void seed( Sseq& seq ) {
-            engine.seed( seq );
+            engine_instance( ).seed( seq );
         }
 
         /// return random number from engine in [min(), max()] range
         static typename Engine::result_type get( ) {
-            return engine( );
+            return engine_instance( )( );
         }
 
         /**
@@ -556,7 +540,7 @@ namespace effolkronium {
         * \return true, if other and internal engine are equal
         */
         static bool is_equal( const Engine& other ) {
-            return engine == other;
+            return engine_instance( ) == other;
         }
 
         /**
@@ -570,7 +554,7 @@ namespace effolkronium {
         */
         template<typename CharT, typename Traits>
         static void serialize( std::basic_ostream<CharT, Traits>& ost ) {
-            ost << engine;
+            ost << engine_instance( );
         }
 
         /**
@@ -586,7 +570,7 @@ namespace effolkronium {
         */
         template<typename CharT, typename Traits>
         static void deserialize( std::basic_istream<CharT, Traits>& ist ) {
-            ist >> engine;
+            ist >> engine_instance( );
         }
 
         /**
@@ -603,8 +587,8 @@ namespace effolkronium {
             , T>::type get( T from = std::numeric_limits<T>::min( ),
                             T to = std::numeric_limits<T>::max( ) ) {
             if( from < to ) // Allow range from higher to lower
-                return IntegerDist<T>{ from, to }( engine );
-            return IntegerDist<T>{ to, from }( engine );
+                return IntegerDist<T>{ from, to }( engine_instance( ) );
+            return IntegerDist<T>{ to, from }( engine_instance( ) );
         }
 
         /**
@@ -621,8 +605,8 @@ namespace effolkronium {
             , T>::type get( T from = std::numeric_limits<T>::min( ),
                             T to = std::numeric_limits<T>::max( ) ) {
             if( from < to ) // Allow range from higher to lower
-                return RealDist<T>{ from, to }( engine );
-            return RealDist<T>{ to, from }( engine );
+                return RealDist<T>{ from, to }( engine_instance( ) );
+            return RealDist<T>{ to, from }( engine_instance( ) );
         }
 
         /**
@@ -687,7 +671,7 @@ namespace effolkronium {
         static typename std::enable_if<std::is_same<T, bool>::value
             , bool>::type get( const double probability = 0.5 ) {
             assert( 0 <= probability && 1 >= probability ); // out of [0; 1] range
-            return BoolDist{ probability }( engine );
+            return BoolDist{ probability }( engine_instance( ) );
         }
 
         /**
@@ -743,7 +727,7 @@ namespace effolkronium {
         */
         template<typename Dist, typename... Args>
         static typename Dist::result_type get( Args&&... args ) {
-            return Dist{ std::forward<Args>( args )... }( engine );
+            return Dist{ std::forward<Args>( args )... }( engine_instance( ) );
         }
 
         /**
@@ -756,7 +740,7 @@ namespace effolkronium {
         */
         template<typename Dist>
         static typename Dist::result_type get( Dist& dist ) {
-            return dist( engine );
+            return dist( engine_instance( ) );
         }
 
         /**
@@ -767,7 +751,7 @@ namespace effolkronium {
         */
         template<typename RandomIt>
         static void shuffle( RandomIt first, RandomIt last ) {
-            std::shuffle( first, last, engine );
+            std::shuffle( first, last, engine_instance( ) );
         }
 
         /**
@@ -783,31 +767,15 @@ namespace effolkronium {
 
         /// return internal engine by copy
         static Engine get_engine( ) {
-            return engine;
+            return engine_instance( );
         }
     protected:
-        /// return engine seeded by Seeder
-        static Engine make_seeded_engine( ) {
-            // Make seeder instance for seed return by reference like std::seed_seq
-            Seeder seeder;
-            return Engine{ seeder( ) };
+        /// get reference to the thread local engine instance
+        static Engine& engine_instance( ) {
+            thread_local Engine e{ Seeder{ }( ) };
+            return e;
         }
-    protected:
-        /// The random number engine
-        static thread_local Engine engine;
     };
-
-    /// Seed random number engine by Seeder
-    template<
-        typename Engine,
-        typename Seeder,
-        template<typename> class IntegerDist,
-        template<typename> class RealDist,
-        typename BoolDist
-        >
-    thread_local Engine basic_random_thread_local<Engine, Seeder, IntegerDist, RealDist, BoolDist
-    // VS2017 issue, can't init by Seeder from lambda
-    >::engine( make_seeded_engine( ) );
 
     /**
     * \brief Base template class for random 
