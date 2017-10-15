@@ -431,8 +431,9 @@ namespace effolkronium {
     protected:
         /// get reference to the static engine instance
         static Engine& engine_instance( ) {
-            static Engine e{ Seeder{ }( ) };
-            return e;
+            Seeder seeder{ };
+            static Engine engine{ seeder( ) };
+            return engine;
         }
     };
 
@@ -772,8 +773,9 @@ namespace effolkronium {
     protected:
         /// get reference to the thread local engine instance
         static Engine& engine_instance( ) {
-            thread_local Engine e{ Seeder{ }( ) };
-            return e;
+	    Seeder seeder{ };
+            thread_local Engine engine{ seeder( ) };
+            return engine;
         }
     };
 
