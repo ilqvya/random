@@ -21,7 +21,6 @@
   - [Custom Seeder](#custom-seeder)
   - [Thread local random](#thread-local-random)
   - [Local random](#local-random)
-  - [Buffered random](#buffered-random)
   - [Get engine](#get-engine)
   - [Seeding](#seeding)
   - [min-value](#min-value)
