@@ -376,15 +376,15 @@ namespace effolkronium {
             return get( std::begin( container ), std::end( container ) );
         }
 
-		/**
-		* \brief Return random pointer from built-in array
-		* \param array The built-in array with elements
-		* \return Pointer to random element in array
-		*/
-		template<typename T, std::size_t N>
-		static T* get(T(&array)[N]) {
-			return std::addressof(array[get<std::size_t>(0, N - 1)]);
-		}
+        /**
+        * \brief Return random pointer from built-in array
+        * \param array The built-in array with elements
+        * \return Pointer to random element in array
+        */
+        template<typename T, std::size_t N>
+        static T* get( T( &array )[ N ] ) {
+            return std::addressof( array[ get<std::size_t>( 0, N - 1 ) ] );
+        }
 
         /**
         * \brief Return value from custom Dist distribution
@@ -728,15 +728,15 @@ namespace effolkronium {
             return get( std::begin( container ), std::end( container ) );
         }
 
-		/**
-		* \brief Return random pointer from built-in array
-		* \param array The built-in array with elements
-		* \return Pointer to random element in array
-		*/
-		template<typename T, std::size_t N>
-		static T* get(T(&array)[N]) {
-			return std::addressof(array[get<std::size_t>(0, N - 1)]);
-		}
+        /**
+        * \brief Return random pointer from built-in array
+        * \param array The built-in array with elements
+        * \return Pointer to random element in array
+        */
+        template<typename T, std::size_t N>
+        static T* get( T( &array )[ N ] ) {
+            return std::addressof( array[ get<std::size_t>( 0, N - 1 ) ] );
+        }
 
         /**
         * \brief Return value from custom Dist distribution
@@ -1078,15 +1078,15 @@ namespace effolkronium {
             return get( std::begin( container ), std::end( container ) );
         }
 
-		/**
-		* \brief Return random pointer from built-in array
-		* \param array The built-in array with elements
-		* \return Pointer to random element in array
-		*/
-		template<typename T, std::size_t N>
-		T* get(T(&array)[N]) {
-			return std::addressof(array[get<std::size_t>(0, N - 1)]);
-		}
+        /**
+        * \brief Return random pointer from built-in array
+        * \param array The built-in array with elements
+        * \return Pointer to random element in array
+        */
+        template<typename T, std::size_t N>
+        T* get( T( &array )[ N ] ) {
+            return std::addressof( array[ get<std::size_t>( 0, N - 1 ) ] );
+        }
 
         /**
         * \brief Return value from custom Dist distribution
