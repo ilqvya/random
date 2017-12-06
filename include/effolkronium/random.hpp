@@ -1,7 +1,13 @@
 ﻿/*﻿
-MIT License
+______  ___   _   _______ ________  __
+| ___ \/ _ \ | \ | |  _  \  _  |  \/  | Random for modern C++
+| |_/ / /_\ \|  \| | | | | | | | .  . |
+|    /|  _  || . ` | | | | | | | |\/| | version 1.1.0
+| |\ \| | | || |\  | |/ /\ \_/ / |  | |
+\_| \_\_| |_/\_| \_/___/  \___/\_|  |_/ https://github.com/effolkronium/random
 
-Copyright( c ) 2017 effolkronium
+Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+Copyright (c) 2017 effolkronium
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files( the "Software" ), to deal
