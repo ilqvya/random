@@ -15,6 +15,7 @@
   - [Bool](#bool)
   - [Random value from std::initilizer_list](#random-value-from-stdinitilizer_list)
   - [Random iterator](#random-iterator)
+  - [Random element from array](#random-element-from-array)
   - [Shuffle](#shuffle)
   - [Custom distribution](#custom-distribution)
   - [Custom Seeder](#custom-seeder)
@@ -169,6 +170,12 @@ auto randomIt = Random::get( array.begin(), array.end() );
 * Container
 ```cpp
 auto randomIt = Random::get( array );
+```
+### Random element from array
+Return pointer to random element in built-in array
+```cpp
+int array [] = {1, 2, 3};
+auto randomPtr = Random::get( array );
 ```
 ### Shuffle
 Reorders the elements in a given range or in all container [ref](http://en.cppreference.com/w/cpp/algorithm/random_shuffle)
