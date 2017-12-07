@@ -1,4 +1,34 @@
-﻿#ifndef EFFOLKRONIUM_RANDOM_HPP
+﻿/*﻿
+______  ___   _   _______ ________  __
+| ___ \/ _ \ | \ | |  _  \  _  |  \/  | Random for modern C++
+| |_/ / /_\ \|  \| | | | | | | | .  . |
+|    /|  _  || . ` | | | | | | | |\/| | version 1.1.0
+| |\ \| | | || |\  | |/ /\ \_/ / |  | |
+\_| \_\_| |_/\_| \_/___/  \___/\_|  |_/ https://github.com/effolkronium/random
+
+Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+Copyright (c) 2017 effolkronium
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files( the "Software" ), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions :
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
+#ifndef EFFOLKRONIUM_RANDOM_HPP
 #define EFFOLKRONIUM_RANDOM_HPP
 
 #include <random>
@@ -377,6 +407,16 @@ namespace effolkronium {
         }
 
         /**
+        * \brief Return random pointer from built-in array
+        * \param array The built-in array with elements
+        * \return Pointer to random element in array
+        */
+        template<typename T, std::size_t N>
+        static T* get( T( &array )[ N ] ) {
+            return std::addressof( array[ get<std::size_t>( 0, N - 1 ) ] );
+        }
+
+        /**
         * \brief Return value from custom Dist distribution
         *        seeded by internal random engine
         * \param Dist The type of custom distribution with next concept:
@@ -719,6 +759,16 @@ namespace effolkronium {
         }
 
         /**
+        * \brief Return random pointer from built-in array
+        * \param array The built-in array with elements
+        * \return Pointer to random element in array
+        */
+        template<typename T, std::size_t N>
+        static T* get( T( &array )[ N ] ) {
+            return std::addressof( array[ get<std::size_t>( 0, N - 1 ) ] );
+        }
+
+        /**
         * \brief Return value from custom Dist distribution
         *        seeded by internal random engine
         * \param Dist The type of custom distribution with next concept:
@@ -1056,6 +1106,16 @@ namespace effolkronium {
             , decltype( std::begin( std::declval<Container>( ) ) )
         >::type get( Container& container ) {
             return get( std::begin( container ), std::end( container ) );
+        }
+
+        /**
+        * \brief Return random pointer from built-in array
+        * \param array The built-in array with elements
+        * \return Pointer to random element in array
+        */
+        template<typename T, std::size_t N>
+        T* get( T( &array )[ N ] ) {
+            return std::addressof( array[ get<std::size_t>( 0, N - 1 ) ] );
         }
 
         /**
