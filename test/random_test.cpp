@@ -683,6 +683,34 @@ TEST_CASE( "return random iterator from container" ) {
     }
 }
 
+TEST_CASE( "return random pointer from built-in array" ) {
+    SECTION( "Matches" ) {
+		int carray [5] = { 1, 2, 3, 4, 5 };
+        std::uintmax_t counter{ std::numeric_limits<std::uintmax_t>::max( ) };
+        bool is1{ false }, is2{ false }, is3{ false },
+            is4{ false }, is5{ false }, isEnd{ false };
+        do {
+            auto ptr = Random DOT get( carray );
+            if( ptr == std::end( carray ) ) {
+                isEnd = true;
+                break;
+            }
+            switch( *ptr ) {
+                case 1: is1 = true; break;
+                case 2: is2 = true; break;
+                case 3: is3 = true; break;
+                case 4: is4 = true; break;
+                case 5: is5 = true; break;
+            }
+        } while( !( is1 && is2 && is3 && is4 && is5 ) && counter--);
+
+        bool isAllMatches = is1 && is2 && is3 && is4 && is5;
+
+        REQUIRE( isAllMatches );
+        REQUIRE( false == isEnd );
+    }
+}
+
 TEST_CASE( "Random range with default arguments" ) {
     Random DOT get<uint8_t>( );
     Random DOT get<uint16_t>( );
