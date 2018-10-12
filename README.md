@@ -156,7 +156,7 @@ auto val = Random::get({1, 2, 3}) // val = 1 or 2 or 3
 ```
 ### Random iterator
 Return random iterator from iterator range or container.
-Iterator must be at least [Input iterator](http://en.cppreference.com/w/cpp/concept/InputIterator).
+Iterator must be at least [Input iterator](http://en.cppreference.com/w/cpp/named_req/InputIterator).
 If a std::distance(first, last) == 0, return the 'last' iterator.
 If container is empty, return [std::end](http://en.cppreference.com/w/cpp/iterator/end)(container) iterator.
 ```cpp
