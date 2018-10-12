@@ -89,6 +89,16 @@ namespace effolkronium {
                 || is_uniform_int <T>::value;
         };
 
+		/// True if type T is character type
+		template<typename T>
+		struct is_supported_character {
+			static constexpr bool value =
+				   std::is_same<T, char>::value
+				|| std::is_same<T, wchar_t>::value
+				|| std::is_same<T, char16_t>::value
+				|| std::is_same<T, char32_t>::value;
+		};
+
         /// True if type T is iterator
         template<typename T>
         struct is_iterator {
@@ -348,6 +358,24 @@ namespace effolkronium {
                             B to = std::numeric_limits<B>::max( ) ) {
             return get( static_cast<C>( from ), static_cast<C>( to ) );
         }
+
+		/**
+		* \brief Generate a random character in a [from; to] range
+		*        by std::uniform_int_distribution
+		* \param from The first limit number of a random range
+		* \param to The second limit number of a random range
+		* \return A random character in a [from; to] range
+		* \note Allow both: 'from' <= 'to' and 'from' >= 'to'
+		* \note Prevent implicit type conversion
+		*/
+		template<typename T>
+		static typename std::enable_if<details::is_supported_character<T>::value
+			, T>::type get(T from = std::numeric_limits<T>::min(),
+				T to = std::numeric_limits<T>::max()) {
+			if (from < to) // Allow range from higher to lower
+				return static_cast<T>(IntegerDist<std::int64_t>{ static_cast<std::int64_t>(from), static_cast<std::int64_t>(to) }(engine_instance()));
+			return static_cast<T>(IntegerDist<std::int64_t>{ static_cast<std::int64_t>(to), static_cast<std::int64_t>(from) }(engine_instance()));
+		}
 
         /**
         * \brief Generate a bool value with specific probability
@@ -701,6 +729,24 @@ namespace effolkronium {
             return get( static_cast<C>( from ), static_cast<C>( to ) );
         }
 
+		/**
+		* \brief Generate a random character in a [from; to] range
+		*        by std::uniform_int_distribution
+		* \param from The first limit number of a random range
+		* \param to The second limit number of a random range
+		* \return A random character in a [from; to] range
+		* \note Allow both: 'from' <= 'to' and 'from' >= 'to'
+		* \note Prevent implicit type conversion
+		*/
+		template<typename T>
+		static typename std::enable_if<details::is_supported_character<T>::value
+			, T>::type get(T from = std::numeric_limits<T>::min(),
+				T to = std::numeric_limits<T>::max()) {
+			if (from < to) // Allow range from higher to lower
+				return static_cast<T>(IntegerDist<std::int64_t>{ static_cast<std::int64_t>(from), static_cast<std::int64_t>(to) }(engine_instance()));
+			return static_cast<T>(IntegerDist<std::int64_t>{ static_cast<std::int64_t>(to), static_cast<std::int64_t>(from) }(engine_instance()));
+		}
+
         /**
         * \brief Generate a bool value with specific probability
         *                         by std::bernoulli_distribution
@@ -1050,6 +1096,24 @@ namespace effolkronium {
                             B to = std::numeric_limits<B>::max( ) ) {
             return get( static_cast<C>( from ), static_cast<C>( to ) );
         }
+
+		/**
+		* \brief Generate a random character in a [from; to] range
+		*        by std::uniform_int_distribution
+		* \param from The first limit number of a random range
+		* \param to The second limit number of a random range
+		* \return A random character in a [from; to] range
+		* \note Allow both: 'from' <= 'to' and 'from' >= 'to'
+		* \note Prevent implicit type conversion
+		*/
+		template<typename T>
+		typename std::enable_if<details::is_supported_character<T>::value
+			, T>::type get(T from = std::numeric_limits<T>::min(),
+				T to = std::numeric_limits<T>::max()) {
+			if (from < to) // Allow range from higher to lower
+				return static_cast<T>(IntegerDist<std::int64_t>{ static_cast<std::int64_t>(from), static_cast<std::int64_t>(to) }(engine));
+			return static_cast<T>(IntegerDist<std::int64_t>{ static_cast<std::int64_t>(to), static_cast<std::int64_t>(from) }(engine));
+		}
 
         /**
         * \brief Generate a bool value with specific probability
