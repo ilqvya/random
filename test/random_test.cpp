@@ -753,3 +753,40 @@ TEST_CASE( "is truly thread local" ) {
 }
 
 #endif
+
+TEST_CASE("Type deduction for random character") {
+	static_assert(std::is_same<char,
+		decltype(Random DOT get(
+			'a', 'b')) > ::value, "");
+
+	static_assert(std::is_same<wchar_t,
+		decltype(Random DOT get(
+			L'a', L'b')) > ::value, "");
+
+	static_assert(std::is_same<char16_t,
+		decltype(Random DOT get(
+			char16_t{ 1 }, char16_t{ 2 })) > ::value, "");
+
+	static_assert(std::is_same<char32_t,
+		decltype(Random DOT get(
+			char32_t{ 1 }, char32_t{ 2 })) > ::value, "");
+}
+
+TEST_CASE("Random characters is truly random") {
+	bool isDifferentNumber{ false };
+
+	do {
+
+		const auto firstRandomNumber = Random DOT get<char>(
+			std::numeric_limits<char>::min(),
+			std::numeric_limits<char>::max());
+
+		const auto secondRandomNumber = Random DOT get<char>(
+			std::numeric_limits<char>::min(),
+			std::numeric_limits<char>::max());
+
+		isDifferentNumber = firstRandomNumber != secondRandomNumber;
+	} while (!isDifferentNumber);
+
+	CHECK(isDifferentNumber);
+}
