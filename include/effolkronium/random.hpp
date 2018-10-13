@@ -76,7 +76,8 @@ namespace effolkronium {
         template<typename T>
         struct is_byte {
             static constexpr bool value =
-                   std::is_same<T,   signed char>::value
+                   std::is_same<T,          char>::value
+                || std::is_same<T,   signed char>::value
                 || std::is_same<T, unsigned char>::value;
         };
 
