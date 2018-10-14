@@ -12,6 +12,7 @@
 - [Five-minute tutorial](#five-minute-tutorial)
   - [Number range](#number-range)
   - [Common type number range](#common-type-number-range)
+  - [Character range](#character-range)
   - [Bool](#bool)
   - [Random value from std::initilizer_list](#random-value-from-stdinitilizer_list)
   - [Random iterator](#random-iterator)
@@ -137,6 +138,14 @@ auto val = Random::get<Random::common>(1.2l, 1.5f) // decltype(val) is long doub
 ```
 ```cpp
 auto val = Random::get<Random::common>(1u, -1) // Error: prevent conversion from signed to unsigned.
+```
+### Character range
+Returns a pseudo-random character in a [first; second] range.
+```cpp
+auto val = Random::get<Random::common>('a', 'z')
+```
+```cpp
+auto val = Random::get<Random::common>(L'㋐', L'㋾')
 ```
 ### Bool
 Generate true with [0; 1] probability
