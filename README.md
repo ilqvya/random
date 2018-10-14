@@ -142,10 +142,13 @@ auto val = Random::get<Random::common>(1u, -1) // Error: prevent conversion from
 ### Character range
 Returns a pseudo-random character in a [first; second] range.
 ```cpp
-auto val = Random::get<Random::common>('a', 'z')
+auto val = Random::get('a', 'z')
 ```
 ```cpp
-auto val = Random::get<Random::common>(L'㋐', L'㋾')
+auto val = Random::get(L'㋐', L'㋾')
+```
+```cpp
+auto val = Random::get<wchar_t>()
 ```
 ### Bool
 Generate true with [0; 1] probability
