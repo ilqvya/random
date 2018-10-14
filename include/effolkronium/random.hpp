@@ -79,12 +79,19 @@ namespace effolkronium {
                    std::is_same<T,   signed char>::value
                 || std::is_same<T, unsigned char>::value;
         };
+        /// True if type T is multibyte
+        template<typename T>
+        struct is_multibyte {
+            static constexpr bool value =
+                   std::is_same<T, wchar_t>::value;
+        };
 
         /// True if type T is plain number type
         template<typename T>
         struct is_supported_number {
             static constexpr bool value =
                    is_byte        <T>::value
+                || is_multibyte   <T>::value
                 || is_uniform_real<T>::value
                 || is_uniform_int <T>::value;
         };
@@ -325,6 +332,25 @@ namespace effolkronium {
                 short, unsigned short>::type;
 
             return static_cast<T>( get<short_t>( from, to ) );
+        }
+
+        /**
+        * \brief Generate a random multibyte number in a [from; to] range
+        * \param from The first limit number of a random range
+        * \param to The second limit number of a random range
+        * \return A random byte number in a [from; to] range
+        * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
+        * \note Prevent implicit type conversion
+        */
+        template<typename T>
+        static typename std::enable_if<details::is_multibyte<T>::value
+            , T>::type get( T from = std::numeric_limits<T>::min( ),
+                            T to = std::numeric_limits<T>::max( ) ) {
+            // Choose between long and unsigned long for byte conversion
+            using long_t = typename std::conditional<std::is_signed<T>::value,
+                long, unsigned long>::type;
+
+            return static_cast<T>( get<long_t>( from, to ) );
         }
 
         /**
