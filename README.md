@@ -1,5 +1,5 @@
 # Random for modern C++ with convenient API
-[![Build Status](https://travis-ci.org/effolkronium/random.svg?branch=develop)](https://travis-ci.org/effolkronium/random)
+[![Build Status](https://travis-ci.org/effolkronium/random.svg?branch=develop)](https://travis-ci.org/effolkronium/random?branch=develop)
 [![Build status](https://ci.appveyor.com/api/projects/status/vq1kodqqxwx16rfv/branch/develop?svg=true)](https://ci.appveyor.com/project/effolkronium/random/branch/develop)
 [![Coverage Status](https://coveralls.io/repos/github/effolkronium/random/badge.svg?branch=develop&unused=0)](https://coveralls.io/github/effolkronium/random?branch=develop&unused=0)
 <a href="https://scan.coverity.com/projects/effolkronium-random">
@@ -36,7 +36,7 @@ There are few ways to get working with random in C++:
 - **C style**
 ```cpp
   srand( time(NULL) ); // seed with time since epoch
-  auto random_number = rand() % (9 - 1)) + 1; // get a pseudo-random integer between 1 and 9
+  auto random_number = (rand() % (9 - 1)) + 1; // get a pseudo-random integer between 1 and 9
 ```
 * Problems
   * should specify seed
