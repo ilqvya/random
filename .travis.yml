@@ -118,25 +118,25 @@ matrix:
     - os: osx
       osx_image: xcode8.3
 
-	  - os: osx
+	- os: osx
       osx_image: xcode9
 
-	  - os: osx
+	- os: osx
       osx_image: xcode9.1
 
-	  - os: osx
+	- os: osx
       osx_image: xcode9.2
 
-	  - os: osx
+	- os: osx
       osx_image: xcode9.3
 
-	  - os: osx
+	- os: osx
       osx_image: xcode9.4
 
-	  - os: osx
+	- os: osx
       osx_image: xcode10
 
-	  - os: osx
+	- os: osx
       osx_image: xcode10.1
       
 # Build steps
