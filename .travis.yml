@@ -64,6 +64,7 @@ matrix:
     # linux clang
     
     # Strange 'Exception: SegFault' on 3.6.X clang
+    # http://releases.llvm.org/
     # (Other compilers and clang 3.7.0+ are OK)
     #- os: linux
     #  env: LLVM_VERSION=3.6.0
@@ -104,7 +105,39 @@ matrix:
     - os: linux
       env: LLVM_VERSION=4.0.0
       compiler: clang
-      
+
+    - os: linux
+      env: LLVM_VERSION=4.0.1
+      compiler: clang
+
+    - os: linux
+      env: LLVM_VERSION=5.0.0
+      compiler: clang
+
+    - os: linux
+      env: LLVM_VERSION=5.0.1
+      compiler: clang
+
+    - os: linux
+      env: LLVM_VERSION=5.0.2
+      compiler: clang
+
+    - os: linux
+      env: LLVM_VERSION=6.0.0
+      compiler: clang
+
+    - os: linux
+      env: LLVM_VERSION=6.0.1
+      compiler: clang
+
+    - os: linux
+      env: LLVM_VERSION=7.0.0
+      compiler: clang
+
+    - os: linux
+      env: LLVM_VERSION=7.0.1
+      compiler: clang
+
     # OSX xcode
     - os: osx
       osx_image: xcode8
@@ -138,6 +171,7 @@ matrix:
 
     - os: osx
       osx_image: xcode10.1   
+
 # Build steps
 script:
   - cmake --version
