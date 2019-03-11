@@ -123,9 +123,7 @@ matrix:
       compiler: clang
 
     - os: linux
-      env: 
-        - LLVM_VERSION=6.0.0
-        - CXXFLAGS=-stdlib=libc++
+      env: LLVM_VERSION=6.0.0 CXXFLAGS=-stdlib=libc++
       compiler: clang
 
     - os: linux
