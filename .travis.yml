@@ -123,7 +123,7 @@ matrix:
       compiler: clang
 
     - os: linux
-      env: LLVM_VERSION=6.0.0 CXXFLAGS=-stdlib=libc++
+      env: LLVM_VERSION=6.0.0
       compiler: clang
 
     - os: linux
@@ -197,6 +197,7 @@ install:
   # install LLVM/clang when LLVM_VERSION is set
   - |
      if [[ "${LLVM_VERSION}" != "" ]]; then
+       sudo apt-get update && apt-get install -y libc++-dev
        LLVM_DIR=${DEPS_DIR}/llvm-${LLVM_VERSION}
        if [[ -z "$(ls -A ${LLVM_DIR})" ]]; then
          travis_retry wget --quiet https://cmake.org/files/v3.6/cmake-3.6.1.tar.gz
