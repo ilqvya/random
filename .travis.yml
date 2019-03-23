@@ -216,7 +216,6 @@ install:
          (cd ${LLVM_DIR}/build && cmake .. -DCMAKE_CXX_COMPILER=g++)
          (cd ${LLVM_DIR}/build/projects/libcxx && make install -j2)
          (cd ${LLVM_DIR}/build/projects/libcxxabi && make install -j2)
-         clang --version
        fi
        ls ${LLVM_DIR}/install/include/c++/v1
        ls ${LLVM_DIR}/install/include/c++
