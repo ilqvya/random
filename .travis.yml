@@ -17,6 +17,7 @@ matrix:
         - sudo make -C lcov-1.11/ install
         - gem install coveralls-lcov
         - pip install --user cpp-coveralls
+        - apt-get install -y libc++-dev
       after_success:
         - make clean
         - cmake -DCOVERAGE_ENABLED=1 -DCMAKE_CXX_COMPILER=$COMPILER ..
@@ -197,7 +198,6 @@ install:
   # install LLVM/clang when LLVM_VERSION is set
   - |
      if [[ "${LLVM_VERSION}" != "" ]]; then
-       sudo apt-get update && apt-get install -y libc++-dev
        LLVM_DIR=${DEPS_DIR}/llvm-${LLVM_VERSION}
        if [[ -z "$(ls -A ${LLVM_DIR})" ]]; then
          travis_retry wget --quiet https://cmake.org/files/v3.6/cmake-3.6.1.tar.gz
@@ -216,6 +216,7 @@ install:
          (cd ${LLVM_DIR}/build && cmake .. -DCMAKE_INSTALL_PREFIX=${LLVM_DIR}/install -DCMAKE_CXX_COMPILER=g++)
          (cd ${LLVM_DIR}/build/projects/libcxx && make install -j2)
          (cd ${LLVM_DIR}/build/projects/libcxxabi && make install -j2)
+         CXXFLAGS="-stdlib=libc++"
        fi
        export CXXFLAGS="-nostdinc++ -isystem ${LLVM_DIR}/install/include/c++/v1"
        export LDFLAGS="-L ${LLVM_DIR}/install/lib -l c++ -l c++abi"
