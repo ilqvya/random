@@ -216,8 +216,12 @@ install:
          (cd ${LLVM_DIR}/build && cmake .. -DCMAKE_INSTALL_PREFIX=${LLVM_DIR}/install -DCMAKE_CXX_COMPILER=g++)
          (cd ${LLVM_DIR}/build/projects/libcxx && make install -j2)
          (cd ${LLVM_DIR}/build/projects/libcxxabi && make install -j2)
-         CXXFLAGS="-stdlib=libc++"
+         clang --version
        fi
+       ls ${LLVM_DIR}/install/include/c++/v1
+       ls ${LLVM_DIR}/install/include/c++
+       ls ${LLVM_DIR}/install/include
+       ls ${LLVM_DIR}/install
        export CXXFLAGS="-nostdinc++ -isystem ${LLVM_DIR}/install/include/c++/v1"
        export LDFLAGS="-L ${LLVM_DIR}/install/lib -l c++ -l c++abi"
        export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${LLVM_DIR}/install/lib"
