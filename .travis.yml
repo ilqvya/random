@@ -79,7 +79,7 @@ matrix:
     # compiler: clang
 
     - os: linux
-      env: LLVM_VERSION=3.7.0
+      env: LLVM_VERSION=3.7.0 COMPILER=clang
       compiler: clang
       addons:
         apt:
@@ -89,7 +89,7 @@ matrix:
             - g++-6
 
     - os: linux
-      env: LLVM_VERSION=3.7.1
+      env: LLVM_VERSION=3.7.1 COMPILER=clang
       compiler: clang
       addons:
         apt:
@@ -99,7 +99,7 @@ matrix:
             - g++-6
 
     - os: linux
-      env: LLVM_VERSION=3.8.0
+      env: LLVM_VERSION=3.8.0 COMPILER=clang
       compiler: clang
       addons:
         apt:
@@ -109,7 +109,7 @@ matrix:
             - g++-6
 
     - os: linux
-      env: LLVM_VERSION=3.8.1
+      env: LLVM_VERSION=3.8.1 COMPILER=clang
       compiler: clang
       addons:
         apt:
@@ -119,7 +119,7 @@ matrix:
             - g++-6
       
     - os: linux
-      env: LLVM_VERSION=3.9.0 
+      env: LLVM_VERSION=3.9.0 COMPILER=clang
       compiler: clang
       addons:
         apt:
@@ -129,7 +129,7 @@ matrix:
             - g++-6
       
     - os: linux
-      env: LLVM_VERSION=3.9.1
+      env: LLVM_VERSION=3.9.1 COMPILER=clang
       compiler: clang
       addons:
         apt:
@@ -139,7 +139,7 @@ matrix:
             - g++-6
       
     - os: linux
-      env: LLVM_VERSION=4.0.0
+      env: LLVM_VERSION=4.0.0 COMPILER=clang
       compiler: clang
       addons:
         apt:
@@ -149,7 +149,7 @@ matrix:
             - g++-6
 
     - os: linux
-      env: LLVM_VERSION=4.0.1
+      env: LLVM_VERSION=4.0.1 COMPILER=clang
       compiler: clang
       addons:
         apt:
@@ -159,7 +159,7 @@ matrix:
             - g++-6
 
     - os: linux
-      env: LLVM_VERSION=5.0.0
+      env: LLVM_VERSION=5.0.0 COMPILER=clang
       compiler: clang
       addons:
         apt:
@@ -169,7 +169,7 @@ matrix:
             - g++-6
 
     - os: linux
-      env: LLVM_VERSION=5.0.1
+      env: LLVM_VERSION=5.0.1 COMPILER=clang
       compiler: clang
       addons:
         apt:
@@ -179,7 +179,7 @@ matrix:
             - g++-6
 
     - os: linux
-      env: LLVM_VERSION=5.0.2
+      env: LLVM_VERSION=5.0.2 COMPILER=clang
       compiler: clang
       addons:
         apt:
@@ -189,7 +189,7 @@ matrix:
             - g++-6
 
     - os: linux
-      env: LLVM_VERSION=6.0.0
+      env: LLVM_VERSION=6.0.0 COMPILER=clang
       compiler: clang
       addons:
         apt:
@@ -199,7 +199,7 @@ matrix:
             - g++-6
 
     - os: linux
-      env: LLVM_VERSION=6.0.1
+      env: LLVM_VERSION=6.0.1 COMPILER=clang
       compiler: clang
       addons:
         apt:
@@ -209,7 +209,7 @@ matrix:
             - g++-6
 
     - os: linux
-      env: LLVM_VERSION=7.0.0
+      env: LLVM_VERSION=7.0.0 COMPILER=clang
       compiler: clang
       addons:
         apt:
@@ -219,7 +219,7 @@ matrix:
             - g++-6
 
     - os: linux
-      env: LLVM_VERSION=7.0.1
+      env: LLVM_VERSION=7.0.1 COMPILER=clang
       compiler: clang
       addons:
         apt:
@@ -229,7 +229,7 @@ matrix:
             - g++-6
 
     - os: linux
-      env: LLVM_VERSION=8.0.0
+      env: LLVM_VERSION=8.0.0 COMPILER=clang
       compiler: clang
       addons:
         apt:
