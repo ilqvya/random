@@ -228,6 +228,16 @@ matrix:
           packages:
             - g++-6
 
+    - os: linux
+      env: LLVM_VERSION=8.0.0
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
+
     # OSX xcode
     - os: osx
       osx_image: xcode8
