@@ -125,6 +125,12 @@ matrix:
     - os: linux
       env: LLVM_VERSION=6.0.0
       compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
 
     - os: linux
       env: LLVM_VERSION=6.0.1
@@ -212,14 +218,12 @@ install:
          travis_retry wget --quiet -O - ${LIBCXX_URL}    | tar --strip-components=1 -xJ -C ${LLVM_DIR}/projects/libcxx
          travis_retry wget --quiet -O - ${LIBCXXABI_URL} | tar --strip-components=1 -xJ -C ${LLVM_DIR}/projects/libcxxabi
          travis_retry wget --quiet -O - ${CLANG_URL}     | tar --strip-components=1 -xJ -C ${LLVM_DIR}/clang
-         (cd ${LLVM_DIR}/build && cmake .. -DCMAKE_CXX_COMPILER=g++)
+         (cd ${LLVM_DIR}/build && cmake .. -DCMAKE_INSTALL_PREFIX=${LLVM_DIR}/install -DCMAKE_CXX_COMPILER=g++-6)
          (cd ${LLVM_DIR}/build/projects/libcxx && make install -j2)
          (cd ${LLVM_DIR}/build/projects/libcxxabi && make install -j2)
        fi
-       ls ${LLVM_DIR}/install/include/c++/v1
-       ls ${LLVM_DIR}/install/include/c++
-       ls ${LLVM_DIR}/install/include
-       ls ${LLVM_DIR}/install
-       export CXXFLAGS="-stdlib=libc++"
-       clang --version
+       export CXXFLAGS="-nostdinc++ -isystem ${LLVM_DIR}/install/include/c++/v1"
+       export LDFLAGS="-L ${LLVM_DIR}/install/lib -l c++ -l c++abi"
+       export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${LLVM_DIR}/install/lib"
+       export PATH="${LLVM_DIR}/clang/bin:${PATH}"
      fi
