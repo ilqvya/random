@@ -19,6 +19,8 @@ matrix:
         - pip install --user cpp-coveralls
       after_success:
         - make clean
+        - echo $COMPILER
+        - $COMPILER --version
         - cmake -DCOVERAGE_ENABLED=1 -DCMAKE_CXX_COMPILER=$COMPILER ..
         - make -j4
         - test/random_static_test "*"
@@ -63,7 +65,7 @@ matrix:
       
     # linux clang
     
-    # Strange 'Exception: SegFault' on 3.6.X clang
+    # [!!!WARNING!!!] Strange 'Exception: SegFault' on 3.6.X clang
     # http://releases.llvm.org/
     # (Other compilers and clang 3.7.0+ are OK)
     #- os: linux
