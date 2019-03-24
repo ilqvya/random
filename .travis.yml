@@ -19,8 +19,6 @@ matrix:
         - pip install --user cpp-coveralls
       after_success:
         - make clean
-        - echo $COMPILER
-        - $COMPILER --version
         - cmake -DCOVERAGE_ENABLED=1 -DCMAKE_CXX_COMPILER=$COMPILER ..
         - make -j4
         - test/random_static_test "*"
@@ -278,6 +276,8 @@ matrix:
 script:
   - cmake --version
   - echo "Start BUILD !!!!@@@!!!@@@!!^!"
+  - echo $COMPILER
+  - $COMPILER --version
   - mkdir build
   - cd build
   - cmake -DCMAKE_CXX_COMPILER=$COMPILER ..
