@@ -297,6 +297,7 @@ script:
   - echo "Start BUILD !!!!@@@!!!@@@!!^!"
   - mkdir build
   - cd build
+  - echo $COMPILER
   - cmake -DCMAKE_CXX_COMPILER=$COMPILER ..
   - cmake --build . --config Debug
   - ctest -C Debug --output-on-failure
