@@ -20,6 +20,8 @@ matrix:
       after_success:
         - make clean
         - echo $COMPILER
+        - g++ --version
+        - clang --version
         - cmake -DCOVERAGE_ENABLED=1 -DCMAKE_CXX_COMPILER=$COMPILER ..
         - make -j4
         - test/random_static_test "*"
