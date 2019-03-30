@@ -427,10 +427,11 @@ namespace effolkronium {
         * \note If container is empty return std::end( container ) iterator
         */
         template<typename Container>
-        static typename std::enable_if<details::is_iterator<
-            decltype( std::begin( std::declval<Container>( ) ) )>::value
-            , decltype( std::begin( std::declval<Container>( ) ) )
-        >::type get( Container& container ) {
+        static auto get( Container& container ) -> 
+            typename std::enable_if<details::is_iterator<
+                decltype(std::begin(container))>::value
+                , decltype(std::begin(container))
+            >::type {
             return get( std::begin( container ), std::end( container ) );
         }
 
@@ -797,10 +798,11 @@ namespace effolkronium {
         * \note If container is empty return std::end( container ) iterator
         */
         template<typename Container>
-        static typename std::enable_if<details::is_iterator<
-            decltype( std::begin( std::declval<Container>( ) ) )>::value
-            , decltype( std::begin( std::declval<Container>( ) ) )
-        >::type get( Container& container ) {
+        static auto get( Container& container ) -> 
+            typename std::enable_if<details::is_iterator<
+                decltype(std::begin(container))>::value
+                , decltype(std::begin(container))
+            >::type {
             return get( std::begin( container ), std::end( container ) );
         }
 
@@ -1165,10 +1167,11 @@ namespace effolkronium {
         * \note If container is empty return std::end( container ) iterator
         */
         template<typename Container>
-        typename std::enable_if<details::is_iterator<
-            decltype( std::begin( std::declval<Container>( ) ) )>::value
-            , decltype( std::begin( std::declval<Container>( ) ) )
-        >::type get( Container& container ) {
+        auto get( Container& container ) -> 
+            typename std::enable_if<details::is_iterator<
+                decltype(std::begin(container))>::value
+                , decltype(std::begin(container))
+            >::type {
             return get( std::begin( container ), std::end( container ) );
         }
 

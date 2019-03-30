@@ -790,3 +790,23 @@ TEST_CASE("Random characters is truly random") {
 
 	CHECK(isDifferentNumber);
 }
+
+TEST_CASE("Random iterator assigment") {
+    std::vector<int> testData{ 1,2,3,4 };
+    int newVal = 5;
+
+    *(Random DOT get(testData.begin(), testData.end())) = newVal;
+
+    bool testDataHasNewVal = std::find(testData.cbegin(), testData.cend(), newVal) != testData.end();
+    CHECK(testDataHasNewVal);
+}
+
+TEST_CASE("Random container assigment") {
+    std::vector<int> testData{ 1,2,3,4 };
+    int newVal = 5;
+    
+    *(Random DOT get(testData)) = newVal;
+
+    bool testDataHasNewVal = std::find(testData.cbegin(), testData.cend(), newVal) != testData.end();
+    CHECK(testDataHasNewVal);
+}
