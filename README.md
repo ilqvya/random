@@ -1,7 +1,7 @@
 # Random for modern C++ with convenient API
-[![Build Status](https://travis-ci.org/effolkronium/random.svg?branch=master)](https://travis-ci.org/effolkronium/random)
-[![Build status](https://ci.appveyor.com/api/projects/status/vq1kodqqxwx16rfv/branch/master?svg=true)](https://ci.appveyor.com/project/effolkronium/random/branch/master)
-[![Coverage Status](https://coveralls.io/repos/github/effolkronium/random/badge.svg?branch=master&unused=0)](https://coveralls.io/github/effolkronium/random?branch=master&unused=0)
+[![Build Status](https://travis-ci.org/effolkronium/random.svg?branch=develop)](https://travis-ci.org/effolkronium/random?branch=develop)
+[![Build status](https://ci.appveyor.com/api/projects/status/vq1kodqqxwx16rfv/branch/develop?svg=true)](https://ci.appveyor.com/project/effolkronium/random/branch/develop)
+[![Coverage Status](https://coveralls.io/repos/github/effolkronium/random/badge.svg?branch=develop&unused=0)](https://coveralls.io/github/effolkronium/random?branch=develop&unused=0)
 <a href="https://scan.coverity.com/projects/effolkronium-random">
   <img alt="Coverity Scan Build Status"
        src="https://scan.coverity.com/projects/13062/badge.svg"/>
@@ -22,6 +22,7 @@
   - [Custom Seeder](#custom-seeder)
   - [Thread local random](#thread-local-random)
   - [Local random](#local-random)
+  - [engine](#engine)
   - [Get engine](#get-engine)
   - [Seeding](#seeding)
   - [min-value](#min-value)
@@ -36,7 +37,7 @@ There are few ways to get working with random in C++:
 - **C style**
 ```cpp
   srand( time(NULL) ); // seed with time since epoch
-  auto random_number = rand() % (9 - 1)) + 1; // get a pseudo-random integer between 1 and 9
+  auto random_number = (rand() % (9 - 1)) + 1; // get a pseudo-random integer between 1 and 9
 ```
 * Problems
   * should specify seed
@@ -62,16 +63,15 @@ There are few ways to get working with random in C++:
 ```
 * Advantages
   * **Intuitive syntax**. You can do almost everything with random by simple 'get' method, like getting simple numbers, bools, random object from given set or using custom distribution.
-  * **Trivial integration**. All code consists of a single header file [`random.hpp`](https://github.com/effolkronium/random/blob/master/include/effolkronium/random.hpp). That's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
+  * **Trivial integration**. All code consists of a single header file [`random.hpp`](https://github.com/effolkronium/random/blob/develop/include/effolkronium/random.hpp). That's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
   * **Usability**. There are 3 versions of random: 
     * *random_static* which has static methods and static internal state. It's not thread safe but more efficient
     * *random_thread_local* which has static methods and [thread_local](http://en.cppreference.com/w/cpp/keyword/thread_local) internal state. It's thread safe but less efficient
     * *random_local* which has non static methods and local internal state. It can be created on the stack at local scope
 ## Supported compilers
-* GCC 4.9 - 7.0 (and possibly later)
-* Clang 3.7 - 4.0 (and possibly later)
-* Microsoft Visual C++ 2015
-* Microsoft Visual C++ 2017
+* GCC 4.9 - 8.0 (and possibly later)
+* Clang 3.7 - 8.0 (and possibly later)
+* Microsoft Visual C++ 2015 - 2017 (and possibly later)
 ## Integration
 #### CMake
 * As subproject
@@ -98,7 +98,7 @@ find_package(effolkronium_random REQUIRED)
 target_link_libraries(${TARGET} effolkronium_random)
 ```
 #### Manually
-The single required source, file [`random.hpp`](https://github.com/effolkronium/random/blob/master/include/effolkronium/random.hpp) is in the [`include/effolkronium`](https://github.com/effolkronium/random/tree/master/include/effolkronium) directory.
+The single required source, file [`random.hpp`](https://github.com/effolkronium/random/blob/develop/include/effolkronium/random.hpp) is in the [`include/effolkronium`](https://github.com/effolkronium/random/tree/develop/include/effolkronium) directory.
 #### Then
 All you need to do is add
 ```cpp
@@ -302,6 +302,14 @@ Returns the random number in [ Random::min( ), Random::max ] range
 ```cpp
 auto val = Random::get( );
 // val is random number in [ Random::min( ), Random::max ] range
+```
+### engine
+Returns reference to the internal engine.
+```cpp
+auto& engine = Random::engine( );
+```
+```cpp
+std::sample(itBeg, itEnd, std::back_inserter(out), 5, Random::engine( ));
 ```
 ### Get engine
 Returns copy of internal engine.
