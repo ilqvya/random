@@ -60,10 +60,30 @@ matrix:
           packages:
             - g++-6
       env: COMPILER=g++-6
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-7
+      env: COMPILER=g++-7
+
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-8
+      env: COMPILER=g++-8
       
     # linux clang
     
-    # Strange 'Exception: SegFault' on 3.6.X clang
+    # [!!!WARNING!!!] Strange 'Exception: SegFault' on 3.6.X clang
+    # http://releases.llvm.org/
     # (Other compilers and clang 3.7.0+ are OK)
     #- os: linux
     #  env: LLVM_VERSION=3.6.0
@@ -80,31 +100,163 @@ matrix:
     - os: linux
       env: LLVM_VERSION=3.7.0
       compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
 
     - os: linux
       env: LLVM_VERSION=3.7.1
       compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
 
     - os: linux
       env: LLVM_VERSION=3.8.0
       compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
 
     - os: linux
       env: LLVM_VERSION=3.8.1
       compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
       
     - os: linux
       env: LLVM_VERSION=3.9.0 
       compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
       
     - os: linux
       env: LLVM_VERSION=3.9.1
       compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
       
     - os: linux
       env: LLVM_VERSION=4.0.0
       compiler: clang
-      
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
+
+    - os: linux
+      env: LLVM_VERSION=4.0.1
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
+
+    - os: linux
+      env: LLVM_VERSION=5.0.0
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
+
+    - os: linux
+      env: LLVM_VERSION=5.0.1
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
+
+    - os: linux
+      env: LLVM_VERSION=5.0.2
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
+
+    - os: linux
+      env: LLVM_VERSION=6.0.0
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
+
+    - os: linux
+      env: LLVM_VERSION=6.0.1
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
+
+    - os: linux
+      env: LLVM_VERSION=7.0.0
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
+
+    - os: linux
+      env: LLVM_VERSION=7.0.1
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
+
+    - os: linux
+      env: LLVM_VERSION=8.0.0
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
+
     # OSX xcode
     - os: osx
       osx_image: xcode8
@@ -117,13 +269,35 @@ matrix:
 
     - os: osx
       osx_image: xcode8.3
-      
+
+    - os: osx
+      osx_image: xcode9
+
+    - os: osx
+      osx_image: xcode9.1
+
+    - os: osx
+      osx_image: xcode9.2
+
+    - os: osx
+      osx_image: xcode9.3
+
+    - os: osx
+      osx_image: xcode9.4
+
+    - os: osx
+      osx_image: xcode10
+
+    - os: osx
+      osx_image: xcode10.1   
+
 # Build steps
 script:
   - cmake --version
   - echo "Start BUILD !!!!@@@!!!@@@!!^!"
   - mkdir build
   - cd build
+  - echo $COMPILER
   - cmake -DCMAKE_CXX_COMPILER=$COMPILER ..
   - cmake --build . --config Debug
   - ctest -C Debug --output-on-failure
@@ -158,7 +332,7 @@ install:
          travis_retry wget --quiet -O - ${LIBCXX_URL}    | tar --strip-components=1 -xJ -C ${LLVM_DIR}/projects/libcxx
          travis_retry wget --quiet -O - ${LIBCXXABI_URL} | tar --strip-components=1 -xJ -C ${LLVM_DIR}/projects/libcxxabi
          travis_retry wget --quiet -O - ${CLANG_URL}     | tar --strip-components=1 -xJ -C ${LLVM_DIR}/clang
-         (cd ${LLVM_DIR}/build && cmake .. -DCMAKE_INSTALL_PREFIX=${LLVM_DIR}/install -DCMAKE_CXX_COMPILER=g++)
+         (cd ${LLVM_DIR}/build && cmake .. -DCMAKE_INSTALL_PREFIX=${LLVM_DIR}/install -DCMAKE_C_COMPILER=gcc-6 -DCMAKE_CXX_COMPILER=g++-6 -DCMAKE_CXX_STANDARD=11)
          (cd ${LLVM_DIR}/build/projects/libcxx && make install -j2)
          (cd ${LLVM_DIR}/build/projects/libcxxabi && make install -j2)
        fi

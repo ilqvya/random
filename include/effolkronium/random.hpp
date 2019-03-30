@@ -2,12 +2,12 @@
 ______  ___   _   _______ ________  __
 | ___ \/ _ \ | \ | |  _  \  _  |  \/  | Random for modern C++
 | |_/ / /_\ \|  \| | | | | | | | .  . |
-|    /|  _  || . ` | | | | | | | |\/| | version 1.1.0
+|    /|  _  || . ` | | | | | | | |\/| | version 1.3.0
 | |\ \| | | || |\  | |/ /\ \_/ / |  | |
 \_| \_\_| |_/\_| \_/___/  \___/\_|  |_/ https://github.com/effolkronium/random
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-Copyright (c) 2017 effolkronium
+Copyright (c) 2019 effolkronium
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files( the "Software" ), to deal
@@ -427,10 +427,11 @@ namespace effolkronium {
         * \note If container is empty return std::end( container ) iterator
         */
         template<typename Container>
-        static typename std::enable_if<details::is_iterator<
-            decltype( std::begin( std::declval<Container>( ) ) )>::value
-            , decltype( std::begin( std::declval<Container>( ) ) )
-        >::type get( Container& container ) {
+        static auto get( Container& container ) -> 
+            typename std::enable_if<details::is_iterator<
+                decltype(std::begin(container))>::value
+                , decltype(std::begin(container))
+            >::type {
             return get( std::begin( container ), std::end( container ) );
         }
 
@@ -495,6 +496,11 @@ namespace effolkronium {
         /// return internal engine by copy
         static Engine get_engine( ) {
             return engine_instance( );
+        }
+
+        /// return internal engine by ref
+        static Engine& engine() {
+            return engine_instance();
         }
     protected:
         /// get reference to the static engine instance
@@ -797,10 +803,11 @@ namespace effolkronium {
         * \note If container is empty return std::end( container ) iterator
         */
         template<typename Container>
-        static typename std::enable_if<details::is_iterator<
-            decltype( std::begin( std::declval<Container>( ) ) )>::value
-            , decltype( std::begin( std::declval<Container>( ) ) )
-        >::type get( Container& container ) {
+        static auto get( Container& container ) -> 
+            typename std::enable_if<details::is_iterator<
+                decltype(std::begin(container))>::value
+                , decltype(std::begin(container))
+            >::type {
             return get( std::begin( container ), std::end( container ) );
         }
 
@@ -865,6 +872,11 @@ namespace effolkronium {
         /// return internal engine by copy
         static Engine get_engine( ) {
             return engine_instance( );
+        }
+
+        /// return internal engine by ref
+        static Engine& engine() {
+            return engine_instance();
         }
     protected:
         /// get reference to the thread local engine instance
@@ -931,7 +943,7 @@ namespace effolkronium {
 
         /// Advances the internal state by z times
         void discard( const unsigned long long z ) {
-            engine.discard( z );
+            m_engine.discard( z );
         }
 
         /// Reseed by Seeder
@@ -948,7 +960,7 @@ namespace effolkronium {
         */
         void seed( const typename Engine::result_type value =
                           Engine::default_seed ) {
-            engine.seed( value );
+            m_engine.seed( value );
         }
 
         /**
@@ -959,12 +971,12 @@ namespace effolkronium {
         */
         template<typename Sseq>
         void seed( Sseq& seq ) {
-            engine.seed( seq );
+            m_engine.seed( seq );
         }
 
         /// return random number from engine in [min(), max()] range
         typename Engine::result_type get( ) {
-            return engine( );
+            return m_engine( );
         }
 
         /**
@@ -977,7 +989,7 @@ namespace effolkronium {
         * \return true, if other and internal engine are equal
         */
         bool is_equal( const Engine& other ) {
-            return engine == other;
+            return m_engine == other;
         }
 
         /**
@@ -991,7 +1003,7 @@ namespace effolkronium {
         */
         template<typename CharT, typename Traits>
         void serialize( std::basic_ostream<CharT, Traits>& ost ) {
-            ost << engine;
+            ost << m_engine;
         }
 
         /**
@@ -1007,7 +1019,7 @@ namespace effolkronium {
         */
         template<typename CharT, typename Traits>
         void deserialize( std::basic_istream<CharT, Traits>& ist ) {
-            ist >> engine;
+            ist >> m_engine;
         }
 
         /**
@@ -1024,8 +1036,8 @@ namespace effolkronium {
             , T>::type get( T from = std::numeric_limits<T>::min( ),
                             T to = std::numeric_limits<T>::max( ) ) {
             if( from < to ) // Allow range from higher to lower
-                return IntegerDist<T>{ from, to }( engine );
-            return IntegerDist<T>{ to, from }( engine );
+                return IntegerDist<T>{ from, to }( m_engine );
+            return IntegerDist<T>{ to, from }( m_engine );
         }
 
         /**
@@ -1042,8 +1054,8 @@ namespace effolkronium {
             , T>::type get( T from = std::numeric_limits<T>::min( ),
                             T to = std::numeric_limits<T>::max( ) ) {
             if( from < to ) // Allow range from higher to lower
-                return RealDist<T>{ from, to }( engine );
-            return RealDist<T>{ to, from }( engine );
+                return RealDist<T>{ from, to }( m_engine );
+            return RealDist<T>{ to, from }( m_engine );
         }
 
         /**
@@ -1111,8 +1123,8 @@ namespace effolkronium {
 			, T>::type get(T from = std::numeric_limits<T>::min(),
 				T to = std::numeric_limits<T>::max()) {
 			if (from < to) // Allow range from higher to lower
-				return static_cast<T>(IntegerDist<std::int64_t>{ static_cast<std::int64_t>(from), static_cast<std::int64_t>(to) }(engine));
-			return static_cast<T>(IntegerDist<std::int64_t>{ static_cast<std::int64_t>(to), static_cast<std::int64_t>(from) }(engine));
+				return static_cast<T>(IntegerDist<std::int64_t>{ static_cast<std::int64_t>(from), static_cast<std::int64_t>(to) }(m_engine));
+			return static_cast<T>(IntegerDist<std::int64_t>{ static_cast<std::int64_t>(to), static_cast<std::int64_t>(from) }(m_engine));
 		}
 
         /**
@@ -1126,7 +1138,7 @@ namespace effolkronium {
         typename std::enable_if<std::is_same<T, bool>::value
             , bool>::type get( const double probability = 0.5 ) {
             assert( 0 <= probability && 1 >= probability ); // out of [0; 1] range
-            return BoolDist{ probability }( engine );
+            return BoolDist{ probability }( m_engine );
         }
 
         /**
@@ -1165,10 +1177,11 @@ namespace effolkronium {
         * \note If container is empty return std::end( container ) iterator
         */
         template<typename Container>
-        typename std::enable_if<details::is_iterator<
-            decltype( std::begin( std::declval<Container>( ) ) )>::value
-            , decltype( std::begin( std::declval<Container>( ) ) )
-        >::type get( Container& container ) {
+        auto get( Container& container ) -> 
+            typename std::enable_if<details::is_iterator<
+                decltype(std::begin(container))>::value
+                , decltype(std::begin(container))
+            >::type {
             return get( std::begin( container ), std::end( container ) );
         }
 
@@ -1192,7 +1205,7 @@ namespace effolkronium {
         */
         template<typename Dist, typename... Args>
         typename Dist::result_type get( Args&&... args ) {
-            return Dist{ std::forward<Args>( args )... }( engine );
+            return Dist{ std::forward<Args>( args )... }( m_engine );
         }
 
         /**
@@ -1205,7 +1218,7 @@ namespace effolkronium {
         */
         template<typename Dist>
         typename Dist::result_type get( Dist& dist ) {
-            return dist( engine );
+            return dist( m_engine );
         }
 
         /**
@@ -1216,7 +1229,7 @@ namespace effolkronium {
         */
         template<typename RandomIt>
         void shuffle( RandomIt first, RandomIt last ) {
-            std::shuffle( first, last, engine );
+            std::shuffle( first, last, m_engine );
         }
 
         /**
@@ -1232,7 +1245,12 @@ namespace effolkronium {
 
         /// return internal engine by copy
         Engine get_engine( ) const {
-            return engine;
+            return m_engine;
+        }
+
+        /// return internal engine by ref
+        Engine& engine() {
+            return m_engine;
         }
     protected:
         /// return engine seeded by Seeder
@@ -1243,7 +1261,7 @@ namespace effolkronium {
         }
     protected:
         /// The random number engine
-        Engine engine{ make_seeded_engine( ) };
+        Engine m_engine{ make_seeded_engine( ) };
     };
 
     /** 
