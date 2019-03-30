@@ -1,7 +1,7 @@
 ﻿cmake_minimum_required(VERSION 3.0)
 
 # define the project
-project(effolkronium_random VERSION 1.2.1 LANGUAGES CXX)
+project(effolkronium_random VERSION 1.3.0 LANGUAGES CXX)
 
 option(Random_BuildTests "Build the unit tests" ON)
 
