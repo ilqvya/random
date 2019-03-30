@@ -22,6 +22,7 @@
   - [Custom Seeder](#custom-seeder)
   - [Thread local random](#thread-local-random)
   - [Local random](#local-random)
+  - [engine](#engine)
   - [Get engine](#get-engine)
   - [Seeding](#seeding)
   - [min-value](#min-value)
@@ -68,10 +69,9 @@ There are few ways to get working with random in C++:
     * *random_thread_local* which has static methods and [thread_local](http://en.cppreference.com/w/cpp/keyword/thread_local) internal state. It's thread safe but less efficient
     * *random_local* which has non static methods and local internal state. It can be created on the stack at local scope
 ## Supported compilers
-* GCC 4.9 - 7.0 (and possibly later)
-* Clang 3.7 - 4.0 (and possibly later)
-* Microsoft Visual C++ 2015
-* Microsoft Visual C++ 2017
+* GCC 4.9 - 8.0 (and possibly later)
+* Clang 3.7 - 8.0 (and possibly later)
+* Microsoft Visual C++ 2015 - 2017 (and possibly later)
 ## Integration
 #### CMake
 * As subproject
@@ -302,6 +302,15 @@ Returns the random number in [ Random::min( ), Random::max ] range
 ```cpp
 auto val = Random::get( );
 // val is random number in [ Random::min( ), Random::max ] range
+```
+### engine
+Returns reference to the internal engine.
+```cpp
+auto& engine = Random::engine( );
+std::sample(itBeg, itEnd, std::back_inserter(out), 5, Random::engine( ));
+```
+```cpp
+std::sample(itBeg, itEnd, std::back_inserter(out), 5, Random::engine( ));
 ```
 ### Get engine
 Returns copy of internal engine.
