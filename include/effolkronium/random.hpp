@@ -7,7 +7,7 @@ ______  ___   _   _______ ________  __
 \_| \_\_| |_/\_| \_/___/  \___/\_|  |_/ https://github.com/effolkronium/random
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-Copyright (c) 2017 effolkronium
+Copyright (c) 2019 effolkronium
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files( the "Software" ), to deal
