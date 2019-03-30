@@ -307,7 +307,6 @@ auto val = Random::get( );
 Returns reference to the internal engine.
 ```cpp
 auto& engine = Random::engine( );
-std::sample(itBeg, itEnd, std::back_inserter(out), 5, Random::engine( ));
 ```
 ```cpp
 std::sample(itBeg, itEnd, std::back_inserter(out), 5, Random::engine( ));
