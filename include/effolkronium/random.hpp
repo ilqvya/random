@@ -2,7 +2,7 @@
 ______  ___   _   _______ ________  __
 | ___ \/ _ \ | \ | |  _  \  _  |  \/  | Random for modern C++
 | |_/ / /_\ \|  \| | | | | | | | .  . |
-|    /|  _  || . ` | | | | | | | |\/| | version 1.3.0
+|    /|  _  || . ` | | | | | | | |\/| | version 1.3.1
 | |\ \| | | || |\  | |/ /\ \_/ / |  | |
 \_| \_\_| |_/\_| \_/___/  \___/\_|  |_/ https://github.com/effolkronium/random
 
@@ -505,8 +505,7 @@ namespace effolkronium {
     protected:
         /// get reference to the static engine instance
         static Engine& engine_instance( ) {
-            Seeder seeder{ };
-            static Engine engine{ seeder( ) };
+			static Engine engine{ Seeder{ }( ) };
             return engine;
         }
     };
@@ -881,8 +880,7 @@ namespace effolkronium {
     protected:
         /// get reference to the thread local engine instance
         static Engine& engine_instance( ) {
-	    Seeder seeder{ };
-            thread_local Engine engine{ seeder( ) };
+			thread_local Engine engine{ Seeder{ }( ) };
             return engine;
         }
     };
@@ -1256,8 +1254,7 @@ namespace effolkronium {
         /// return engine seeded by Seeder
         static Engine make_seeded_engine( ) {
             // Make seeder instance for seed return by reference like std::seed_seq
-            Seeder seeder;
-            return Engine{ seeder( ) };
+			return Engine{ Seeder{ }( ) };
         }
     protected:
         /// The random number engine
