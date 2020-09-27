@@ -310,9 +310,6 @@ install:
   - |
      if [[ !(-x $(which cmake)) && (-x $(which brew)) ]]; then
        # https://github.com/Homebrew/homebrew-cask/issues/50586
-       brew untap homebrew/homebrew-cask-drivers
-       brew reinstall cask
-       brew update
        brew install cmake
        cmake --version
      fi
