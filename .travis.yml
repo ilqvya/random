@@ -389,7 +389,7 @@ script:
   - cd build
   - echo "Compiler:"
   - echo $COMPILER
-  -|
+  - |
      if [[ "${LLVM_VERSION}" != "" ]]; then
        echo "Check clang version"
        clang --version | grep ${LLVM_VERSION}
