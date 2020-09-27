@@ -850,3 +850,47 @@ TEST_CASE("Get random engine by reference:)") {
 
     REQUIRE(isEngineNotTheSame);
 }
+
+TEST_CASE("Construct Seeder only once") {
+	constexpr auto currentSeed = 42u;
+	thread_local int constructCount = 0;
+	constructCount = 0;
+	thread_local int invokeCount = 0;
+	invokeCount = 0;
+
+	struct Seeder {
+		Seeder() { ++constructCount; }
+		unsigned operator() () {
+			++invokeCount;
+			return currentSeed;
+		}
+	};
+
+#ifdef RANDOM_STATIC
+
+	using tRandom = effolkronium::basic_random_static<std::mt19937, Seeder>;
+
+#endif
+#ifdef RANDOM_THREAD_LOCAL
+
+	using tRandom = effolkronium::basic_random_thread_local<std::mt19937, Seeder>;
+
+#endif
+#ifdef RANDOM_LOCAL
+
+	effolkronium::basic_random_local<std::mt19937, Seeder> tRandom;
+
+#endif
+
+	std::vector<int> randomValues;
+	for(int i = 0; i < 256; ++i)
+		tRandom DOT get();
+
+	REQUIRE(constructCount == 1);
+	REQUIRE(invokeCount == 1);
+
+	tRandom DOT reseed();
+
+	REQUIRE(constructCount == 2);
+	REQUIRE(invokeCount == 2);
+}
