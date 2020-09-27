@@ -282,7 +282,6 @@ matrix:
     - os: linux
       env:
         - LLVM_VERSION=9.0.0
-        - LLVM_VERSION_GITHUB=TRUE
       compiler: clang
       addons:
         apt:
@@ -390,6 +389,11 @@ script:
   - cd build
   - echo "Compiler:"
   - echo $COMPILER
+  -|
+     if [[ "${LLVM_VERSION}" != "" ]]; then
+       echo "Check clang version"
+       clang --version | grep ${LLVM_VERSION}
+     fi
   - echo "FORDEBUG11"
   - clang --version
   - echo "FORDEBUG22"
