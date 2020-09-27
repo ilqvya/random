@@ -268,7 +268,9 @@ matrix:
             - g++-6
             
     - os: linux
-      env: LLVM_VERSION=8.0.1
+      env:
+        - LLVM_VERSION=8.0.1
+        - LLVM_VERSION_GITHUB=TRUE
       compiler: clang
       addons:
         apt:
@@ -278,7 +280,9 @@ matrix:
             - g++-6
             
     - os: linux
-      env: LLVM_VERSION=9.0.0
+      env:
+        - LLVM_VERSION=9.0.0
+        - LLVM_VERSION_GITHUB=TRUE
       compiler: clang
       addons:
         apt:
@@ -288,7 +292,9 @@ matrix:
             - g++-6
             
     - os: linux
-      env: LLVM_VERSION=9.0.1
+      env:
+        - LLVM_VERSION=9.0.1
+        - LLVM_VERSION_GITHUB=TRUE
       compiler: clang
       addons:
         apt:
@@ -298,7 +304,9 @@ matrix:
             - g++-6
             
     - os: linux
-      env: LLVM_VERSION=10.0.0
+      env:
+        - LLVM_VERSION=10.0.0
+        - LLVM_VERSION_GITHUB=TRUE
       compiler: clang
       addons:
         apt:
@@ -308,7 +316,9 @@ matrix:
             - g++-6
             
     - os: linux
-      env: LLVM_VERSION=10.0.1
+      env:
+        - LLVM_VERSION=10.0.1
+        - LLVM_VERSION_GITHUB=TRUE
       compiler: clang
       addons:
         apt:
@@ -404,10 +414,17 @@ install:
          tar xfz cmake-3.6.1.tar.gz
          (cd cmake-3.6.1 && ./configure --prefix=${LLVM_DIR}/cmake && make install)
          export PATH="${LLVM_DIR}/cmake/bin:${PATH}"
-         LLVM_URL="http://llvm.org/releases/${LLVM_VERSION}/llvm-${LLVM_VERSION}.src.tar.xz"
-         LIBCXX_URL="http://llvm.org/releases/${LLVM_VERSION}/libcxx-${LLVM_VERSION}.src.tar.xz"
-         LIBCXXABI_URL="http://llvm.org/releases/${LLVM_VERSION}/libcxxabi-${LLVM_VERSION}.src.tar.xz"
-         CLANG_URL="http://llvm.org/releases/${LLVM_VERSION}/clang+llvm-${LLVM_VERSION}-x86_64-linux-gnu-ubuntu-14.04.tar.xz"
+         if [[ "${LLVM_VERSION_GITHUB}" != "" ]]; then
+           LLVM_URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/llvm-${LLVM_VERSION}.src.tar.xz"
+           LIBCXX_URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/libcxx-${LLVM_VERSION}.src.tar.xz"
+           LIBCXXABI_URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/libcxxabi-${LLVM_VERSION}.src.tar.xz"
+           CLANG_URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-${LLVM_VERSION}/clang+llvm-${LLVM_VERSION}-x86_64-linux-gnu-ubuntu-14.04.tar.xz"
+         else
+           LLVM_URL="http://llvm.org/releases/${LLVM_VERSION}/llvm-${LLVM_VERSION}.src.tar.xz"
+           LIBCXX_URL="http://llvm.org/releases/${LLVM_VERSION}/libcxx-${LLVM_VERSION}.src.tar.xz"
+           LIBCXXABI_URL="http://llvm.org/releases/${LLVM_VERSION}/libcxxabi-${LLVM_VERSION}.src.tar.xz"
+           CLANG_URL="http://llvm.org/releases/${LLVM_VERSION}/clang+llvm-${LLVM_VERSION}-x86_64-linux-gnu-ubuntu-14.04.tar.xz"
+         fi
          mkdir -p ${LLVM_DIR} ${LLVM_DIR}/build ${LLVM_DIR}/projects/libcxx ${LLVM_DIR}/projects/libcxxabi ${LLVM_DIR}/clang
          travis_retry wget --quiet -O - ${LLVM_URL}      | tar --strip-components=1 -xJ -C ${LLVM_DIR}
          travis_retry wget --quiet -O - ${LIBCXX_URL}    | tar --strip-components=1 -xJ -C ${LLVM_DIR}/projects/libcxx
