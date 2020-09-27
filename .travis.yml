@@ -394,11 +394,6 @@ script:
        echo "Check clang version"
        clang --version | grep ${LLVM_VERSION}
      fi
-  - echo "FORDEBUG11"
-  - clang --version
-  - echo "FORDEBUG22"
-  - clang-${LLVM_VERSION} --version
-  - echo "FORDEBUGENDD"
   - cmake -DCMAKE_CXX_COMPILER=$COMPILER ..
   - cmake --build . --config Debug
   - ctest -C Debug --output-on-failure
@@ -448,11 +443,4 @@ install:
        export LDFLAGS="-L ${LLVM_DIR}/install/lib -l c++ -l c++abi"
        export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${LLVM_DIR}/install/lib"
        export PATH="${LLVM_DIR}/clang/bin:${PATH}"
-       
-       echo "FORDEBUG1"
-       clang --version
-       echo "FORDEBUG2"
-       clang-${LLVM_VERSION} --version
-       echo "FORDEBUGEND"
-       
      fi
