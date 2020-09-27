@@ -256,6 +256,66 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-6
+            
+    - os: linux
+      env: LLVM_VERSION=7.1.0
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
+            
+    - os: linux
+      env: LLVM_VERSION=8.0.1
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
+            
+    - os: linux
+      env: LLVM_VERSION=9.0.0
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
+            
+    - os: linux
+      env: LLVM_VERSION=9.0.1
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
+            
+    - os: linux
+      env: LLVM_VERSION=10.0.0
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
+            
+    - os: linux
+      env: LLVM_VERSION=10.0.1
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
 
     # OSX xcode
     - os: osx
