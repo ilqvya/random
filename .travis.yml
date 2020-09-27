@@ -268,18 +268,6 @@ matrix:
       osx_image: xcode8.2
 
     - os: osx
-      osx_image: xcode8.3
-
-    - os: osx
-      osx_image: xcode9
-
-    - os: osx
-      osx_image: xcode9.1
-
-    - os: osx
-      osx_image: xcode9.2
-
-    - os: osx
       osx_image: xcode9.3
 
     - os: osx
@@ -290,6 +278,39 @@ matrix:
 
     - os: osx
       osx_image: xcode10.1   
+      
+    - os: osx
+      osx_image: xcode10.2   
+      
+    - os: osx
+      osx_image: xcode10.3   
+      
+     - os: osx
+      osx_image: xcode11   
+      
+      - os: osx
+      osx_image: xcode11.1   
+      
+      - os: osx
+      osx_image: xcode11.2   
+      
+      - os: osx
+      osx_image: xcode11.3   
+      
+      - os: osx
+      osx_image: xcode11.4   
+      
+      - os: osx
+      osx_image: xcode11.5   
+      
+      - os: osx
+      osx_image: xcode11.6   
+      
+      - os: osx
+      osx_image: xcode12
+      
+      - os: osx
+      osx_image: xcode12u
 
 # Build steps
 script:
