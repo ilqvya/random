@@ -2,7 +2,7 @@
 ______  ___   _   _______ ________  __
 | ___ \/ _ \ | \ | |  _  \  _  |  \/  | Random for modern C++
 | |_/ / /_\ \|  \| | | | | | | | .  . |
-|    /|  _  || . ` | | | | | | | |\/| | version 1.3.0
+|    /|  _  || . ` | | | | | | | |\/| | version 1.3.1
 | |\ \| | | || |\  | |/ /\ \_/ / |  | |
 \_| \_\_| |_/\_| \_/___/  \___/\_|  |_/ https://github.com/effolkronium/random
 
@@ -89,15 +89,15 @@ namespace effolkronium {
                 || is_uniform_int <T>::value;
         };
 
-		/// True if type T is character type
-		template<typename T>
-		struct is_supported_character {
-			static constexpr bool value =
-				   std::is_same<T, char>::value
-				|| std::is_same<T, wchar_t>::value
-				|| std::is_same<T, char16_t>::value
-				|| std::is_same<T, char32_t>::value;
-		};
+        /// True if type T is character type
+        template<typename T>
+        struct is_supported_character {
+            static constexpr bool value =
+                   std::is_same<T, char>::value
+                || std::is_same<T, wchar_t>::value
+                || std::is_same<T, char16_t>::value
+                || std::is_same<T, char32_t>::value;
+        };
 
         /// True if type T is iterator
         template<typename T>
@@ -279,7 +279,7 @@ namespace effolkronium {
         * \param to The second limit number of a random range
         * \return A random integer number in a [from; to] range
         * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
-		* \note Prevent implicit type conversion
+        * \note Prevent implicit type conversion
         */
         template<typename T>
         static typename std::enable_if<details::is_uniform_int<T>::value
@@ -359,23 +359,23 @@ namespace effolkronium {
             return get( static_cast<C>( from ), static_cast<C>( to ) );
         }
 
-		/**
-		* \brief Generate a random character in a [from; to] range
-		*        by std::uniform_int_distribution
-		* \param from The first limit number of a random range
-		* \param to The second limit number of a random range
-		* \return A random character in a [from; to] range
-		* \note Allow both: 'from' <= 'to' and 'from' >= 'to'
-		* \note Prevent implicit type conversion
-		*/
-		template<typename T>
-		static typename std::enable_if<details::is_supported_character<T>::value
-			, T>::type get(T from = std::numeric_limits<T>::min(),
-				T to = std::numeric_limits<T>::max()) {
-			if (from < to) // Allow range from higher to lower
-				return static_cast<T>(IntegerDist<std::int64_t>{ static_cast<std::int64_t>(from), static_cast<std::int64_t>(to) }(engine_instance()));
-			return static_cast<T>(IntegerDist<std::int64_t>{ static_cast<std::int64_t>(to), static_cast<std::int64_t>(from) }(engine_instance()));
-		}
+        /**
+        * \brief Generate a random character in a [from; to] range
+        *        by std::uniform_int_distribution
+        * \param from The first limit number of a random range
+        * \param to The second limit number of a random range
+        * \return A random character in a [from; to] range
+        * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
+        * \note Prevent implicit type conversion
+        */
+        template<typename T>
+        static typename std::enable_if<details::is_supported_character<T>::value
+            , T>::type get(T from = std::numeric_limits<T>::min(),
+                T to = std::numeric_limits<T>::max()) {
+            if (from < to) // Allow range from higher to lower
+                return static_cast<T>(IntegerDist<std::int64_t>{ static_cast<std::int64_t>(from), static_cast<std::int64_t>(to) }(engine_instance()));
+            return static_cast<T>(IntegerDist<std::int64_t>{ static_cast<std::int64_t>(to), static_cast<std::int64_t>(from) }(engine_instance()));
+        }
 
         /**
         * \brief Generate a bool value with specific probability
@@ -505,8 +505,7 @@ namespace effolkronium {
     protected:
         /// get reference to the static engine instance
         static Engine& engine_instance( ) {
-            Seeder seeder{ };
-            static Engine engine{ seeder( ) };
+            static Engine engine{ Seeder{ }( ) };
             return engine;
         }
     };
@@ -655,7 +654,7 @@ namespace effolkronium {
         * \param to The second limit number of a random range
         * \return A random integer number in a [from; to] range
         * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
-		* \note Prevent implicit type conversion
+        * \note Prevent implicit type conversion
         */
         template<typename T>
         static typename std::enable_if<details::is_uniform_int<T>::value
@@ -735,23 +734,23 @@ namespace effolkronium {
             return get( static_cast<C>( from ), static_cast<C>( to ) );
         }
 
-		/**
-		* \brief Generate a random character in a [from; to] range
-		*        by std::uniform_int_distribution
-		* \param from The first limit number of a random range
-		* \param to The second limit number of a random range
-		* \return A random character in a [from; to] range
-		* \note Allow both: 'from' <= 'to' and 'from' >= 'to'
-		* \note Prevent implicit type conversion
-		*/
-		template<typename T>
-		static typename std::enable_if<details::is_supported_character<T>::value
-			, T>::type get(T from = std::numeric_limits<T>::min(),
-				T to = std::numeric_limits<T>::max()) {
-			if (from < to) // Allow range from higher to lower
-				return static_cast<T>(IntegerDist<std::int64_t>{ static_cast<std::int64_t>(from), static_cast<std::int64_t>(to) }(engine_instance()));
-			return static_cast<T>(IntegerDist<std::int64_t>{ static_cast<std::int64_t>(to), static_cast<std::int64_t>(from) }(engine_instance()));
-		}
+        /**
+        * \brief Generate a random character in a [from; to] range
+        *        by std::uniform_int_distribution
+        * \param from The first limit number of a random range
+        * \param to The second limit number of a random range
+        * \return A random character in a [from; to] range
+        * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
+        * \note Prevent implicit type conversion
+        */
+        template<typename T>
+        static typename std::enable_if<details::is_supported_character<T>::value
+            , T>::type get(T from = std::numeric_limits<T>::min(),
+                T to = std::numeric_limits<T>::max()) {
+            if (from < to) // Allow range from higher to lower
+                return static_cast<T>(IntegerDist<std::int64_t>{ static_cast<std::int64_t>(from), static_cast<std::int64_t>(to) }(engine_instance()));
+            return static_cast<T>(IntegerDist<std::int64_t>{ static_cast<std::int64_t>(to), static_cast<std::int64_t>(from) }(engine_instance()));
+        }
 
         /**
         * \brief Generate a bool value with specific probability
@@ -881,8 +880,7 @@ namespace effolkronium {
     protected:
         /// get reference to the thread local engine instance
         static Engine& engine_instance( ) {
-	    Seeder seeder{ };
-            thread_local Engine engine{ seeder( ) };
+            thread_local Engine engine{ Seeder{ }( ) };
             return engine;
         }
     };
@@ -1029,7 +1027,7 @@ namespace effolkronium {
         * \param to The second limit number of a random range
         * \return A random integer number in a [from; to] range
         * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
-		* \note Prevent implicit type conversion
+        * \note Prevent implicit type conversion
         */
         template<typename T>
         typename std::enable_if<details::is_uniform_int<T>::value
@@ -1109,23 +1107,23 @@ namespace effolkronium {
             return get( static_cast<C>( from ), static_cast<C>( to ) );
         }
 
-		/**
-		* \brief Generate a random character in a [from; to] range
-		*        by std::uniform_int_distribution
-		* \param from The first limit number of a random range
-		* \param to The second limit number of a random range
-		* \return A random character in a [from; to] range
-		* \note Allow both: 'from' <= 'to' and 'from' >= 'to'
-		* \note Prevent implicit type conversion
-		*/
-		template<typename T>
-		typename std::enable_if<details::is_supported_character<T>::value
-			, T>::type get(T from = std::numeric_limits<T>::min(),
-				T to = std::numeric_limits<T>::max()) {
-			if (from < to) // Allow range from higher to lower
-				return static_cast<T>(IntegerDist<std::int64_t>{ static_cast<std::int64_t>(from), static_cast<std::int64_t>(to) }(m_engine));
-			return static_cast<T>(IntegerDist<std::int64_t>{ static_cast<std::int64_t>(to), static_cast<std::int64_t>(from) }(m_engine));
-		}
+        /**
+        * \brief Generate a random character in a [from; to] range
+        *        by std::uniform_int_distribution
+        * \param from The first limit number of a random range
+        * \param to The second limit number of a random range
+        * \return A random character in a [from; to] range
+        * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
+        * \note Prevent implicit type conversion
+        */
+        template<typename T>
+        typename std::enable_if<details::is_supported_character<T>::value
+            , T>::type get(T from = std::numeric_limits<T>::min(),
+                T to = std::numeric_limits<T>::max()) {
+            if (from < to) // Allow range from higher to lower
+                return static_cast<T>(IntegerDist<std::int64_t>{ static_cast<std::int64_t>(from), static_cast<std::int64_t>(to) }(m_engine));
+            return static_cast<T>(IntegerDist<std::int64_t>{ static_cast<std::int64_t>(to), static_cast<std::int64_t>(from) }(m_engine));
+        }
 
         /**
         * \brief Generate a bool value with specific probability
@@ -1256,8 +1254,7 @@ namespace effolkronium {
         /// return engine seeded by Seeder
         static Engine make_seeded_engine( ) {
             // Make seeder instance for seed return by reference like std::seed_seq
-            Seeder seeder;
-            return Engine{ seeder( ) };
+            return Engine{ Seeder{ }( ) };
         }
     protected:
         /// The random number engine
