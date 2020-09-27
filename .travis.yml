@@ -285,31 +285,31 @@ matrix:
     - os: osx
       osx_image: xcode10.3   
       
-     - os: osx
+    - os: osx
       osx_image: xcode11   
       
-      - os: osx
+    - os: osx
       osx_image: xcode11.1   
       
-      - os: osx
+    - os: osx
       osx_image: xcode11.2   
       
-      - os: osx
+    - os: osx
       osx_image: xcode11.3   
       
-      - os: osx
+    - os: osx
       osx_image: xcode11.4   
       
-      - os: osx
+    - os: osx
       osx_image: xcode11.5   
       
-      - os: osx
+    - os: osx
       osx_image: xcode11.6   
       
-      - os: osx
+    - os: osx
       osx_image: xcode12
       
-      - os: osx
+    - os: osx
       osx_image: xcode12u
 
 # Build steps
