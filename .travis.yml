@@ -90,33 +90,7 @@ matrix:
             - g++-9
       env: COMPILER=g++-9
       
-    - os: linux
-      compiler: gcc
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-10
-      env: COMPILER=g++-10
-      
     # linux clang
-    
-    # [!!!WARNING!!!] Strange 'Exception: SegFault' on 3.6.X clang
-    # http://releases.llvm.org/
-    # (Other compilers and clang 3.7.0+ are OK)
-    #- os: linux
-    #  env: LLVM_VERSION=3.6.0
-    #  compiler: clang
-
-    #- os: linux
-    #  env: LLVM_VERSION=3.6.1
-    #  compiler: clang
-
-    #- os: linux
-    #  env: LLVM_VERSION=3.6.2
-    # compiler: clang
-
     - os: linux
       env: LLVM_VERSION=3.7.0
       compiler: clang
