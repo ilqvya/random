@@ -306,11 +306,11 @@ matrix:
             - g++-6
             
     - os: linux
-      dist: xenial
+      dist: bionic
       env:
         - LLVM_VERSION=10.0.0
         - LLVM_VERSION_GITHUB=TRUE
-        - LLVM_DISTRO_VERSION=16.04
+        - LLVM_DISTRO_VERSION=18.04
       compiler: clang
       addons:
         apt:
