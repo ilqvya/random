@@ -35,6 +35,9 @@ matrix:
     # linux gcc
     - os: linux
       compiler: gcc
+      arch:
+        - amd64
+        - arm64
       addons:
         apt:
           sources:
