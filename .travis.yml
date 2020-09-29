@@ -35,7 +35,6 @@ matrix:
     # linux gcc
     - os: linux
       compiler: gcc
-      arch: arm64
       addons:
         apt:
           sources:
@@ -73,6 +72,17 @@ matrix:
 
     - os: linux
       compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-8
+      env: COMPILER=g++-8
+      
+    - os: linux
+      compiler: gcc
+      arch: arm64
       addons:
         apt:
           sources:
