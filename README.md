@@ -48,7 +48,7 @@ There are few ways to get working with random in C++:
   std::random_device random_device; // create object for seeding
   std::mt19937 engine{random_device()}; // create engine and seed it
   std::uniform_int_distribution<> dist(1,9); // create distribution for integers with [1; 9] range
-  auto random_number = dist(engine); // finally get a pseudo-randomrandom integer number
+  auto random_number = dist(engine); // finally get a pseudo-random integer number
 ```
 * Problems
   * should specify seed
