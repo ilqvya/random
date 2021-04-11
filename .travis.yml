@@ -6,6 +6,7 @@ matrix:
   include:
     # coveralls
     - os: linux
+      dist: xenial
       compiler: gcc
       addons:   
         apt:
