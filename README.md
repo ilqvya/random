@@ -71,7 +71,7 @@ There are few ways to get working with random in C++:
 ## Supported compilers
 * GCC 4.9 - 8.0 (and possibly later)
 * Clang 3.7 - 8.0 (and possibly later)
-* Microsoft Visual C++ 2015 - 2017 (and possibly later)
+* Microsoft Visual C++ 2015 - 2019 (and possibly later)
 ## Integration
 #### CMake
 * As subproject
