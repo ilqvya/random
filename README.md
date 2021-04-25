@@ -17,6 +17,7 @@
   - [Random value from std::initilizer_list](#random-value-from-stdinitilizer_list)
   - [Random iterator](#random-iterator)
   - [Random element from array](#random-element-from-array)
+  - [Container of random values](#container-of-random-values)
   - [Shuffle](#shuffle)
   - [Custom distribution](#custom-distribution)
   - [Custom Seeder](#custom-seeder)
@@ -63,7 +64,7 @@ There are few ways to get working with random in C++:
 ```
 * Advantages
   * **Intuitive syntax**. You can do almost everything with random by simple 'get' method, like getting simple numbers, bools, random object from given set or using custom distribution.
-  * **Trivial integration**. All code consists of a single header file [`random.hpp`](https://github.com/effolkronium/random/blob/develop/include/effolkronium/random.hpp). That's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
+  * **Trivial integration**. All code consists of a single header file [`random.hpp`](https://github.com/effolkronium/random/blob/master/include/effolkronium/random.hpp). That's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
   * **Usability**. There are 3 versions of random: 
     * *random_static* which has static methods and static internal state. It's not thread safe but more efficient
     * *random_thread_local* which has static methods and [thread_local](http://en.cppreference.com/w/cpp/keyword/thread_local) internal state. It's thread safe but less efficient
@@ -98,7 +99,7 @@ find_package(effolkronium_random REQUIRED)
 target_link_libraries(${TARGET} effolkronium_random)
 ```
 #### Manually
-The single required source, file [`random.hpp`](https://github.com/effolkronium/random/blob/develop/include/effolkronium/random.hpp) is in the [`include/effolkronium`](https://github.com/effolkronium/random/tree/develop/include/effolkronium) directory.
+The single required source, file [`random.hpp`](https://github.com/effolkronium/random/blob/master/include/effolkronium/random.hpp) is in the [`include/effolkronium`](https://github.com/effolkronium/random/tree/master/include/effolkronium) directory.
 #### Then
 All you need to do is add
 ```cpp
@@ -187,6 +188,31 @@ Return pointer to random element in built-in array
 ```cpp
 int array [] = {1, 2, 3};
 auto randomPtr = Random::get( array );
+```
+### Container of random values
+Return container filled with random numbers.
+Any containers with "begin", "end" and "insert" methods are applicable
+```cpp
+auto vec = Random::get<std::vector>(1, 9, 5); // decltype(vec) is std::vector<int> with size = 5
+// Note: "reserve" method invokes automatically for performance
+
+auto mset = Random::get<std::multiset>(1.0, 9.9, 10); // decltype(mset) is std::multiset<double> with size = 10
+
+auto arr = Random::get<std::array, 5>('0', '9'); // decltype(arr) is std::array<char, 5>
+// Warning: Returning arrays with large size could be ineficcient
+
+auto vec = Random::get<std::vector>(1l, 9ll, 5); // decltype(vec) is std::vector<long long> with size = 5
+
+template<typename T>
+class MyContainer
+{
+    iterator begin() {...}
+    iterator end() {...}
+    void insert(iterator after, T value) {...}
+};
+
+auto vec = Random DOT get<MyContainer>(1, 9, 5); // decltype(vec) is std::MyContainer<int> with size = 5
+
 ```
 ### Shuffle
 Reorders the elements in a given range or in all container [ref](http://en.cppreference.com/w/cpp/algorithm/random_shuffle)
