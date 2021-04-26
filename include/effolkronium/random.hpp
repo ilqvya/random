@@ -2,7 +2,7 @@
 ______  ___   _   _______ ________  __
 | ___ \/ _ \ | \ | |  _  \  _  |  \/  | Random for modern C++
 | |_/ / /_\ \|  \| | | | | | | | .  . |
-|    /|  _  || . ` | | | | | | | |\/| | version 1.3.1
+|    /|  _  || . ` | | | | | | | |\/| | version 1.4.0
 | |\ \| | | || |\  | |/ /\ \_/ / |  | |
 \_| \_\_| |_/\_| \_/___/  \___/\_|  |_/ https://github.com/effolkronium/random
 
@@ -115,6 +115,34 @@ namespace effolkronium {
         public:
             static constexpr bool value = std::is_same<
                 decltype( test( std::declval<T>( ) ) ), long>::value;
+        };
+
+        template <typename T>
+        class has_reserve
+        {
+        private:
+            template <typename C>
+            static char test(...);
+
+            template <typename C>
+            static long test(decltype(&C::reserve));
+        public:
+            static constexpr bool value = std::is_same<
+                decltype(test<T>(0)), long>::value;
+        };
+
+        template <typename T>
+        class has_insert
+        {
+        private:
+            template <typename C>
+            static char test(...);
+
+            template <typename C>
+            static long test(decltype(&C::insert));
+        public:
+            static constexpr bool value = std::is_same<
+                decltype(test<T>(0)), long>::value;
         };
 
     } // namespace details
@@ -433,6 +461,149 @@ namespace effolkronium {
                 , decltype(std::begin(container))
             >::type {
             return get( std::begin( container ), std::end( container ) );
+        }
+
+        /**
+        * \brief Return container filled with random values
+        * \param from The first limit number of a random range
+        * \param to The second limit number of a random range
+        * \param size The number of elements in resulting container
+        * \return Container filled with random values
+        * \note Container "reserve" method will be called before generation
+        */
+        template<template<typename...> class Container, typename A>
+        static typename std::enable_if<
+                details::has_reserve<Container<A>>::value
+            , Container<A>>::type get(A from, A to, std::size_t size) {
+            Container<A> container;
+
+            container.reserve(size);
+            for (std::size_t i = 0; i < size; ++i)
+                container.insert(std::end(container), get(from, to));
+
+            return container;
+        }
+
+        /**
+        * \brief Return container filled with random common_type values
+        * \param Key The Key type for this version of 'get' method
+        *     Type should be '(THIS_TYPE)::common' struct
+        * \param from The first limit number of a random range
+        * \param to The second limit number of a random range
+        * \param size The number of elements in resulting container
+        * \return Container filled with random values
+        * \note Container "reserve" method will be called before generation
+        */
+        template<
+            template<typename...> class Container,
+            typename Key,
+            typename A,
+            typename B,
+            typename C = typename std::common_type<A, B>::type>
+        static typename std::enable_if<
+                   std::is_same<Key, common>::value
+                && details::has_reserve<Container<A>>::value
+            , Container<C>>::type get(A start, B end, std::size_t size) {
+            Container<C> container;
+
+            container.reserve(size);
+            for (std::size_t i = 0; i < size; ++i)
+                container.insert(std::end(container), get<common>(start, end));
+
+            return container;
+        }
+
+        /**
+        * \brief Return container filled with random values
+        * \param from The first limit number of a random range
+        * \param to The second limit number of a random range
+        * \param size The number of elements in resulting container
+        * \return Container filled with random values
+        */
+        template<template<typename...> class Container, typename A>
+        static typename std::enable_if<
+              !details::has_reserve<Container<A>>::value
+            , Container<A>>::type get(A start, A end, std::size_t size) {
+            Container<A> container;
+
+            for (std::size_t i = 0; i < size; ++i)
+                container.insert(std::end(container), get(start, end));
+
+            return container;
+        }
+
+        /**
+        * \brief Return container filled with random common_type values
+        * \param Key The Key type for this version of 'get' method
+        *     Type should be '(THIS_TYPE)::common' struct
+        * \param from The first limit number of a random range
+        * \param to The second limit number of a random range
+        * \param size The number of elements in resulting container
+        * \return Container filled with random values
+        */
+        template<
+            template<typename...> class Container,
+            typename Key,
+            typename A,
+            typename B,
+            typename C = typename std::common_type<A, B>::type>
+        static typename std::enable_if<
+                 std::is_same<Key, common>::value
+              && !details::has_reserve<Container<C>>::value
+            , Container<C>>::type get(A start, B end, std::size_t size) {
+            Container<C> container;
+
+            for (std::size_t i = 0; i < size; ++i)
+                container.insert(std::end(container), get<common>(start, end));
+
+            return container;
+        }
+
+        /**
+        * \brief Return array-like container filled with random values
+        * \param from The first limit number of a random range
+        * \param to The second limit number of a random range
+        * \param N The number of elements in resulting container
+        * \return Container filled with random values
+        */
+        template<template<typename AA, std::size_t NN, typename...> class Container, std::size_t N, typename A>
+        static typename std::enable_if<
+               !details::has_insert<Container<A, N>>::value
+            , Container<A, N>>::type get(A start, A end) {
+            Container<A, N> container = {{ 0 }};
+
+            for (std::size_t i = 0; i < N; ++i)
+                container[i] = get(start, end);
+
+            return container;
+        }
+
+        /**
+        * \brief Return array-like container filled with random common_type values
+        * \param Key The Key type for this version of 'get' method
+        *     Type should be '(THIS_TYPE)::common' struct
+        * \param from The first limit number of a random range
+        * \param to The second limit number of a random range
+        * \param size The number of elements in resulting container
+        * \return Container filled with random values
+        */
+        template<
+            template<typename AA, std::size_t NN, typename...> class Container,
+            std::size_t N,
+            typename Key,
+            typename A,
+            typename B,
+            typename C = typename std::common_type<A, B>::type>
+        static typename std::enable_if<
+                  std::is_same<Key, common>::value
+               && !details::has_insert<Container<C, N>>::value
+            , Container<C, N>>::type get(A start, B end) {
+            Container<C, N> container = {{ 0 }};
+
+            for (std::size_t i = 0; i < N; ++i)
+                container[i] = get<common>(start, end);
+
+            return container;
         }
 
         /**
@@ -811,6 +982,149 @@ namespace effolkronium {
         }
 
         /**
+        * \brief Return container filled with random values
+        * \param from The first limit number of a random range
+        * \param to The second limit number of a random range
+        * \param size The number of elements in resulting container
+        * \return Container filled with random values
+        * \note Container "reserve" method will be called before generation
+        */
+        template<template<typename...> class Container, typename A>
+        static typename std::enable_if<
+                details::has_reserve<Container<A>>::value
+            , Container<A>>::type get(A from, A to, std::size_t size) {
+            Container<A> container;
+
+            container.reserve(size);
+            for (std::size_t i = 0; i < size; ++i)
+                container.insert(std::end(container), get(from, to));
+
+            return container;
+        }
+
+        /**
+        * \brief Return container filled with random common_type values
+        * \param Key The Key type for this version of 'get' method
+        *     Type should be '(THIS_TYPE)::common' struct
+        * \param from The first limit number of a random range
+        * \param to The second limit number of a random range
+        * \param size The number of elements in resulting container
+        * \return Container filled with random values
+        * \note Container "reserve" method will be called before generation
+        */
+        template<
+            template<typename...> class Container,
+            typename Key,
+            typename A,
+            typename B,
+            typename C = typename std::common_type<A, B>::type>
+        static typename std::enable_if<
+                   std::is_same<Key, common>::value
+                && details::has_reserve<Container<A>>::value
+            , Container<C>>::type get(A start, B end, std::size_t size) {
+            Container<C> container;
+
+            container.reserve(size);
+            for (std::size_t i = 0; i < size; ++i)
+                container.insert(std::end(container), get<common>(start, end));
+
+            return container;
+        }
+
+        /**
+        * \brief Return container filled with random values
+        * \param from The first limit number of a random range
+        * \param to The second limit number of a random range
+        * \param size The number of elements in resulting container
+        * \return Container filled with random values
+        */
+        template<template<typename...> class Container, typename A>
+        static typename std::enable_if<
+              !details::has_reserve<Container<A>>::value
+            , Container<A>>::type get(A start, A end, std::size_t size) {
+            Container<A> container;
+
+            for (std::size_t i = 0; i < size; ++i)
+                container.insert(std::end(container), get(start, end));
+
+            return container;
+        }
+
+        /**
+        * \brief Return container filled with random common_type values
+        * \param Key The Key type for this version of 'get' method
+        *     Type should be '(THIS_TYPE)::common' struct
+        * \param from The first limit number of a random range
+        * \param to The second limit number of a random range
+        * \param size The number of elements in resulting container
+        * \return Container filled with random values
+        */
+        template<
+            template<typename...> class Container,
+            typename Key,
+            typename A,
+            typename B,
+            typename C = typename std::common_type<A, B>::type>
+        static typename std::enable_if<
+                 std::is_same<Key, common>::value
+              && !details::has_reserve<Container<C>>::value
+            , Container<C>>::type get(A start, B end, std::size_t size) {
+            Container<C> container;
+
+            for (std::size_t i = 0; i < size; ++i)
+                container.insert(std::end(container), get<common>(start, end));
+
+            return container;
+        }
+
+        /**
+        * \brief Return array-like container filled with random values
+        * \param from The first limit number of a random range
+        * \param to The second limit number of a random range
+        * \param N The number of elements in resulting container
+        * \return Container filled with random values
+        */
+        template<template<typename AA, std::size_t NN, typename...> class Container, std::size_t N, typename A>
+        static typename std::enable_if<
+               !details::has_insert<Container<A, N>>::value
+            , Container<A, N>>::type get(A start, A end) {
+            Container<A, N> container = {{ 0 }};
+
+            for (std::size_t i = 0; i < N; ++i)
+                container[i] = get(start, end);
+
+            return container;
+        }
+
+        /**
+        * \brief Return array-like container filled with random common_type values
+        * \param Key The Key type for this version of 'get' method
+        *     Type should be '(THIS_TYPE)::common' struct
+        * \param from The first limit number of a random range
+        * \param to The second limit number of a random range
+        * \param size The number of elements in resulting container
+        * \return Container filled with random values
+        */
+        template<
+            template<typename AA, std::size_t NN, typename...> class Container,
+            std::size_t N,
+            typename Key,
+            typename A,
+            typename B,
+            typename C = typename std::common_type<A, B>::type>
+        static typename std::enable_if<
+                  std::is_same<Key, common>::value
+               && !details::has_insert<Container<C, N>>::value
+            , Container<C, N>>::type get(A start, B end) {
+            Container<C, N> container = {{ 0 }};
+
+            for (std::size_t i = 0; i < N; ++i)
+                container[i] = get<common>(start, end);
+
+            return container;
+        }
+
+        /**
         * \brief Return random pointer from built-in array
         * \param array The built-in array with elements
         * \return Pointer to random element in array
@@ -1181,6 +1495,149 @@ namespace effolkronium {
                 , decltype(std::begin(container))
             >::type {
             return get( std::begin( container ), std::end( container ) );
+        }
+
+        /**
+        * \brief Return container filled with random values
+        * \param from The first limit number of a random range
+        * \param to The second limit number of a random range
+        * \param size The number of elements in resulting container
+        * \return Container filled with random values
+        * \note Container "reserve" method will be called before generation
+        */
+        template<template<typename...> class Container, typename A>
+        typename std::enable_if<
+                details::has_reserve<Container<A>>::value
+            , Container<A>>::type get(A from, A to, std::size_t size) {
+            Container<A> container;
+
+            container.reserve(size);
+            for (std::size_t i = 0; i < size; ++i)
+                container.insert(std::end(container), get(from, to));
+
+            return container;
+        }
+
+        /**
+        * \brief Return container filled with random common_type values
+        * \param Key The Key type for this version of 'get' method
+        *     Type should be '(THIS_TYPE)::common' struct
+        * \param from The first limit number of a random range
+        * \param to The second limit number of a random range
+        * \param size The number of elements in resulting container
+        * \return Container filled with random values
+        * \note Container "reserve" method will be called before generation
+        */
+        template<
+            template<typename...> class Container,
+            typename Key,
+            typename A,
+            typename B,
+            typename C = typename std::common_type<A, B>::type>
+        typename std::enable_if<
+                   std::is_same<Key, common>::value
+                && details::has_reserve<Container<A>>::value
+            , Container<C>>::type get(A start, B end, std::size_t size) {
+            Container<C> container;
+
+            container.reserve(size);
+            for (std::size_t i = 0; i < size; ++i)
+                container.insert(std::end(container), get<common>(start, end));
+
+            return container;
+        }
+
+        /**
+        * \brief Return container filled with random values
+        * \param from The first limit number of a random range
+        * \param to The second limit number of a random range
+        * \param size The number of elements in resulting container
+        * \return Container filled with random values
+        */
+        template<template<typename...> class Container, typename A>
+        typename std::enable_if<
+              !details::has_reserve<Container<A>>::value
+            , Container<A>>::type get(A start, A end, std::size_t size) {
+            Container<A> container;
+
+            for (std::size_t i = 0; i < size; ++i)
+                container.insert(std::end(container), get(start, end));
+
+            return container;
+        }
+
+        /**
+        * \brief Return container filled with random common_type values
+        * \param Key The Key type for this version of 'get' method
+        *     Type should be '(THIS_TYPE)::common' struct
+        * \param from The first limit number of a random range
+        * \param to The second limit number of a random range
+        * \param size The number of elements in resulting container
+        * \return Container filled with random values
+        */
+        template<
+            template<typename...> class Container,
+            typename Key,
+            typename A,
+            typename B,
+            typename C = typename std::common_type<A, B>::type>
+        typename std::enable_if<
+                 std::is_same<Key, common>::value
+              && !details::has_reserve<Container<C>>::value
+            , Container<C>>::type get(A start, B end, std::size_t size) {
+            Container<C> container;
+
+            for (std::size_t i = 0; i < size; ++i)
+                container.insert(std::end(container), get<common>(start, end));
+
+            return container;
+        }
+
+        /**
+        * \brief Return array-like container filled with random values
+        * \param from The first limit number of a random range
+        * \param to The second limit number of a random range
+        * \param N The number of elements in resulting container
+        * \return Container filled with random values
+        */
+        template<template<typename AA, std::size_t NN, typename...> class Container, std::size_t N, typename A>
+        typename std::enable_if<
+               !details::has_insert<Container<A, N>>::value
+            , Container<A, N>>::type get(A start, A end) {
+            Container<A, N> container = {{ 0 }};
+
+            for (std::size_t i = 0; i < N; ++i)
+                container[i] = get(start, end);
+
+            return container;
+        }
+
+        /**
+        * \brief Return array-like container filled with random common_type values
+        * \param Key The Key type for this version of 'get' method
+        *     Type should be '(THIS_TYPE)::common' struct
+        * \param from The first limit number of a random range
+        * \param to The second limit number of a random range
+        * \param size The number of elements in resulting container
+        * \return Container filled with random values
+        */
+        template<
+            template<typename AA, std::size_t NN, typename...> class Container,
+            std::size_t N,
+            typename Key,
+            typename A,
+            typename B,
+            typename C = typename std::common_type<A, B>::type>
+        typename std::enable_if<
+                  std::is_same<Key, common>::value
+               && !details::has_insert<Container<C, N>>::value
+            , Container<C, N>>::type get(A start, B end) {
+            Container<C, N> container = {{ 0 }};
+
+            for (std::size_t i = 0; i < N; ++i)
+                container[i] = get<common>(start, end);
+
+            return container;
         }
 
         /**
