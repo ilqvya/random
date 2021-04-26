@@ -211,7 +211,7 @@ class MyContainer
     void insert(iterator after, T value) {...}
 };
 
-auto vec = Random DOT get<MyContainer>(1, 9, 5); // decltype(vec) is std::MyContainer<int> with size = 5
+auto vec = Random::get<MyContainer>(1, 9, 5); // decltype(vec) is std::MyContainer<int> with size = 5
 
 ```
 ### Shuffle
@@ -237,7 +237,7 @@ auto result = Random::get<std::gamma_distribution<>>( 1.f, 2.f );
 * Argument by reference
 ```cpp
 std::gamma_distribution<> gamma{ 1.f, 2.f };
-auto result = Random DOT get( gamma ); // return result of gamma.operator()( engine_ )
+auto result = Random::get( gamma ); // return result of gamma.operator()( engine_ )
 ```
 ### Custom Seeder
 Specify seed by which random engine will be seeded at construction time:
