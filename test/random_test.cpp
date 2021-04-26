@@ -711,6 +711,100 @@ TEST_CASE( "return random pointer from built-in array" ) {
     }
 }
 
+static thread_local int reserve_count = 0;
+static thread_local int insert_count = 0;
+
+template<typename A>
+class Container
+{
+public:
+    void* end(...)
+    {
+        return 0;
+    }
+
+    void insert(...)
+    {
+        ++insert_count;
+    }
+
+    void reserve(std::size_t)
+    {
+        ++reserve_count;
+    }
+};
+
+TEST_CASE("return randomly generated containers with reserve method") {
+    Random DOT get<Container>(1, 200, 3);
+
+    REQUIRE(1 == reserve_count);
+    REQUIRE(3 == insert_count);
+}
+
+TEST_CASE("return randomly generated containers") {
+    auto vec = Random DOT get<std::vector>(1, 200, 3);
+    auto set = Random DOT get<std::set>(1.0, 200.0, 4);
+    auto arr = Random DOT get<std::array, 5>('1', '9');
+
+    auto vec_common = Random DOT get<std::vector, Random_t::common>(1u, 2ul, 6);
+    auto set_common = Random DOT get<std::set, Random_t::common>(1.f, 2.l, 7);
+    auto arr_common = Random DOT get<std::array, 8, Random_t::common>(1, 2l);
+    
+    static_assert(std::is_same<int, decltype(vec)::value_type>::value, "");
+    static_assert(std::is_same<double, decltype(set)::value_type>::value, "");
+    static_assert(std::is_same<char, decltype(arr)::value_type>::value, "");
+
+    static_assert(std::is_same<unsigned long, decltype(vec_common)::value_type>::value, "");
+    static_assert(std::is_same<long double, decltype(set_common)::value_type>::value, "");
+    static_assert(std::is_same<long, decltype(arr_common)::value_type>::value, "");
+
+    REQUIRE(3 == vec.size());
+    REQUIRE(4 == set.size());
+    REQUIRE(5 == arr.size());
+
+    REQUIRE(6 == vec_common.size());
+    REQUIRE(7 == set_common.size());
+    REQUIRE(8 == arr_common.size());
+
+    {
+        bool unique = false;
+
+        auto try_count = std::numeric_limits<int>::max();
+        while (try_count-- > 0)
+        {
+            auto vec2 = Random DOT get<std::vector>(1, 100, 3);
+            auto set2 = Random DOT get<std::set>(1.0, 200.0, 4);
+            auto arr2 = Random DOT get<std::array, 5>('1', '9');
+
+            unique = vec != vec2 && set != set2 && arr != arr2;
+
+            if (unique)
+                break;
+        }
+
+        REQUIRE(true == unique);
+    }
+
+    {
+        bool unique2 = false;
+
+        auto try_count = std::numeric_limits<int>::max();
+        while (try_count-- > 0)
+        {
+            auto vec2_common = Random DOT get<std::vector, Random_t::common>(1u, 200ul, 6);
+            auto set2_common = Random DOT get<std::set, Random_t::common>(1.f, 200.l, 7);
+            auto arr2_common = Random DOT get<std::array, 8, Random_t::common>(1, 200l);
+
+            unique2 = vec_common != vec2_common && set_common != set2_common && arr_common != arr2_common;
+
+            if (unique2)
+                break;
+        }
+
+        REQUIRE(true == unique2);
+    }
+}
+
 TEST_CASE( "Random range with default arguments" ) {
     Random DOT get<uint8_t>( );
     Random DOT get<uint16_t>( );
