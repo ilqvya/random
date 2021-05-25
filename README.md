@@ -14,7 +14,7 @@
   - [Common type number range](#common-type-number-range)
   - [Character range](#character-range)
   - [Bool](#bool)
-  - [Random value from std::initilizer_list](#random-value-from-stdinitilizer_list)
+  - [Random value from std::initializer_list](#random-value-from-stdinitializer_list)
   - [Random iterator](#random-iterator)
   - [Random element from array](#random-element-from-array)
   - [Container of random values](#container-of-random-values)
@@ -162,8 +162,8 @@ auto val = Random::get<bool>() // true with 50% probability by default
 ```cpp
 auto val = Random::get<bool>(-1) // Error: assert occurred! Out of [0; 1] range
 ```
-### Random value from std::initilizer_list
-Return random value from values in a std::initilizer_list
+### Random value from std::initializer_list
+Return random value from values in a std::initializer_list
 ```cpp
 auto val = Random::get({1, 2, 3}) // val = 1 or 2 or 3
 ```
