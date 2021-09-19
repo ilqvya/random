@@ -38,7 +38,7 @@ There are few ways to get working with random in C++:
 - **C style**
 ```cpp
   srand( time(NULL) ); // seed with time since epoch
-  auto random_number = (rand() % (9 - 1)) + 1; // get a pseudo-random integer between 1 and 9
+  auto random_number = (rand() % 9) + 1; // get a pseudo-random integer between 1 and 9
 ```
 * Problems
   * should specify seed
