@@ -71,7 +71,7 @@ TEST_CASE( "Type deduction for random integer numbers" ) {
                    decltype( Random DOT get( 0ull, 0ull ) )>::value, "" );
 }
 
-TEST_CASE( "Random integer numbres is truly random" ) {
+TEST_CASE( "Random integer numbers is truly random" ) {
     bool isDifferentNumber{ false };
 
     do {
@@ -136,7 +136,7 @@ TEST_CASE( "Type deduction for random real numbers" ) {
                    decltype( Random DOT get( 0.l, 0.l ) )>::value, "" );
 }
 
-TEST_CASE( "Random real numbres is truly random" ) {
+TEST_CASE( "Random real numbers is truly random" ) {
     bool isDifferentNumber{ false };
     auto count = std::numeric_limits<std::uintmax_t>::min( );
 
@@ -213,7 +213,7 @@ TEST_CASE( "Type deduction for random byte numbers" ) {
                        std::uint8_t{ 0 } ) ) > ::value, "" );
 }
 
-TEST_CASE( "Random byte numbres is truly random" ) {
+TEST_CASE( "Random byte numbers is truly random" ) {
     bool isDifferentNumber{ false };
 
     do {
@@ -291,7 +291,7 @@ TEST_CASE( "Type deduction for random common_type numbers" ) {
                        0.f, 0.l ) ) > ::value, "" );
 }
 
-TEST_CASE( "Random common type numbres is truly random" ) {
+TEST_CASE( "Random common type numbers is truly random" ) {
     bool isDifferentNumber{ false };
 
     do {
@@ -885,7 +885,7 @@ TEST_CASE("Random characters is truly random") {
 	CHECK(isDifferentNumber);
 }
 
-TEST_CASE("Random iterator assigment") {
+TEST_CASE("Random iterator assignment") {
     std::vector<int> testData{ 1,2,3,4 };
     int newVal = 5;
 
@@ -895,7 +895,7 @@ TEST_CASE("Random iterator assigment") {
     CHECK(testDataHasNewVal);
 }
 
-TEST_CASE("Random container assigment") {
+TEST_CASE("Random container assignment") {
     std::vector<int> testData{ 1,2,3,4 };
     int newVal = 5;
     

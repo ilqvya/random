@@ -42,7 +42,7 @@ There are few ways to get working with random in C++:
 ```
 * Problems
   * should specify seed
-  * should write your own distribution algorihtm
+  * should write your own distribution algorithm
   * [There are no guarantees as to the quality of the random sequence produced.](http://en.cppreference.com/w/cpp/numeric/random/rand#Notes)
 - **C++11 style**
 ```cpp
@@ -274,7 +274,7 @@ Seed an internal random engine by a newly created Seeder instance
 Random::reseed( );
 ```
 ### Thread local random
-It uses static methods API and data with [thread_local](http://en.cppreference.com/w/cpp/keyword/thread_local) storage which is fully **thread safe** (but less perfomance)
+It uses static methods API and data with [thread_local](http://en.cppreference.com/w/cpp/keyword/thread_local) storage which is fully **thread safe** (but less performance)
 ```cpp
 using Random = effolkronium::random_thread_local
 

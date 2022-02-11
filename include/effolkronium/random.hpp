@@ -1728,7 +1728,7 @@ namespace effolkronium {
     /**
     * \brief The basic static random alias based on a std::mt19937
     * \note It uses static methods API and data with thread_local storage
-    * \note Thread safe but less perfomance
+    * \note Thread safe but less performance
     */
     using random_thread_local = basic_random_thread_local<std::mt19937>;
 
