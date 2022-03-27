@@ -1,4 +1,7 @@
+#!/bin/bash
+
 set -e
+set -x
 
 echo CI_DEBUG_CONFIGURATION: $CONFIGURATION
 
