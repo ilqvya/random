@@ -1,5 +1,4 @@
 # Random for modern C++ with convenient API
-[![Build Status](https://travis-ci.org/effolkronium/random.svg?branch=master)](https://travis-ci.org/effolkronium/random?branch=master)
 [![Build status](https://ci.appveyor.com/api/projects/status/vq1kodqqxwx16rfv/branch/master?svg=true)](https://ci.appveyor.com/project/effolkronium/random/branch/master)
 [![Coverage Status](https://coveralls.io/repos/github/effolkronium/random/badge.svg?branch=master&unused=0)](https://coveralls.io/github/effolkronium/random?branch=master&unused=0)
 <a href="https://scan.coverity.com/projects/effolkronium-random">
@@ -70,9 +69,9 @@ There are few ways to get working with random in C++:
     * *random_thread_local* which has static methods and [thread_local](http://en.cppreference.com/w/cpp/keyword/thread_local) internal state. It's thread safe but less efficient
     * *random_local* which has non static methods and local internal state. It can be created on the stack at local scope
 ## Supported compilers
-* GCC 4.9 - 8.0 (and possibly later)
-* Clang 3.7 - 8.0 (and possibly later)
-* Microsoft Visual C++ 2015 - 2019 (and possibly later)
+* GCC 4.9 - 10.0 (and possibly later)
+* Clang 3.7 - 10.0 (and possibly later)
+* Microsoft Visual C++ 2015 - 2022 (and possibly later)
 ## Integration
 #### CMake
 * As subproject
