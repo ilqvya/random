@@ -1,26 +1,25 @@
 ﻿version: '{build}' 
 
 os: 
+  - macos-monterey
+  - macos-bigsur
+  - macos-catalina
+  - Ubuntu
+  - Ubuntu1604
+  - Ubuntu2004
   - Visual Studio 2015
   - Visual Studio 2017
   - Visual Studio 2019
+  - Visual Studio 2022
   
 platform:
-  - x86
   - x64
+  - x86
 
 configuration:
-  - Debug
   - Release
+  - Debug
 
 build_script:
-  - IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2015" ( IF "%PLATFORM%" == "x86" ( SET GEN="Visual Studio 14 2015" ) ELSE ( SET GEN="Visual Studio 14 2015 Win64" ) )
-  - IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2017" ( IF "%PLATFORM%" == "x86" ( SET GEN="Visual Studio 15 2017" ) ELSE ( SET GEN="Visual Studio 15 2017 Win64" ) )
-  - IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2013" ( IF "%PLATFORM%" == "x86" ( SET GEN="Visual Studio 12 2013" ) ELSE ( SET GEN="Visual Studio 12 2013 Win64" ) )
-  - IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" ( IF "%PLATFORM%" == "x86" ( SET GEN="Visual Studio 16 2019" ) ELSE ( SET GEN="Visual Studio 16 2019" ) )
-  - IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2019" ( IF "%PLATFORM%" == "x86" ( SET GEN="Visual Studio 16 2019" ) ELSE ( SET ARCH=-A x64 ) )
-  - echo %GEN% %ARCH%
-  - cmake . -G %GEN% %ARCH% -DCMAKE_CXX_FLAGS="%additional_flags%"
-  - echo %CONFIGURATION%
-  - cmake --build . --config %CONFIGURATION%
-  - ctest -C %CONFIGURATION%
+  - ps: .\appveyor_build_win.bat
+  - sh: ./appveyor_build_lin.sh
