@@ -11,4 +11,5 @@ configuration:
   - Release
 
 build_script:
-  -ps .\appveyor_build_win.bat
+  - ps: .\appveyor_build_win.bat
+  - sh: ./appveyor_build_lin.sh
