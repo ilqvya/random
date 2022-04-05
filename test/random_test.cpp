@@ -6,6 +6,10 @@
 #include <thread>
 #include <vector>
 
+#ifdef _WIN32 // Unit test for case when builds fail 'cause of min\max macro included from Windows.h before random.hpp
+#include "Windows.h"
+#endif
+
 #include "current_random.hpp"
 
 TEST_CASE( "Range overflow for random integer numbers" ) {
