@@ -673,7 +673,7 @@ namespace effolkronium {
         static Engine& engine() {
             return engine_instance();
         }
-    protected:
+    private:
         /// get reference to the static engine instance
         static Engine& engine_instance( ) {
             static Engine engine{ Seeder{ }( ) };
@@ -1191,7 +1191,7 @@ namespace effolkronium {
         static Engine& engine() {
             return engine_instance();
         }
-    protected:
+    private:
         /// get reference to the thread local engine instance
         static Engine& engine_instance( ) {
             thread_local Engine engine{ Seeder{ }( ) };
@@ -1707,13 +1707,13 @@ namespace effolkronium {
         Engine& engine() {
             return m_engine;
         }
-    protected:
+    private:
         /// return engine seeded by Seeder
         static Engine make_seeded_engine( ) {
             // Make seeder instance for seed return by reference like std::seed_seq
             return Engine{ Seeder{ }( ) };
         }
-    protected:
+    private:
         /// The random number engine
         Engine m_engine{ make_seeded_engine( ) };
     };
