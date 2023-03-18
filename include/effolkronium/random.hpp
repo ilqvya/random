@@ -1713,7 +1713,7 @@ namespace effolkronium {
             // Make seeder instance for seed return by reference like std::seed_seq
             return Engine{ Seeder{ }( ) };
         }
-    protected:
+    private:
         /// The random number engine
         Engine m_engine{ make_seeded_engine( ) };
     };
