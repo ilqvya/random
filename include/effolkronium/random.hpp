@@ -1707,7 +1707,7 @@ namespace effolkronium {
         Engine& engine() {
             return m_engine;
         }
-    protected:
+    private:
         /// return engine seeded by Seeder
         static Engine make_seeded_engine( ) {
             // Make seeder instance for seed return by reference like std::seed_seq
