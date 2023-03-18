@@ -673,7 +673,7 @@ namespace effolkronium {
         static Engine& engine() {
             return engine_instance();
         }
-    protected:
+    private:
         /// get reference to the static engine instance
         static Engine& engine_instance( ) {
             static Engine engine{ Seeder{ }( ) };
@@ -1191,7 +1191,7 @@ namespace effolkronium {
         static Engine& engine() {
             return engine_instance();
         }
-    protected:
+    private:
         /// get reference to the thread local engine instance
         static Engine& engine_instance( ) {
             thread_local Engine engine{ Seeder{ }( ) };
