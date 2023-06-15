@@ -420,11 +420,11 @@ namespace effolkronium {
         }
 
         /**
-        * \brief Return random value from initilizer_list
-        * \param init_list initilizer_list with values
-        * \return Random value from initilizer_list
-        * \note Should be 1 or more elements in initilizer_list
-        * \note Warning! Elements in initilizer_list can't be moved:
+        * \brief Return random value from initializer_list
+        * \param init_list initializer_list with values
+        * \return Random value from initializer_list
+        * \note Should be 1 or more elements in initializer_list
+        * \note Warning! Elements in initializer_list can't be moved:
         *               https://stackoverflow.com/a/8193157/5734836
         */
         template<typename T>
@@ -938,11 +938,11 @@ namespace effolkronium {
         }
 
         /**
-        * \brief Return random value from initilizer_list
-        * \param init_list initilizer_list with values
-        * \return Random value from initilizer_list
-        * \note Should be 1 or more elements in initilizer_list
-        * \note Warning! Elements in initilizer_list can't be moved:
+        * \brief Return random value from initializer_list
+        * \param init_list initializer_list with values
+        * \return Random value from initializer_list
+        * \note Should be 1 or more elements in initializer_list
+        * \note Warning! Elements in initializer_list can't be moved:
         *               https://stackoverflow.com/a/8193157/5734836
         */
         template<typename T>
@@ -1454,11 +1454,11 @@ namespace effolkronium {
         }
 
         /**
-        * \brief Return random value from initilizer_list
-        * \param init_list initilizer_list with values
-        * \return Random value from initilizer_list
-        * \note Should be 1 or more elements in initilizer_list
-        * \note Warning! Elements in initilizer_list can't be moved:
+        * \brief Return random value from initializer_list
+        * \param init_list initializer_list with values
+        * \return Random value from initializer_list
+        * \note Should be 1 or more elements in initializer_list
+        * \note Warning! Elements in initializer_list can't be moved:
         *               https://stackoverflow.com/a/8193157/5734836
         */
         template<typename T>
@@ -1721,7 +1721,7 @@ namespace effolkronium {
     /** 
     * \brief The basic static random alias based on a std::mt19937
     * \note It uses static methods API and data with static storage
-    * \note Not thread safe but more prefomance
+    * \note Not thread safe but more performance
     */
     using random_static = basic_random_static<std::mt19937>;
 
