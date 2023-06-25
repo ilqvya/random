@@ -659,6 +659,8 @@ namespace effolkronium {
         *        Type should be '(THIS_TYPE)::common' struct
         * \param map_container A container that has mapped_type,
         *        value_type and key_type defined
+        * \return A random iterator from given map container based
+        *         on the result of the weighted random number generation
         * \note return the end iterator if the iterator is empty
         */
         template<
@@ -1215,6 +1217,8 @@ namespace effolkronium {
         *        Type should be '(THIS_TYPE)::common' struct
         * \param map_container A container that has mapped_type,
         *        value_type and key_type defined
+        * \return A random iterator from given map container based
+        *         on the result of the weighted random number generation
         * \note return the end iterator if the iterator is empty
         */
         template<
@@ -1769,6 +1773,8 @@ namespace effolkronium {
         *        Type should be '(THIS_TYPE)::common' struct
         * \param map_container A container that has mapped_type,
         *        value_type and key_type defined
+        * \return A random iterator from given map container based
+        *         on the result of the weighted random number generation
         * \note return the end iterator if the iterator is empty
         */
         template<
