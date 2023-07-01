@@ -31,6 +31,7 @@ SOFTWARE.
 #ifndef EFFOLKRONIUM_RANDOM_HPP
 #define EFFOLKRONIUM_RANDOM_HPP
 
+#include <iostream>
 #include <random>
 #include <chrono> // timed seed
 #include <type_traits>
@@ -659,8 +660,46 @@ namespace effolkronium {
         *        Type should be '(THIS_TYPE)::common' struct
         * \param map_container A container that has mapped_type,
         *        value_type and key_type defined
-        * \return A random iterator from given map container based
-        *         on the result of the weighted random number generation
+        * \note return the end iterator if the iterator is empty or total weight is equals to sum
+        */
+        template<
+            typename Key,
+            class MapContainer
+        >
+        static auto get(const MapContainer& map_container) -> typename std::enable_if<
+            details::is_map<MapContainer>::value &&
+            details::is_iterator<decltype(std::begin(map_container))>::value &&
+            (details::is_uniform_int<typename MapContainer::mapped_type>::value || details::is_byte<typename MapContainer::mapped_type>::value) &&
+            std::is_same<Key, common>::value,
+        decltype(std::begin(map_container))>::type {
+            using MappedType = typename MapContainer::mapped_type;
+            using PairType = typename MapContainer::value_type;
+            using IteratorType = decltype(std::begin(map_container));
+            
+            IteratorType it = std::begin(map_container);
+            MappedType total_weight = std::accumulate<decltype(it), MappedType>(std::begin(map_container), std::end(map_container), 0, [](MappedType val, const PairType& p){
+                return val + p.second;
+            });
+
+            MappedType random_weight = get(MappedType(0), total_weight - 1);
+            MappedType sum = 0;
+
+            for(; it != std::end(map_container); ++it)
+            {
+                sum += it->second;
+                if(sum > random_weight) return it;
+            }
+            return std::end(map_container);
+        }
+
+        /**
+        * \brief Return a random iterator from given map container by
+        *        utilizing the values of the map container as weights
+        *        for weighted random number generation
+        * \param Key The Key type for this version of 'get' method
+        *        Type should be '(THIS_TYPE)::common' struct
+        * \param map_container A container that has mapped_type,
+        *        value_type and key_type defined
         * \note return the end iterator if the iterator is empty
         */
         template<
@@ -670,20 +709,22 @@ namespace effolkronium {
         static auto get(const MapContainer& map_container) -> typename std::enable_if<
             details::is_map<MapContainer>::value &&
             details::is_iterator<decltype(std::begin(map_container))>::value &&
-            details::is_supported_number<typename MapContainer::mapped_type>::value &&
+            (details::is_uniform_real<typename MapContainer::mapped_type>::value) &&
             std::is_same<Key, common>::value,
         decltype(std::begin(map_container))>::type {
             using MappedType = typename MapContainer::mapped_type;
             using PairType = typename MapContainer::value_type;
             using IteratorType = decltype(std::begin(map_container));
             
-            MappedType total_weight = std::accumulate(std::begin(map_container), std::end(map_container), 0, [](MappedType val, const PairType& p){
+            IteratorType it = std::begin(map_container);
+            MappedType total_weight = std::accumulate<decltype(it), MappedType>(std::begin(map_container), std::end(map_container), 0, [](MappedType val, const PairType& p){
                 return val + p.second;
             });
-            MappedType random_weight = get(0, total_weight - 1);
+
+            MappedType random_weight = get(MappedType(0), std::nextafter(total_weight, std::numeric_limits<MappedType>::min()));
             MappedType sum = 0;
 
-            for(IteratorType it = std::begin(map_container); it != std::end(map_container); ++it)
+            for(; it != std::end(map_container); ++it)
             {
                 sum += it->second;
                 if(sum > random_weight) return it;
@@ -1217,8 +1258,46 @@ namespace effolkronium {
         *        Type should be '(THIS_TYPE)::common' struct
         * \param map_container A container that has mapped_type,
         *        value_type and key_type defined
-        * \return A random iterator from given map container based
-        *         on the result of the weighted random number generation
+        * \note return the end iterator if the iterator is empty or total weight is equals to sum
+        */
+        template<
+            typename Key,
+            class MapContainer
+        >
+        static auto get(const MapContainer& map_container) -> typename std::enable_if<
+            details::is_map<MapContainer>::value &&
+            details::is_iterator<decltype(std::begin(map_container))>::value &&
+            (details::is_uniform_int<typename MapContainer::mapped_type>::value || details::is_byte<typename MapContainer::mapped_type>::value) &&
+            std::is_same<Key, common>::value,
+        decltype(std::begin(map_container))>::type {
+            using MappedType = typename MapContainer::mapped_type;
+            using PairType = typename MapContainer::value_type;
+            using IteratorType = decltype(std::begin(map_container));
+            
+            IteratorType it = std::begin(map_container);
+            MappedType total_weight = std::accumulate<decltype(it), MappedType>(std::begin(map_container), std::end(map_container), 0, [](MappedType val, const PairType& p){
+                return val + p.second;
+            });
+
+            MappedType random_weight = get(MappedType(0), total_weight - 1);
+            MappedType sum = 0;
+
+            for(; it != std::end(map_container); ++it)
+            {
+                sum += it->second;
+                if(sum > random_weight) return it;
+            }
+            return std::end(map_container);
+        }
+
+        /**
+        * \brief Return a random iterator from given map container by
+        *        utilizing the values of the map container as weights
+        *        for weighted random number generation
+        * \param Key The Key type for this version of 'get' method
+        *        Type should be '(THIS_TYPE)::common' struct
+        * \param map_container A container that has mapped_type,
+        *        value_type and key_type defined
         * \note return the end iterator if the iterator is empty
         */
         template<
@@ -1228,20 +1307,22 @@ namespace effolkronium {
         static auto get(const MapContainer& map_container) -> typename std::enable_if<
             details::is_map<MapContainer>::value &&
             details::is_iterator<decltype(std::begin(map_container))>::value &&
-            details::is_supported_number<typename MapContainer::mapped_type>::value &&
+            (details::is_uniform_real<typename MapContainer::mapped_type>::value) &&
             std::is_same<Key, common>::value,
         decltype(std::begin(map_container))>::type {
             using MappedType = typename MapContainer::mapped_type;
             using PairType = typename MapContainer::value_type;
             using IteratorType = decltype(std::begin(map_container));
             
-            MappedType total_weight = std::accumulate(std::begin(map_container), std::end(map_container), 0, [](MappedType val, const PairType& p){
+            IteratorType it = std::begin(map_container);
+            MappedType total_weight = std::accumulate<decltype(it), MappedType>(std::begin(map_container), std::end(map_container), 0, [](MappedType val, const PairType& p){
                 return val + p.second;
             });
-            MappedType random_weight = get(0, total_weight - 1);
+
+            MappedType random_weight = get(MappedType(0), std::nextafter(total_weight, std::numeric_limits<MappedType>::min()));
             MappedType sum = 0;
 
-            for(IteratorType it = std::begin(map_container); it != std::end(map_container); ++it)
+            for(; it != std::end(map_container); ++it)
             {
                 sum += it->second;
                 if(sum > random_weight) return it;
@@ -1773,8 +1854,46 @@ namespace effolkronium {
         *        Type should be '(THIS_TYPE)::common' struct
         * \param map_container A container that has mapped_type,
         *        value_type and key_type defined
-        * \return A random iterator from given map container based
-        *         on the result of the weighted random number generation
+        * \note return the end iterator if the iterator is empty or total weight is equals to sum
+        */
+        template<
+            typename Key,
+            class MapContainer
+        >
+        auto get(const MapContainer& map_container) -> typename std::enable_if<
+            details::is_map<MapContainer>::value &&
+            details::is_iterator<decltype(std::begin(map_container))>::value &&
+            (details::is_uniform_int<typename MapContainer::mapped_type>::value || details::is_byte<typename MapContainer::mapped_type>::value) &&
+            std::is_same<Key, common>::value,
+        decltype(std::begin(map_container))>::type {
+            using MappedType = typename MapContainer::mapped_type;
+            using PairType = typename MapContainer::value_type;
+            using IteratorType = decltype(std::begin(map_container));
+            
+            IteratorType it = std::begin(map_container);
+            MappedType total_weight = std::accumulate<decltype(it), MappedType>(std::begin(map_container), std::end(map_container), 0, [](MappedType val, const PairType& p){
+                return val + p.second;
+            });
+
+            MappedType random_weight = get(MappedType(0), total_weight - 1);
+            MappedType sum = 0;
+
+            for(; it != std::end(map_container); ++it)
+            {
+                sum += it->second;
+                if(sum > random_weight) return it;
+            }
+            return std::end(map_container);
+        }
+
+        /**
+        * \brief Return a random iterator from given map container by
+        *        utilizing the values of the map container as weights
+        *        for weighted random number generation
+        * \param Key The Key type for this version of 'get' method
+        *        Type should be '(THIS_TYPE)::common' struct
+        * \param map_container A container that has mapped_type,
+        *        value_type and key_type defined
         * \note return the end iterator if the iterator is empty
         */
         template<
@@ -1784,20 +1903,22 @@ namespace effolkronium {
         auto get(const MapContainer& map_container) -> typename std::enable_if<
             details::is_map<MapContainer>::value &&
             details::is_iterator<decltype(std::begin(map_container))>::value &&
-            details::is_supported_number<typename MapContainer::mapped_type>::value &&
+            (details::is_uniform_real<typename MapContainer::mapped_type>::value) &&
             std::is_same<Key, common>::value,
         decltype(std::begin(map_container))>::type {
             using MappedType = typename MapContainer::mapped_type;
             using PairType = typename MapContainer::value_type;
             using IteratorType = decltype(std::begin(map_container));
             
-            MappedType total_weight = std::accumulate(std::begin(map_container), std::end(map_container), 0, [](MappedType val, const PairType& p){
+            IteratorType it = std::begin(map_container);
+            MappedType total_weight = std::accumulate<decltype(it), MappedType>(std::begin(map_container), std::end(map_container), 0, [](MappedType val, const PairType& p){
                 return val + p.second;
             });
-            MappedType random_weight = get(0, total_weight - 1);
+
+            MappedType random_weight = get(MappedType(0), std::nextafter(total_weight, std::numeric_limits<MappedType>::min()));
             MappedType sum = 0;
 
-            for(IteratorType it = std::begin(map_container); it != std::end(map_container); ++it)
+            for(; it != std::end(map_container); ++it)
             {
                 sum += it->second;
                 if(sum > random_weight) return it;
