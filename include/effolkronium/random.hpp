@@ -31,7 +31,6 @@ SOFTWARE.
 #ifndef EFFOLKRONIUM_RANDOM_HPP
 #define EFFOLKRONIUM_RANDOM_HPP
 
-#include <iostream>
 #include <random>
 #include <chrono> // timed seed
 #include <type_traits>
