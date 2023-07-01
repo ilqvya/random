@@ -679,6 +679,7 @@ namespace effolkronium {
             MappedType total_weight = std::accumulate<decltype(it), MappedType>(std::begin(map_container), std::end(map_container), 0, [](MappedType val, const PairType& p){
                 return val + p.second;
             });
+            if(total_weight == MappedType(0)) return std::end(map_container);
 
             MappedType random_weight = get(MappedType(0), total_weight - 1);
             MappedType sum = 0;
@@ -719,6 +720,7 @@ namespace effolkronium {
             MappedType total_weight = std::accumulate<decltype(it), MappedType>(std::begin(map_container), std::end(map_container), 0, [](MappedType val, const PairType& p){
                 return val + p.second;
             });
+            if(total_weight == MappedType(0)) return std::end(map_container);
 
             MappedType random_weight = get(MappedType(0), std::nextafter(total_weight, std::numeric_limits<MappedType>::min()));
             MappedType sum = 0;
@@ -1277,6 +1279,7 @@ namespace effolkronium {
             MappedType total_weight = std::accumulate<decltype(it), MappedType>(std::begin(map_container), std::end(map_container), 0, [](MappedType val, const PairType& p){
                 return val + p.second;
             });
+            if(total_weight == MappedType(0)) return std::end(map_container);
 
             MappedType random_weight = get(MappedType(0), total_weight - 1);
             MappedType sum = 0;
@@ -1317,6 +1320,7 @@ namespace effolkronium {
             MappedType total_weight = std::accumulate<decltype(it), MappedType>(std::begin(map_container), std::end(map_container), 0, [](MappedType val, const PairType& p){
                 return val + p.second;
             });
+            if(total_weight == MappedType(0)) return std::end(map_container);
 
             MappedType random_weight = get(MappedType(0), std::nextafter(total_weight, std::numeric_limits<MappedType>::min()));
             MappedType sum = 0;
@@ -1873,6 +1877,7 @@ namespace effolkronium {
             MappedType total_weight = std::accumulate<decltype(it), MappedType>(std::begin(map_container), std::end(map_container), 0, [](MappedType val, const PairType& p){
                 return val + p.second;
             });
+            if(total_weight == MappedType(0)) return std::end(map_container);
 
             MappedType random_weight = get(MappedType(0), total_weight - 1);
             MappedType sum = 0;
@@ -1913,6 +1918,7 @@ namespace effolkronium {
             MappedType total_weight = std::accumulate<decltype(it), MappedType>(std::begin(map_container), std::end(map_container), 0, [](MappedType val, const PairType& p){
                 return val + p.second;
             });
+            if(total_weight == MappedType(0)) return std::end(map_container);
 
             MappedType random_weight = get(MappedType(0), std::nextafter(total_weight, std::numeric_limits<MappedType>::min()));
             MappedType sum = 0;
