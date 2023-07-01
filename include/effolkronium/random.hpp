@@ -668,7 +668,7 @@ namespace effolkronium {
         static auto get(const MapContainer& map_container) -> typename std::enable_if<
             details::is_map<MapContainer>::value &&
             details::is_iterator<decltype(std::begin(map_container))>::value &&
-            (details::is_uniform_int<typename MapContainer::mapped_type>::value || details::is_byte<typename MapContainer::mapped_type>::value) &&
+            !std::is_signed<typename MapContainer::mapped_type>::value &&
             std::is_same<Key, common>::value,
         decltype(std::begin(map_container))>::type {
             using MappedType = typename MapContainer::mapped_type;
@@ -709,7 +709,7 @@ namespace effolkronium {
         static auto get(const MapContainer& map_container) -> typename std::enable_if<
             details::is_map<MapContainer>::value &&
             details::is_iterator<decltype(std::begin(map_container))>::value &&
-            (details::is_uniform_real<typename MapContainer::mapped_type>::value) &&
+            details::is_uniform_real<typename MapContainer::mapped_type>::value &&
             std::is_same<Key, common>::value,
         decltype(std::begin(map_container))>::type {
             using MappedType = typename MapContainer::mapped_type;
@@ -718,6 +718,7 @@ namespace effolkronium {
             
             IteratorType it = std::begin(map_container);
             MappedType total_weight = std::accumulate<decltype(it), MappedType>(std::begin(map_container), std::end(map_container), 0, [](MappedType val, const PairType& p){
+                assert(p.second >= decltype(p.second)(0));
                 return val + p.second;
             });
             if(total_weight == MappedType(0)) return std::end(map_container);
@@ -1268,7 +1269,7 @@ namespace effolkronium {
         static auto get(const MapContainer& map_container) -> typename std::enable_if<
             details::is_map<MapContainer>::value &&
             details::is_iterator<decltype(std::begin(map_container))>::value &&
-            (details::is_uniform_int<typename MapContainer::mapped_type>::value || details::is_byte<typename MapContainer::mapped_type>::value) &&
+            !std::is_signed<typename MapContainer::mapped_type>::value &&
             std::is_same<Key, common>::value,
         decltype(std::begin(map_container))>::type {
             using MappedType = typename MapContainer::mapped_type;
@@ -1309,7 +1310,7 @@ namespace effolkronium {
         static auto get(const MapContainer& map_container) -> typename std::enable_if<
             details::is_map<MapContainer>::value &&
             details::is_iterator<decltype(std::begin(map_container))>::value &&
-            (details::is_uniform_real<typename MapContainer::mapped_type>::value) &&
+            details::is_uniform_real<typename MapContainer::mapped_type>::value &&
             std::is_same<Key, common>::value,
         decltype(std::begin(map_container))>::type {
             using MappedType = typename MapContainer::mapped_type;
@@ -1318,6 +1319,7 @@ namespace effolkronium {
             
             IteratorType it = std::begin(map_container);
             MappedType total_weight = std::accumulate<decltype(it), MappedType>(std::begin(map_container), std::end(map_container), 0, [](MappedType val, const PairType& p){
+                assert(p.second >= decltype(p.second)(0));
                 return val + p.second;
             });
             if(total_weight == MappedType(0)) return std::end(map_container);
@@ -1866,7 +1868,7 @@ namespace effolkronium {
         auto get(const MapContainer& map_container) -> typename std::enable_if<
             details::is_map<MapContainer>::value &&
             details::is_iterator<decltype(std::begin(map_container))>::value &&
-            (details::is_uniform_int<typename MapContainer::mapped_type>::value || details::is_byte<typename MapContainer::mapped_type>::value) &&
+            !std::is_signed<typename MapContainer::mapped_type>::value &&
             std::is_same<Key, common>::value,
         decltype(std::begin(map_container))>::type {
             using MappedType = typename MapContainer::mapped_type;
@@ -1907,7 +1909,7 @@ namespace effolkronium {
         auto get(const MapContainer& map_container) -> typename std::enable_if<
             details::is_map<MapContainer>::value &&
             details::is_iterator<decltype(std::begin(map_container))>::value &&
-            (details::is_uniform_real<typename MapContainer::mapped_type>::value) &&
+            details::is_uniform_real<typename MapContainer::mapped_type>::value &&
             std::is_same<Key, common>::value,
         decltype(std::begin(map_container))>::type {
             using MappedType = typename MapContainer::mapped_type;
@@ -1916,6 +1918,7 @@ namespace effolkronium {
             
             IteratorType it = std::begin(map_container);
             MappedType total_weight = std::accumulate<decltype(it), MappedType>(std::begin(map_container), std::end(map_container), 0, [](MappedType val, const PairType& p){
+                assert(p.second >= decltype(p.second)(0));
                 return val + p.second;
             });
             if(total_weight == MappedType(0)) return std::end(map_container);
