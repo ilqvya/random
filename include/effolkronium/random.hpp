@@ -678,19 +678,18 @@ namespace effolkronium {
             std::is_same<Key, weight>::value,
         decltype(std::begin(map_container))>::type {
             using MappedType = typename MapContainer::mapped_type;
-            using PairType = typename MapContainer::value_type;
             using IteratorType = decltype(std::begin(map_container));
             
-            IteratorType it = std::begin(map_container);
-            MappedType total_weight = std::accumulate<decltype(it), MappedType>(std::begin(map_container), std::end(map_container), 0, [](MappedType val, const PairType& p){
-                return val + p.second;
-            });
+            MappedType total_weight = 0;
+            for (IteratorType it = std::begin(map_container); it != std::end(map_container); ++it) {
+                total_weight += it->second;
+            }
             if(total_weight == MappedType(0)) return std::end(map_container);
 
             MappedType random_weight = get(MappedType(0), total_weight - 1);
             MappedType sum = 0;
 
-            for(; it != std::end(map_container); ++it)
+            for(IteratorType it = std::begin(map_container); it != std::end(map_container); ++it)
             {
                 sum += it->second;
                 if(sum > random_weight) return it;
@@ -719,20 +718,19 @@ namespace effolkronium {
             std::is_same<Key, weight>::value,
         decltype(std::begin(map_container))>::type {
             using MappedType = typename MapContainer::mapped_type;
-            using PairType = typename MapContainer::value_type;
             using IteratorType = decltype(std::begin(map_container));
             
-            IteratorType it = std::begin(map_container);
-            MappedType total_weight = std::accumulate<decltype(it), MappedType>(std::begin(map_container), std::end(map_container), 0, [](MappedType val, const PairType& p){
-                assert(p.second >= decltype(p.second)(0));
-                return val + p.second;
-            });
+            MappedType total_weight = 0;
+            for (IteratorType it = std::begin(map_container); it != std::end(map_container); ++it) {
+                assert(it->second >= MappedType(0));
+                total_weight += it->second;
+            }
             if(total_weight == MappedType(0)) return std::end(map_container);
 
-            MappedType random_weight = get(MappedType(0), std::nextafter(total_weight, std::numeric_limits<MappedType>::min()));
+            MappedType random_weight = get(MappedType(0), std::nextafter(total_weight, (std::numeric_limits<MappedType>::min)( )));
             MappedType sum = 0;
 
-            for(; it != std::end(map_container); ++it)
+            for(IteratorType it = std::begin(map_container); it != std::end(map_container); ++it)
             {
                 sum += it->second;
                 if(sum > random_weight) return it;
@@ -1282,19 +1280,18 @@ namespace effolkronium {
             std::is_same<Key, weight>::value,
         decltype(std::begin(map_container))>::type {
             using MappedType = typename MapContainer::mapped_type;
-            using PairType = typename MapContainer::value_type;
             using IteratorType = decltype(std::begin(map_container));
             
-            IteratorType it = std::begin(map_container);
-            MappedType total_weight = std::accumulate<decltype(it), MappedType>(std::begin(map_container), std::end(map_container), 0, [](MappedType val, const PairType& p){
-                return val + p.second;
-            });
+            MappedType total_weight = 0;
+            for (IteratorType it = std::begin(map_container); it != std::end(map_container); ++it) {
+                total_weight += it->second;
+            }
             if(total_weight == MappedType(0)) return std::end(map_container);
 
             MappedType random_weight = get(MappedType(0), total_weight - 1);
             MappedType sum = 0;
 
-            for(; it != std::end(map_container); ++it)
+            for(IteratorType it = std::begin(map_container); it != std::end(map_container); ++it)
             {
                 sum += it->second;
                 if(sum > random_weight) return it;
@@ -1323,20 +1320,19 @@ namespace effolkronium {
             std::is_same<Key, weight>::value,
         decltype(std::begin(map_container))>::type {
             using MappedType = typename MapContainer::mapped_type;
-            using PairType = typename MapContainer::value_type;
             using IteratorType = decltype(std::begin(map_container));
             
-            IteratorType it = std::begin(map_container);
-            MappedType total_weight = std::accumulate<decltype(it), MappedType>(std::begin(map_container), std::end(map_container), 0, [](MappedType val, const PairType& p){
-                assert(p.second >= decltype(p.second)(0));
-                return val + p.second;
-            });
+            MappedType total_weight = 0;
+            for (IteratorType it = std::begin(map_container); it != std::end(map_container); ++it) {
+                assert(it->second >= MappedType(0));
+                total_weight += it->second;
+            }
             if(total_weight == MappedType(0)) return std::end(map_container);
 
-            MappedType random_weight = get(MappedType(0), std::nextafter(total_weight, std::numeric_limits<MappedType>::min()));
+            MappedType random_weight = get(MappedType(0), std::nextafter(total_weight, (std::numeric_limits<MappedType>::min)( )));
             MappedType sum = 0;
 
-            for(; it != std::end(map_container); ++it)
+            for(IteratorType it = std::begin(map_container); it != std::end(map_container); ++it)
             {
                 sum += it->second;
                 if(sum > random_weight) return it;
@@ -1884,19 +1880,18 @@ namespace effolkronium {
             std::is_same<Key, weight>::value,
         decltype(std::begin(map_container))>::type {
             using MappedType = typename MapContainer::mapped_type;
-            using PairType = typename MapContainer::value_type;
             using IteratorType = decltype(std::begin(map_container));
             
-            IteratorType it = std::begin(map_container);
-            MappedType total_weight = std::accumulate<decltype(it), MappedType>(std::begin(map_container), std::end(map_container), 0, [](MappedType val, const PairType& p){
-                return val + p.second;
-            });
+            MappedType total_weight = 0;
+            for (IteratorType it = std::begin(map_container); it != std::end(map_container); ++it) {
+                total_weight += it->second;
+            }
             if(total_weight == MappedType(0)) return std::end(map_container);
 
             MappedType random_weight = get(MappedType(0), total_weight - 1);
             MappedType sum = 0;
 
-            for(; it != std::end(map_container); ++it)
+            for(IteratorType it = std::begin(map_container); it != std::end(map_container); ++it)
             {
                 sum += it->second;
                 if(sum > random_weight) return it;
@@ -1925,20 +1920,19 @@ namespace effolkronium {
             std::is_same<Key, weight>::value,
         decltype(std::begin(map_container))>::type {
             using MappedType = typename MapContainer::mapped_type;
-            using PairType = typename MapContainer::value_type;
             using IteratorType = decltype(std::begin(map_container));
             
-            IteratorType it = std::begin(map_container);
-            MappedType total_weight = std::accumulate<decltype(it), MappedType>(std::begin(map_container), std::end(map_container), 0, [](MappedType val, const PairType& p){
-                assert(p.second >= decltype(p.second)(0));
-                return val + p.second;
-            });
+            MappedType total_weight = 0;
+            for (IteratorType it = std::begin(map_container); it != std::end(map_container); ++it) {
+                assert(it->second >= MappedType(0));
+                total_weight += it->second;
+            }
             if(total_weight == MappedType(0)) return std::end(map_container);
 
-            MappedType random_weight = get(MappedType(0), std::nextafter(total_weight, std::numeric_limits<MappedType>::min()));
+            MappedType random_weight = get(MappedType(0), std::nextafter(total_weight, (std::numeric_limits<MappedType>::min)( )));
             MappedType sum = 0;
 
-            for(; it != std::end(map_container); ++it)
+            for(IteratorType it = std::begin(map_container); it != std::end(map_container); ++it)
             {
                 sum += it->second;
                 if(sum > random_weight) return it;

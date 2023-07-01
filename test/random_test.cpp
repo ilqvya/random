@@ -1035,15 +1035,15 @@ TEST_CASE("Empty map and maps with zero total weight tests"){
     REQUIRE(Random DOT get<Random_t::weight>(empty_double_map) == empty_double_map.end());
 
     // Zero weighted maps
-    std::unordered_map<std::string, unsigned long> zero_long_umap = {{"Orange", 0}, {"Apple", 0}, {"Banana", 0}};
-    std::unordered_map<std::string, unsigned> zero_uint_umap = {{"Orange", 0}, {"Apple", 0}, {"Banana", 0}};
-    std::unordered_map<std::string, float> zero_float_umap = {{"Orange", 0}, {"Apple", 0}, {"Banana", 0}};
-    std::unordered_map<std::string, double> zero_double_umap = {{"Orange", 0}, {"Apple", 0}, {"Banana", 0}};
+    std::unordered_map<std::string, unsigned long> zero_long_umap = {{"Orange", 0ul}, {"Apple", 0ul}, {"Banana", 0ul}};
+    std::unordered_map<std::string, unsigned> zero_uint_umap = {{"Orange", 0u}, {"Apple", 0u}, {"Banana", 0u}};
+    std::unordered_map<std::string, float> zero_float_umap = {{"Orange", 0.0f}, {"Apple", 0.0f}, {"Banana", 0.0f}};
+    std::unordered_map<std::string, double> zero_double_umap = {{"Orange", 0.0}, {"Apple", 0.0}, {"Banana", 0.0}};
 
-    std::map<std::string, unsigned long> zero_ulong_map = {{"Orange", 0}, {"Apple", 0}, {"Banana", 0}};
-    std::map<std::string, unsigned> zero_uint_map = {{"Orange", 0}, {"Apple", 0}, {"Banana", 0}};
-    std::map<std::string, float> zero_float_map = {{"Orange", 0}, {"Apple", 0}, {"Banana", 0}};
-    std::map<std::string, double> zero_double_map = {{"Orange", 0}, {"Apple", 0}, {"Banana", 0}};
+    std::map<std::string, unsigned long> zero_ulong_map = {{"Orange", 0ul}, {"Apple", 0ul}, {"Banana", 0ul}};
+    std::map<std::string, unsigned> zero_uint_map = {{"Orange", 0u}, {"Apple", 0u}, {"Banana", 0u}};
+    std::map<std::string, float> zero_float_map = {{"Orange", 0.0f}, {"Apple", 0.0f}, {"Banana", 0.0f}};
+    std::map<std::string, double> zero_double_map = {{"Orange", 0.0}, {"Apple", 0.0}, {"Banana", 0.0}};
 
     REQUIRE(Random DOT get<Random_t::weight>(zero_long_umap) == zero_long_umap.end());
     REQUIRE(Random DOT get<Random_t::weight>(zero_uint_umap) == zero_uint_umap.end());
@@ -1057,15 +1057,15 @@ TEST_CASE("Empty map and maps with zero total weight tests"){
 }
 
 TEST_CASE("Maps with non-zero total weight tests"){
-    std::unordered_map<std::string, unsigned long> nonzero_ulong_umap = {{"Orange", 1}, {"Apple", 2}, {"Banana", 3}};
-    std::unordered_map<std::string, unsigned> nonzero_uint_umap = {{"Orange", 1}, {"Apple", 2}, {"Banana", 3}};
-    std::unordered_map<std::string, float> nonzero_float_umap = {{"Orange", 1}, {"Apple", 2}, {"Banana", 3}};
-    std::unordered_map<std::string, double> nonzero_double_umap = {{"Orange", 1}, {"Apple", 2}, {"Banana", 3}};
+    std::unordered_map<std::string, unsigned long> nonzero_ulong_umap = {{"Orange", 1ul}, {"Apple", 2ul}, {"Banana", 3ul}};
+    std::unordered_map<std::string, unsigned> nonzero_uint_umap = {{"Orange", 1u}, {"Apple", 2u}, {"Banana", 3u}};
+    std::unordered_map<std::string, float> nonzero_float_umap = {{"Orange", 1.0f}, {"Apple", 2.0f}, {"Banana", 3.0f}};
+    std::unordered_map<std::string, double> nonzero_double_umap = {{"Orange", 1.0}, {"Apple", 2.0}, {"Banana", 3.0}};
     
-    std::map<std::string, unsigned long> nonzero_ulong_map = {{"Orange", 1}, {"Apple", 2}, {"Banana", 3}};
-    std::map<std::string, unsigned> nonzero_uint_map = {{"Orange", 1}, {"Apple", 2}, {"Banana", 3}};
-    std::map<std::string, float> nonzero_float_map = {{"Orange", 1}, {"Apple", 2}, {"Banana", 3}};
-    std::map<std::string, double> nonzero_double_map = {{"Orange", 1}, {"Apple", 2}, {"Banana", 3}};
+    std::map<std::string, unsigned long> nonzero_ulong_map = {{"Orange", 1ul}, {"Apple", 2ul}, {"Banana", 3ul}};
+    std::map<std::string, unsigned> nonzero_uint_map = {{"Orange", 1u}, {"Apple", 2u}, {"Banana", 3u}};
+    std::map<std::string, float> nonzero_float_map = {{"Orange", 1.0f}, {"Apple", 2.0f}, {"Banana", 3.0f}};
+    std::map<std::string, double> nonzero_double_map = {{"Orange", 1.0}, {"Apple", 2.0}, {"Banana", 3.0}};
 
     REQUIRE(Random DOT get<Random_t::weight>(nonzero_ulong_umap) != nonzero_ulong_umap.end());
     REQUIRE(Random DOT get<Random_t::weight>(nonzero_uint_umap) != nonzero_uint_umap.end());
