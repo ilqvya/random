@@ -1014,77 +1014,65 @@ TEST_CASE("is_map trait"){
 
 TEST_CASE("Empty map and maps with zero total weight tests"){
     // Empty maps
-    std::unordered_map<std::string, int> empty_int_umap;
-    std::unordered_map<std::string, long> empty_long_umap;
+    std::unordered_map<std::string, unsigned long> empty_ulong_umap;
     std::unordered_map<std::string, unsigned> empty_uint_umap;
     std::unordered_map<std::string, float> empty_float_umap;
     std::unordered_map<std::string, double> empty_double_umap;
 
-    std::map<std::string, int> empty_int_map;
-    std::map<std::string, long> empty_long_map;
+    std::map<std::string, unsigned long> empty_ulong_map;
     std::map<std::string, unsigned> empty_uint_map;
     std::map<std::string, float> empty_float_map;
     std::map<std::string, double> empty_double_map;
 
-    REQUIRE(Random DOT get<Random_t::common>(empty_int_umap) == empty_int_umap.end());
-    REQUIRE(Random DOT get<Random_t::common>(empty_long_umap) == empty_long_umap.end());
+    REQUIRE(Random DOT get<Random_t::common>(empty_ulong_umap) == empty_ulong_umap.end());
     REQUIRE(Random DOT get<Random_t::common>(empty_uint_umap) == empty_uint_umap.end());
     REQUIRE(Random DOT get<Random_t::common>(empty_float_umap) == empty_float_umap.end());
     REQUIRE(Random DOT get<Random_t::common>(empty_double_umap) == empty_double_umap.end());
 
-    REQUIRE(Random DOT get<Random_t::common>(empty_int_map) == empty_int_map.end());
-    REQUIRE(Random DOT get<Random_t::common>(empty_long_map) == empty_long_map.end());
+    REQUIRE(Random DOT get<Random_t::common>(empty_ulong_map) == empty_ulong_map.end());
     REQUIRE(Random DOT get<Random_t::common>(empty_uint_map) == empty_uint_map.end());
     REQUIRE(Random DOT get<Random_t::common>(empty_float_map) == empty_float_map.end());
     REQUIRE(Random DOT get<Random_t::common>(empty_double_map) == empty_double_map.end());
 
     // Zero weighted maps
-    std::unordered_map<std::string, int> zero_int_umap = {{"Orange", 0}, {"Apple", 0}, {"Banana", 0}};
-    std::unordered_map<std::string, long> zero_long_umap = {{"Orange", 0}, {"Apple", 0}, {"Banana", 0}};
+    std::unordered_map<std::string, unsigned long> zero_long_umap = {{"Orange", 0}, {"Apple", 0}, {"Banana", 0}};
     std::unordered_map<std::string, unsigned> zero_uint_umap = {{"Orange", 0}, {"Apple", 0}, {"Banana", 0}};
     std::unordered_map<std::string, float> zero_float_umap = {{"Orange", 0}, {"Apple", 0}, {"Banana", 0}};
     std::unordered_map<std::string, double> zero_double_umap = {{"Orange", 0}, {"Apple", 0}, {"Banana", 0}};
 
-    std::map<std::string, int> zero_int_map = {{"Orange", 0}, {"Apple", 0}, {"Banana", 0}};
-    std::map<std::string, long> zero_long_map = {{"Orange", 0}, {"Apple", 0}, {"Banana", 0}};
+    std::map<std::string, unsigned long> zero_ulong_map = {{"Orange", 0}, {"Apple", 0}, {"Banana", 0}};
     std::map<std::string, unsigned> zero_uint_map = {{"Orange", 0}, {"Apple", 0}, {"Banana", 0}};
     std::map<std::string, float> zero_float_map = {{"Orange", 0}, {"Apple", 0}, {"Banana", 0}};
     std::map<std::string, double> zero_double_map = {{"Orange", 0}, {"Apple", 0}, {"Banana", 0}};
 
-    REQUIRE(Random DOT get<Random_t::common>(zero_int_umap) == zero_int_umap.end());
     REQUIRE(Random DOT get<Random_t::common>(zero_long_umap) == zero_long_umap.end());
     REQUIRE(Random DOT get<Random_t::common>(zero_uint_umap) == zero_uint_umap.end());
     REQUIRE(Random DOT get<Random_t::common>(zero_float_umap) == zero_float_umap.end());
     REQUIRE(Random DOT get<Random_t::common>(zero_double_umap) == zero_double_umap.end());
 
-    REQUIRE(Random DOT get<Random_t::common>(zero_int_map) == zero_int_map.end());
-    REQUIRE(Random DOT get<Random_t::common>(zero_long_map) == zero_long_map.end());
+    REQUIRE(Random DOT get<Random_t::common>(zero_ulong_map) == zero_ulong_map.end());
     REQUIRE(Random DOT get<Random_t::common>(zero_uint_map) == zero_uint_map.end());
     REQUIRE(Random DOT get<Random_t::common>(zero_float_map) == zero_float_map.end());
     REQUIRE(Random DOT get<Random_t::common>(zero_double_map) == zero_double_map.end());
 }
 
 TEST_CASE("Maps with non-zero total weight tests"){
-    std::unordered_map<std::string, int> nonzero_int_umap = {{"Orange", 1}, {"Apple", 2}, {"Banana", 3}};
-    std::unordered_map<std::string, long> nonzero_long_umap = {{"Orange", 1}, {"Apple", 2}, {"Banana", 3}};
+    std::unordered_map<std::string, unsigned long> nonzero_ulong_umap = {{"Orange", 1}, {"Apple", 2}, {"Banana", 3}};
     std::unordered_map<std::string, unsigned> nonzero_uint_umap = {{"Orange", 1}, {"Apple", 2}, {"Banana", 3}};
     std::unordered_map<std::string, float> nonzero_float_umap = {{"Orange", 1}, {"Apple", 2}, {"Banana", 3}};
     std::unordered_map<std::string, double> nonzero_double_umap = {{"Orange", 1}, {"Apple", 2}, {"Banana", 3}};
     
-    std::map<std::string, int> nonzero_int_map = {{"Orange", 1}, {"Apple", 2}, {"Banana", 3}};
-    std::map<std::string, long> nonzero_long_map = {{"Orange", 1}, {"Apple", 2}, {"Banana", 3}};
+    std::map<std::string, unsigned long> nonzero_ulong_map = {{"Orange", 1}, {"Apple", 2}, {"Banana", 3}};
     std::map<std::string, unsigned> nonzero_uint_map = {{"Orange", 1}, {"Apple", 2}, {"Banana", 3}};
     std::map<std::string, float> nonzero_float_map = {{"Orange", 1}, {"Apple", 2}, {"Banana", 3}};
     std::map<std::string, double> nonzero_double_map = {{"Orange", 1}, {"Apple", 2}, {"Banana", 3}};
 
-    REQUIRE(Random DOT get<Random_t::common>(nonzero_int_umap) != nonzero_int_umap.end());
-    REQUIRE(Random DOT get<Random_t::common>(nonzero_long_umap) != nonzero_long_umap.end());
+    REQUIRE(Random DOT get<Random_t::common>(nonzero_ulong_umap) != nonzero_ulong_umap.end());
     REQUIRE(Random DOT get<Random_t::common>(nonzero_uint_umap) != nonzero_uint_umap.end());
     REQUIRE(Random DOT get<Random_t::common>(nonzero_float_umap) != nonzero_float_umap.end());
     REQUIRE(Random DOT get<Random_t::common>(nonzero_double_umap) != nonzero_double_umap.end());
     
-    REQUIRE(Random DOT get<Random_t::common>(nonzero_int_map) != nonzero_int_map.end());
-    REQUIRE(Random DOT get<Random_t::common>(nonzero_long_map) != nonzero_long_map.end());
+    REQUIRE(Random DOT get<Random_t::common>(nonzero_ulong_map) != nonzero_ulong_map.end());
     REQUIRE(Random DOT get<Random_t::common>(nonzero_uint_map) != nonzero_uint_map.end());
     REQUIRE(Random DOT get<Random_t::common>(nonzero_float_map) != nonzero_float_map.end());
     REQUIRE(Random DOT get<Random_t::common>(nonzero_double_map) != nonzero_double_map.end());
