@@ -801,6 +801,9 @@ namespace effolkronium {
         /// Key type for getting common type numbers or objects
         using common = details::common;
 
+        /// Key type for weighted random number generation
+        using weight = details::weight;
+
         basic_random_static() = delete;
 
         /// return internal engine by copy
@@ -857,6 +860,9 @@ namespace effolkronium {
         /// Key type for getting common type numbers or objects
         using common = details::common;
 
+        /// Key type for weighted random number generation
+        using weight = details::weight;
+
         basic_random_thread_local( ) = delete;
 
         /// return internal engine by copy
@@ -912,6 +918,9 @@ namespace effolkronium {
 
         /// Key type for getting common type numbers or objects
         using common = details::common;
+
+        /// Key type for weighted random number generation
+        using weight = details::weight;
 
         /// Advances the internal state by z times
         void discard( const unsigned long long z ) {
