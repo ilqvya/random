@@ -17,6 +17,7 @@
   - [Random iterator](#random-iterator)
   - [Random element from array](#random-element-from-array)
   - [Container of random values](#container-of-random-values)
+  - [Weighted random values](#weighted-random-values)
   - [Shuffle](#shuffle)
   - [Custom distribution](#custom-distribution)
   - [Custom Seeder](#custom-seeder)
@@ -212,6 +213,20 @@ class MyContainer
 
 auto vec = Random::get<MyContainer>(1, 9, 5); // decltype(vec) is std::MyContainer<int> with size = 5
 
+```
+### Weighted random values
+Return random iterator from map-like containers
+```cpp
+    std::unordered_map<std::string, unsigned long> nonzero_ulong_umap = {{"Orange", 1ul}, {"Apple", 2ul}, {"Banana", 3ul}};
+    std::unordered_map<std::string, unsigned> nonzero_uint_umap = {{"Orange", 1u}, {"Apple", 2u}, {"Banana", 3u}};
+    
+    std::map<std::string, float> nonzero_float_map = {{"Orange", 1.0f}, {"Apple", 2.0f}, {"Banana", 3.0f}};
+    std::map<std::string, double> nonzero_double_map = {{"Orange", 1.0}, {"Apple", 2.0}, {"Banana", 3.0}};
+
+    Random::get<Random_t::weight>(nonzero_ulong_umap);
+    Random::get<Random_t::weight>(nonzero_uint_umap);
+    Random::get<Random_t::weight>(nonzero_float_map);
+    Random::get<Random_t::weight>(nonzero_double_map);
 ```
 ### Shuffle
 Reorders the elements in a given range or in all container [ref](http://en.cppreference.com/w/cpp/algorithm/random_shuffle)
