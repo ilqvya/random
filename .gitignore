@@ -392,3 +392,4 @@ _deps
 
 # VS2019 out folder
 out/
+build/
