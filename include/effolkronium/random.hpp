@@ -674,7 +674,7 @@ namespace effolkronium {
             details::is_map<MapContainer>::value &&
             details::is_iterator<decltype(std::begin(map_container))>::value &&
             !std::is_signed<typename MapContainer::mapped_type>::value &&
-            std::is_same<Key, basic_random_base::weight>::value,
+            std::is_same<Key, details::weight>::value,
         decltype(std::begin(map_container))>::type {
             using MappedType = typename MapContainer::mapped_type;
             using IteratorType = decltype(std::begin(map_container));
