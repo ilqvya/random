@@ -47,7 +47,10 @@ namespace effolkronium {
 
     namespace details {
         /// Key type for getting common type numbers or objects
-        struct common{ }; 
+        struct common{ };
+
+        /// Key type for weighted random number generation
+        struct weight{ };
 
         /// True if type T is applicable by a std::uniform_int_distribution
         template<typename T>
@@ -145,6 +148,15 @@ namespace effolkronium {
                 decltype(test<T>(0)), long>::value;
         };
 
+        template<typename...>
+        using void_t = void;
+
+        template<typename Type, typename = void>
+        struct is_map : public std::false_type  {};
+
+        template<typename Type>
+        struct is_map<Type, void_t<typename Type::key_type, typename Type::mapped_type, typename Type::value_type>> : public std::true_type{};
+
     } // namespace details
 
     /// Default seeder for 'random' classes
@@ -201,6 +213,9 @@ namespace effolkronium {
 
         /// Key type for getting common type numbers or objects
         using common = details::common;
+
+        /// Key type for weighted random number generation
+        using weight = details::weight;
 
         /**
         * \return The minimum value
@@ -419,11 +434,11 @@ namespace effolkronium {
         }
 
         /**
-        * \brief Return random value from initilizer_list
-        * \param init_list initilizer_list with values
-        * \return Random value from initilizer_list
-        * \note Should be 1 or more elements in initilizer_list
-        * \note Warning! Elements in initilizer_list can't be moved:
+        * \brief Return random value from initializer_list
+        * \param init_list initializer_list with values
+        * \return Random value from initializer_list
+        * \note Should be 1 or more elements in initializer_list
+        * \note Warning! Elements in initializer_list can't be moved:
         *               https://stackoverflow.com/a/8193157/5734836
         */
         template<typename T>
@@ -639,6 +654,87 @@ namespace effolkronium {
         template<typename Dist>
         static typename Dist::result_type get( Dist& dist ) {
             return dist( engine_instance( ) );
+        }
+
+        /**
+        * \brief Return a random iterator from given map container by
+        *        utilizing the values of the map container as weights
+        *        for weighted random number generation
+        * \param Key The Key type for this version of 'get' method
+        *        Type should be '(THIS_TYPE)::common' struct
+        * \param map_container A container that has mapped_type,
+        *        value_type and key_type defined
+        * \note return the end iterator if the iterator is empty or total weight is equals to sum
+        */
+        template<
+            typename Key,
+            class MapContainer
+        >
+        static auto get(const MapContainer& map_container) -> typename std::enable_if<
+            details::is_map<MapContainer>::value &&
+            details::is_iterator<decltype(std::begin(map_container))>::value &&
+            !std::is_signed<typename MapContainer::mapped_type>::value &&
+            std::is_same<Key, details::weight>::value,
+        decltype(std::begin(map_container))>::type {
+            using MappedType = typename MapContainer::mapped_type;
+            using IteratorType = decltype(std::begin(map_container));
+            
+            MappedType total_weight = 0;
+            for (IteratorType it = std::begin(map_container); it != std::end(map_container); ++it) {
+                total_weight += it->second;
+            }
+            if(total_weight == MappedType(0)) return std::end(map_container);
+
+            MappedType random_weight = get(MappedType(0), total_weight - 1);
+            MappedType sum = 0;
+
+            for(IteratorType it = std::begin(map_container); it != std::end(map_container); ++it)
+            {
+                sum += it->second;
+                if(sum > random_weight) return it;
+            }
+            return std::end(map_container);
+        }
+
+        /**
+        * \brief Return a random iterator from given map container by
+        *        utilizing the values of the map container as weights
+        *        for weighted random number generation
+        * \param Key The Key type for this version of 'get' method
+        *        Type should be '(THIS_TYPE)::common' struct
+        * \param map_container A container that has mapped_type,
+        *        value_type and key_type defined
+        * \note return the end iterator if the iterator is empty
+        */
+        template<
+            typename Key,
+            class MapContainer
+        >
+        static auto get(const MapContainer& map_container) -> typename std::enable_if<
+            details::is_map<MapContainer>::value &&
+            details::is_iterator<decltype(std::begin(map_container))>::value &&
+            details::is_uniform_real<typename MapContainer::mapped_type>::value &&
+            std::is_same<Key, details::weight>::value,
+        decltype(std::begin(map_container))>::type {
+            using MappedType = typename MapContainer::mapped_type;
+            using IteratorType = decltype(std::begin(map_container));
+            
+            MappedType total_weight = 0;
+            for (IteratorType it = std::begin(map_container); it != std::end(map_container); ++it) {
+                assert(it->second >= MappedType(0));
+                total_weight += it->second;
+            }
+            if(total_weight == MappedType(0)) return std::end(map_container);
+
+            MappedType random_weight = get(MappedType(0), std::nextafter(total_weight, (std::numeric_limits<MappedType>::min)( )));
+            MappedType sum = 0;
+
+            for(IteratorType it = std::begin(map_container); it != std::end(map_container); ++it)
+            {
+                sum += it->second;
+                if(sum > random_weight) return it;
+            }
+            return std::end(map_container);
         }
 
         /**
@@ -1018,11 +1114,11 @@ namespace effolkronium {
         }
 
         /**
-        * \brief Return random value from initilizer_list
-        * \param init_list initilizer_list with values
-        * \return Random value from initilizer_list
-        * \note Should be 1 or more elements in initilizer_list
-        * \note Warning! Elements in initilizer_list can't be moved:
+        * \brief Return random value from initializer_list
+        * \param init_list initializer_list with values
+        * \return Random value from initializer_list
+        * \note Should be 1 or more elements in initializer_list
+        * \note Warning! Elements in initializer_list can't be moved:
         *               https://stackoverflow.com/a/8193157/5734836
         */
         template<typename T>
@@ -1241,6 +1337,87 @@ namespace effolkronium {
         }
 
         /**
+        * \brief Return a random iterator from given map container by
+        *        utilizing the values of the map container as weights
+        *        for weighted random number generation
+        * \param Key The Key type for this version of 'get' method
+        *        Type should be '(THIS_TYPE)::common' struct
+        * \param map_container A container that has mapped_type,
+        *        value_type and key_type defined
+        * \note return the end iterator if the iterator is empty or total weight is equals to sum
+        */
+        template<
+            typename Key,
+            class MapContainer
+        >
+        auto get(const MapContainer& map_container) -> typename std::enable_if<
+            details::is_map<MapContainer>::value &&
+            details::is_iterator<decltype(std::begin(map_container))>::value &&
+            !std::is_signed<typename MapContainer::mapped_type>::value &&
+            std::is_same<Key, details::weight>::value,
+        decltype(std::begin(map_container))>::type {
+            using MappedType = typename MapContainer::mapped_type;
+            using IteratorType = decltype(std::begin(map_container));
+            
+            MappedType total_weight = 0;
+            for (IteratorType it = std::begin(map_container); it != std::end(map_container); ++it) {
+                total_weight += it->second;
+            }
+            if(total_weight == MappedType(0)) return std::end(map_container);
+
+            MappedType random_weight = get(MappedType(0), total_weight - 1);
+            MappedType sum = 0;
+
+            for(IteratorType it = std::begin(map_container); it != std::end(map_container); ++it)
+            {
+                sum += it->second;
+                if(sum > random_weight) return it;
+            }
+            return std::end(map_container);
+        }
+
+        /**
+        * \brief Return a random iterator from given map container by
+        *        utilizing the values of the map container as weights
+        *        for weighted random number generation
+        * \param Key The Key type for this version of 'get' method
+        *        Type should be '(THIS_TYPE)::common' struct
+        * \param map_container A container that has mapped_type,
+        *        value_type and key_type defined
+        * \note return the end iterator if the iterator is empty
+        */
+        template<
+            typename Key,
+            class MapContainer
+        >
+        auto get(const MapContainer& map_container) -> typename std::enable_if<
+            details::is_map<MapContainer>::value &&
+            details::is_iterator<decltype(std::begin(map_container))>::value &&
+            details::is_uniform_real<typename MapContainer::mapped_type>::value &&
+            std::is_same<Key, details::weight>::value,
+        decltype(std::begin(map_container))>::type {
+            using MappedType = typename MapContainer::mapped_type;
+            using IteratorType = decltype(std::begin(map_container));
+            
+            MappedType total_weight = 0;
+            for (IteratorType it = std::begin(map_container); it != std::end(map_container); ++it) {
+                assert(it->second >= MappedType(0));
+                total_weight += it->second;
+            }
+            if(total_weight == MappedType(0)) return std::end(map_container);
+
+            MappedType random_weight = get(MappedType(0), std::nextafter(total_weight, (std::numeric_limits<MappedType>::min)( )));
+            MappedType sum = 0;
+
+            for(IteratorType it = std::begin(map_container); it != std::end(map_container); ++it)
+            {
+                sum += it->second;
+                if(sum > random_weight) return it;
+            }
+            return std::end(map_container);
+        }
+
+        /**
         * \brief Reorders the elements in the given range [first, last)
         *        such that each possible permutation of those elements
         *        has equal probability of appearance.
@@ -1285,7 +1462,7 @@ namespace effolkronium {
     /** 
     * \brief The basic static random alias based on a std::mt19937
     * \note It uses static methods API and data with static storage
-    * \note Not thread safe but more prefomance
+    * \note Not thread safe but more performance
     */
     using random_static = basic_random_static<std::mt19937>;
 

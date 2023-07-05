@@ -5,6 +5,8 @@
 #include <array>
 #include <thread>
 #include <vector>
+#include <map>
+#include <unordered_map>
 
 #ifdef _WIN32 // Unit test for case when builds fail 'cause of min\max macro included from Windows.h before random.hpp
 #include "Windows.h"
@@ -991,4 +993,87 @@ TEST_CASE("Construct Seeder only once") {
 
 	REQUIRE(constructCount == 2);
 	REQUIRE(invokeCount == 2);
+}
+
+TEST_CASE("is_map trait"){
+    static_assert(effolkronium::details::is_map<std::unordered_map<int ,int>>::value, "");
+    static_assert(effolkronium::details::is_map<std::map<int ,int>>::value, "");
+    // This should also count as a map
+    struct CustomMap{
+        using key_type = int;
+        using mapped_type = int;
+        using value_type = int;
+    };
+    static_assert(effolkronium::details::is_map<CustomMap>::value, "");
+
+    // Some datatypes that shouldn't be classified as a map
+    static_assert(!effolkronium::details::is_map<int>::value, "");
+    static_assert(!effolkronium::details::is_map<std::vector<int>>::value, "");
+    static_assert(!effolkronium::details::is_map<std::string>::value, "");
+}
+
+TEST_CASE("Empty map and maps with zero total weight tests"){
+    // Empty maps
+    std::unordered_map<std::string, unsigned long> empty_ulong_umap;
+    std::unordered_map<std::string, unsigned> empty_uint_umap;
+    std::unordered_map<std::string, float> empty_float_umap;
+    std::unordered_map<std::string, double> empty_double_umap;
+
+    std::map<std::string, unsigned long> empty_ulong_map;
+    std::map<std::string, unsigned> empty_uint_map;
+    std::map<std::string, float> empty_float_map;
+    std::map<std::string, double> empty_double_map;
+
+    REQUIRE(Random DOT get<Random_t::weight>(empty_ulong_umap) == empty_ulong_umap.end());
+    REQUIRE(Random DOT get<Random_t::weight>(empty_uint_umap) == empty_uint_umap.end());
+    REQUIRE(Random DOT get<Random_t::weight>(empty_float_umap) == empty_float_umap.end());
+    REQUIRE(Random DOT get<Random_t::weight>(empty_double_umap) == empty_double_umap.end());
+
+    REQUIRE(Random DOT get<Random_t::weight>(empty_ulong_map) == empty_ulong_map.end());
+    REQUIRE(Random DOT get<Random_t::weight>(empty_uint_map) == empty_uint_map.end());
+    REQUIRE(Random DOT get<Random_t::weight>(empty_float_map) == empty_float_map.end());
+    REQUIRE(Random DOT get<Random_t::weight>(empty_double_map) == empty_double_map.end());
+
+    // Zero weighted maps
+    std::unordered_map<std::string, unsigned long> zero_long_umap = {{"Orange", 0ul}, {"Apple", 0ul}, {"Banana", 0ul}};
+    std::unordered_map<std::string, unsigned> zero_uint_umap = {{"Orange", 0u}, {"Apple", 0u}, {"Banana", 0u}};
+    std::unordered_map<std::string, float> zero_float_umap = {{"Orange", 0.0f}, {"Apple", 0.0f}, {"Banana", 0.0f}};
+    std::unordered_map<std::string, double> zero_double_umap = {{"Orange", 0.0}, {"Apple", 0.0}, {"Banana", 0.0}};
+
+    std::map<std::string, unsigned long> zero_ulong_map = {{"Orange", 0ul}, {"Apple", 0ul}, {"Banana", 0ul}};
+    std::map<std::string, unsigned> zero_uint_map = {{"Orange", 0u}, {"Apple", 0u}, {"Banana", 0u}};
+    std::map<std::string, float> zero_float_map = {{"Orange", 0.0f}, {"Apple", 0.0f}, {"Banana", 0.0f}};
+    std::map<std::string, double> zero_double_map = {{"Orange", 0.0}, {"Apple", 0.0}, {"Banana", 0.0}};
+
+    REQUIRE(Random DOT get<Random_t::weight>(zero_long_umap) == zero_long_umap.end());
+    REQUIRE(Random DOT get<Random_t::weight>(zero_uint_umap) == zero_uint_umap.end());
+    REQUIRE(Random DOT get<Random_t::weight>(zero_float_umap) == zero_float_umap.end());
+    REQUIRE(Random DOT get<Random_t::weight>(zero_double_umap) == zero_double_umap.end());
+
+    REQUIRE(Random DOT get<Random_t::weight>(zero_ulong_map) == zero_ulong_map.end());
+    REQUIRE(Random DOT get<Random_t::weight>(zero_uint_map) == zero_uint_map.end());
+    REQUIRE(Random DOT get<Random_t::weight>(zero_float_map) == zero_float_map.end());
+    REQUIRE(Random DOT get<Random_t::weight>(zero_double_map) == zero_double_map.end());
+}
+
+TEST_CASE("Maps with non-zero total weight tests"){
+    std::unordered_map<std::string, unsigned long> nonzero_ulong_umap = {{"Orange", 1ul}, {"Apple", 2ul}, {"Banana", 3ul}};
+    std::unordered_map<std::string, unsigned> nonzero_uint_umap = {{"Orange", 1u}, {"Apple", 2u}, {"Banana", 3u}};
+    std::unordered_map<std::string, float> nonzero_float_umap = {{"Orange", 1.0f}, {"Apple", 2.0f}, {"Banana", 3.0f}};
+    std::unordered_map<std::string, double> nonzero_double_umap = {{"Orange", 1.0}, {"Apple", 2.0}, {"Banana", 3.0}};
+    
+    std::map<std::string, unsigned long> nonzero_ulong_map = {{"Orange", 1ul}, {"Apple", 2ul}, {"Banana", 3ul}};
+    std::map<std::string, unsigned> nonzero_uint_map = {{"Orange", 1u}, {"Apple", 2u}, {"Banana", 3u}};
+    std::map<std::string, float> nonzero_float_map = {{"Orange", 1.0f}, {"Apple", 2.0f}, {"Banana", 3.0f}};
+    std::map<std::string, double> nonzero_double_map = {{"Orange", 1.0}, {"Apple", 2.0}, {"Banana", 3.0}};
+
+    REQUIRE(Random DOT get<Random_t::weight>(nonzero_ulong_umap) != nonzero_ulong_umap.end());
+    REQUIRE(Random DOT get<Random_t::weight>(nonzero_uint_umap) != nonzero_uint_umap.end());
+    REQUIRE(Random DOT get<Random_t::weight>(nonzero_float_umap) != nonzero_float_umap.end());
+    REQUIRE(Random DOT get<Random_t::weight>(nonzero_double_umap) != nonzero_double_umap.end());
+    
+    REQUIRE(Random DOT get<Random_t::weight>(nonzero_ulong_map) != nonzero_ulong_map.end());
+    REQUIRE(Random DOT get<Random_t::weight>(nonzero_uint_map) != nonzero_uint_map.end());
+    REQUIRE(Random DOT get<Random_t::weight>(nonzero_float_map) != nonzero_float_map.end());
+    REQUIRE(Random DOT get<Random_t::weight>(nonzero_double_map) != nonzero_double_map.end());
 }
