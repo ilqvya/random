@@ -54,7 +54,7 @@ There are few ways to get working with random in C++:
 * Problems
   * should specify seed
   * should choose, create and use a chain of various objects like engines and distributions
-  * [mt19937](http://en.cppreference.com/w/cpp/numeric/random/mersenne_twister_engine) use 5000 bytes of memory for each creation (which is bad for performance if we create it too frequently)
+  * [mt19937](http://en.cppreference.com/w/cpp/numeric/random/mersenne_twister_engine) uses 5000 bytes of memory for each creation (which is bad for performance if we create it too frequently)
   * uncomfortable and not intuitively clear usage
 - **effolkronium random style**
 ```cpp
