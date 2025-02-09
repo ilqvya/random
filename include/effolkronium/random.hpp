@@ -4,10 +4,10 @@ ______  ___   _   _______ ________  __
 | |_/ / /_\ \|  \| | | | | | | | .  . |
 |    /|  _  || . ` | | | | | | | |\/| | version 1.5.0
 | |\ \| | | || |\  | |/ /\ \_/ / |  | |
-\_| \_\_| |_/\_| \_/___/  \___/\_|  |_/ https://github.com/effolkronium/random
+\_| \_\_| |_/\_| \_/___/  \___/\_|  |_/ https://github.com/ilqvya/random
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-Copyright (c) 2017-2024 effolkronium (Illia Polishchuk)
+Copyright (c) 2017-2025 ilqvya (Illia Polishchuk)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files( the "Software" ), to deal
