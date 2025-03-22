@@ -376,6 +376,7 @@
 
 #include <sstream>
 #include <algorithm>
+#include <cstdint>
 
 namespace Catch {
 
