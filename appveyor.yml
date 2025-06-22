@@ -1,28 +1,17 @@
 ﻿version: '{build}' 
 
-os: 
-  - macos-sonoma
-  - macos-ventura
-  - macos-monterey
-  - macos-bigsur
-  - macos-catalina
-  - Ubuntu
-  - Ubuntu1604
-  - Ubuntu2004
+os:
   - Ubuntu2204
-  - Visual Studio 2015
-  - Visual Studio 2017
-  - Visual Studio 2019
-  - Visual Studio 2022
   
 platform:
   - x64
-  - x86
 
 configuration:
-  - Release
   - Debug
 
 build_script:
   - ps: .\appveyor_build_win.bat
   - sh: ./appveyor_build_lin.sh
+
+after_build:
+  - sh: ./appveyor_coverity_scan.sh
