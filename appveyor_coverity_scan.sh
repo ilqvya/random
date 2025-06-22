@@ -34,11 +34,6 @@ if [ "$APPVEYOR_BUILD_WORKER_IMAGE" = "Ubuntu2204" ] && \
   # Build with Coverity
   "$COV_DIR/bin/cov-build" --dir cov-int ./appveyor_build_lin.sh
 
-  # Ignore test and usr directory
-  echo "Ignoring test and usr dir: "
-  ls -la cov-int/
-  find cov-int/emit -type f -name '*.tu' | grep -E '/(usr|test)/' | xargs rm -v
-  
   # Package and upload
   tar czf coverity.tgz cov-int
 
