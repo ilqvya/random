@@ -35,6 +35,8 @@ if [ "$APPVEYOR_BUILD_WORKER_IMAGE" = "Ubuntu2204" ] && \
   "$COV_DIR/bin/cov-build" --dir cov-int ./appveyor_build_lin.sh
 
   # Ignore test and usr directory
+  echo "Ignoring test and usr dir: "
+  ls -la cov-int/
   rm -rf cov-int/test
   rm -rf cov-int/usr
   
