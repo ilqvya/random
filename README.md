@@ -1,7 +1,8 @@
 # Random for modern C++ with convenient API
 [![Github-sponsors](https://img.shields.io/badge/sponsor-30363D?style=for-the-badge&logo=GitHub-Sponsors&logoColor=#EA4AAA)](https://github.com/sponsors/ilqvya)
 [![Build status](https://ci.appveyor.com/api/projects/status/nukrsqimulgel7nk?svg=true)](https://ci.appveyor.com/project/ilqvya/random)
-[![Coverage Status](https://coveralls.io/repos/github/effolkronium/random/badge.svg?branch=master&unused=0)](https://coveralls.io/github/effolkronium/random?branch=master&unused=0)<a href="https://scan.coverity.com/projects/effolkronium-random"><img alt="Coverity Scan Build Status" src="https://scan.coverity.com/projects/13062/badge.svg"/></a>
+[![Coverage Status](https://coveralls.io/repos/github/effolkronium/random/badge.svg?branch=master&unused=0)](https://coveralls.io/github/effolkronium/random?branch=master&unused=0)
+<a href="https://scan.coverity.com/projects/ilqvya-random"><img alt="Coverity Scan Build Status" src="https://scan.coverity.com/projects/31956/badge.svg"/></a>
 [![Github-sponsors](https://img.shields.io/badge/sponsor-30363D?style=for-the-badge&logo=GitHub-Sponsors&logoColor=#EA4AAA)](https://github.com/sponsors/ilqvya)
 - [Design goals](#design-goals)
 - [Supported compilers](#supported-compilers)
