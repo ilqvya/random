@@ -69,8 +69,8 @@ There are few ways to get working with random in C++:
     * *random_thread_local* which has static methods and [thread_local](http://en.cppreference.com/w/cpp/keyword/thread_local) internal state. It's thread safe but less efficient
     * *random_local* which has non static methods and local internal state. It can be created on the stack at local scope
 ## Supported compilers
-* GCC 4.9 - 10.0 (and possibly later)
-* Clang 3.7 - 10.0 (and possibly later)
+* GCC 4.9 - 13.1.0 (and possibly later)
+* Clang 3.7 - 15.0.0 (and possibly later)
 * Microsoft Visual C++ 2015 - 2022 (and possibly later)
 ## Integration
 #### CMake
