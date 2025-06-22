@@ -37,8 +37,7 @@ if [ "$APPVEYOR_BUILD_WORKER_IMAGE" = "Ubuntu2204" ] && \
   # Ignore test and usr directory
   echo "Ignoring test and usr dir: "
   ls -la cov-int/
-  rm -rf cov-int/test
-  rm -rf cov-int/usr
+  find cov-int/emit -type f -name '*.tu' | grep -E '/(usr|test)/' | xargs rm -v
   
   # Package and upload
   tar czf coverity.tgz cov-int
