@@ -1,12 +1,26 @@
-﻿version: '{build}' 
+version: '{build}' 
 
-os:
+os: 
+  - macos-sonoma
+  - macos-ventura
+  - macos-monterey
+  - macos-bigsur
+  - macos-catalina
+  - Ubuntu
+  - Ubuntu1604
+  - Ubuntu2004
   - Ubuntu2204
+  - Visual Studio 2015
+  - Visual Studio 2017
+  - Visual Studio 2019
+  - Visual Studio 2022
   
 platform:
   - x64
+  - x86
 
 configuration:
+  - Release
   - Debug
 
 build_script:
