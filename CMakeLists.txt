@@ -1,4 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.5)
+﻿cmake_minimum_required(VERSION 3.10)
 
 # define the project
 project(effolkronium_random VERSION 1.5.0 LANGUAGES CXX)
