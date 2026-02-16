@@ -26,6 +26,3 @@ configuration:
 build_script:
   - ps: .\appveyor_build_win.bat
   - sh: ./appveyor_build_lin.sh
-
-after_build:
-  - sh: ./appveyor_coverity_scan.sh
