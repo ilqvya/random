@@ -204,6 +204,10 @@ Any container with "begin", "end", and "insert" methods is supported:
 auto vec = Random::get<std::vector>(1, 9, 5); // decltype(vec) is std::vector<int> with size = 5
 // Note: "reserve" method is invoked automatically if available for performance
 
+auto deq = Random::get<std::deque>(1, 9, 5); // decltype(deq) is std::deque<int> with size = 5
+
+auto lst = Random::get<std::list>(1.0, 9.9, 10); // decltype(lst) is std::list<double> with size = 10
+
 auto mset = Random::get<std::multiset>(1.0, 9.9, 10); // decltype(mset) is std::multiset<double> with size = 10
 
 auto arr = Random::get<std::array, 5>('0', '9'); // decltype(arr) is std::array<char, 5>

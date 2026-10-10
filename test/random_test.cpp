@@ -4,6 +4,8 @@
 #include <array>
 #include <thread>
 #include <vector>
+#include <deque>
+#include <list>
 #include <map>
 #include <set>
 #include <unordered_map>
@@ -785,28 +787,40 @@ TEST_CASE( "return randomly generated containers" ) {
     auto vec = Random.get<std::vector>( 1, 200, 3 );
     auto set = Random.get<std::set>( 1.0, 200.0, 4 );
     auto arr = Random.get<std::array, 5>( '1', '9' );
+    auto deq = Random.get<std::deque>( 10, 50, 4 );
+    auto lst = Random.get<std::list>( 100.0f, 200.0f, 5 );
 
     auto vec_common = Random.get<std::vector, Random_t::common>( 1u, 2ul, 6 );
     auto set_common = Random.get<std::set, Random_t::common>( 1.f, 2.l, 7 );
     auto arr_common = Random.get<std::array, 8, Random_t::common>( 1, 2l );
+    auto deq_common = Random.get<std::deque, Random_t::common>( 1u, 500ul, 4 );
+    auto lst_common = Random.get<std::list, Random_t::common>( 1.0f, 10.0, 3 );
 
     static_assert( std::is_same<int, decltype( vec )::value_type>::value, "" );
     static_assert( std::is_same<double, decltype( set )::value_type>::value, "" );
     static_assert( std::is_same<char, decltype( arr )::value_type>::value, "" );
+    static_assert( std::is_same<int, decltype( deq )::value_type>::value, "" );
+    static_assert( std::is_same<float, decltype( lst )::value_type>::value, "" );
 
     static_assert( std::is_same<unsigned long, decltype( vec_common )::value_type>::value, "" );
     static_assert( std::is_same<long double, decltype( set_common )::value_type>::value, "" );
     static_assert( std::is_same<long, decltype( arr_common )::value_type>::value, "" );
+    static_assert( std::is_same<unsigned long, decltype( deq_common )::value_type>::value, "" );
+    static_assert( std::is_same<double, decltype( lst_common )::value_type>::value, "" );
 
     REQUIRE( 3 == vec.size( ) );
     REQUIRE( set.size( ) <= 4 );
     REQUIRE( set.size( ) >= 1 );
     REQUIRE( 5 == arr.size( ) );
+    REQUIRE( 4 == deq.size( ) );
+    REQUIRE( 5 == lst.size( ) );
 
     REQUIRE( 6 == vec_common.size( ) );
     REQUIRE( set_common.size( ) <= 7 );
     REQUIRE( set_common.size( ) >= 1 );
     REQUIRE( 8 == arr_common.size( ) );
+    REQUIRE( 4 == deq_common.size( ) );
+    REQUIRE( 3 == lst_common.size( ) );
 
     {
         bool unique = false;
