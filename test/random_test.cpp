@@ -766,6 +766,18 @@ TEST_CASE( "return random pointer from built-in array" ) {
         REQUIRE( isAllMatches );
         REQUIRE( false == isEnd );
     }
+
+    SECTION( "const array" ) {
+        const int const_carray[3] = { 10, 20, 30 };
+        const int* ptr = Random.get( const_carray );
+        REQUIRE( ptr != nullptr );
+        REQUIRE( ( *ptr == 10 || *ptr == 20 || *ptr == 30 ) );
+
+        ilqvya::random_local rl;
+        const int* rl_ptr = rl.get( const_carray );
+        REQUIRE( rl_ptr != nullptr );
+        REQUIRE( ( *rl_ptr == 10 || *rl_ptr == 20 || *rl_ptr == 30 ) );
+    }
 }
 
 static thread_local int reserve_count = 0;

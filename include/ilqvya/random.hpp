@@ -550,8 +550,12 @@ namespace ilqvya {
 
             template<typename T, std::size_t N>
             ILQVYA_NODISCARD static T* get( Engine& engine, T ( &array )[N] ) {
+                static_assert( N > 0, "Random::get: built-in array must not be empty" );
                 return std::addressof( array[get<std::size_t>( engine, 0, N - 1 )] );
             }
+
+            template<typename T, std::size_t N>
+            static T* get( Engine&, const T ( &&array )[N] ) = delete;
 
             template<typename Dist, typename... Args>
             ILQVYA_NODISCARD static typename Dist::result_type get( Engine& engine, Args&&... args ) {
@@ -1101,8 +1105,12 @@ namespace ilqvya {
 
         template<typename T, std::size_t N>
         ILQVYA_NODISCARD static T* get( T ( &array )[N] ) {
+            static_assert( N > 0, "Random::get: built-in array must not be empty" );
             return impl::get( engine_instance( ), array );
         }
+
+        template<typename T, std::size_t N>
+        static T* get( const T ( &&array )[N] ) = delete;
 
         template<typename Dist, typename... Args>
         ILQVYA_NODISCARD static typename Dist::result_type get( Args&&... args ) {
@@ -1520,8 +1528,12 @@ namespace ilqvya {
 
         template<typename T, std::size_t N>
         ILQVYA_NODISCARD T* get( T ( &array )[N] ) {
+            static_assert( N > 0, "Random::get: built-in array must not be empty" );
             return impl::get( m_engine, array );
         }
+
+        template<typename T, std::size_t N>
+        T* get( const T ( &&array )[N] ) = delete;
 
         template<typename Dist, typename... Args>
         ILQVYA_NODISCARD typename Dist::result_type get( Args&&... args ) {
