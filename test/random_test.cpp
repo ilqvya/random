@@ -1461,6 +1461,17 @@ TEST_CASE( "Random characters inverted range" ) {
     REQUIRE( wc >= L'a' && wc <= L'z' );
 }
 
+TEST_CASE( "Random real numbers inverted range" ) {
+    float f = Random.get<float>( 10.0f, 1.0f );
+    REQUIRE( f >= 1.0f && f <= 10.0f );
+
+    double d = Random.get<double>( 50.0, 5.0 );
+    REQUIRE( d >= 5.0 && d <= 50.0 );
+
+    long double ld = Random.get<long double>( 100.0l, 0.0l );
+    REQUIRE( ld >= 0.0l && ld <= 100.0l );
+}
+
 TEST_CASE( "Weighted list with zero total weight fallback" ) {
     auto res_int =
         Random.get( { Random_t::weighted_result<int, int>{ 42, 0 }, Random_t::weighted_result<int, int>{ 43, 0 } } );
