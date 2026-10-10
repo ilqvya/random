@@ -126,11 +126,14 @@ jobs:
         run: |
           lcov --capture --directory build --output-file coverage.raw --ignore-errors mismatch,unused,inconsistent 2>/dev/null || lcov --capture --directory build --output-file coverage.raw || true
           if [ -f coverage.raw ]; then
-            lcov --extract coverage.raw '*/include/*' --output-file coverage.info --ignore-errors mismatch,unused,inconsistent 2>/dev/null || lcov --extract coverage.raw '*/include/*' --output-file coverage.info || true
+            # Strip all system headers (/usr/*), test files, and build files
+            lcov --remove coverage.raw '/usr/*' '*/test/*' '*/tests/*' '*/build/*' --output-file coverage.info --ignore-errors mismatch,unused,inconsistent 2>/dev/null || lcov --remove coverage.raw '/usr/*' '*/test/*' '*/tests/*' '*/build/*' --output-file coverage.info || true
+            # Ensure no /usr/* files remain
+            lcov --remove coverage.info '/usr/*' --output-file coverage.info --ignore-errors mismatch,unused,inconsistent 2>/dev/null || true
           fi
           if [ ! -s coverage.info ]; then
             echo "Generating coverage with gcovr..."
-            gcovr -r . --filter 'include/' --lcov coverage.info --print-summary
+            gcovr -r . --filter '^include/' --exclude-directories '/usr' --exclude-directories 'test' --lcov coverage.info --print-summary
           else
             lcov --list coverage.info --ignore-errors mismatch,unused,inconsistent 2>/dev/null || lcov --list coverage.info
           fi
@@ -175,17 +178,27 @@ jobs:
             exit 0
           fi
           echo "Downloading Coverity Scan analysis tool..."
-          curl -s -L -d "project=ilqvya-random&token=${COVERITY_TOKEN}" -X POST https://scan.coverity.com/download/linux64 -o coverity_tool.tar.gz
-          mkdir -p cov-analysis
-          tar -xzf coverity_tool.tar.gz -C cov-analysis --strip-components=1
-          rm coverity_tool.tar.gz
+          curl -s -L --form project=ilqvya-random --form token="${COVERITY_TOKEN}" https://scan.coverity.com/download/linux64 -o coverity_tool.tar.gz || true
+          if ! file coverity_tool.tar.gz | grep -q "gzip"; then
+            echo "Retrying download with project=ilqvya/random..."
+            curl -s -L --form project=ilqvya/random --form token="${COVERITY_TOKEN}" https://scan.coverity.com/download/linux64 -o coverity_tool.tar.gz || true
+          fi
+          if file coverity_tool.tar.gz | grep -q "gzip"; then
+            mkdir -p cov-analysis
+            tar -xzf coverity_tool.tar.gz -C cov-analysis --strip-components=1
+            rm -f coverity_tool.tar.gz
+          else
+            echo "Server response from Coverity download:"
+            head -n 20 coverity_tool.tar.gz || true
+            rm -f coverity_tool.tar.gz
+          fi
 
       - name: Build with cov-build
         env:
           COVERITY_TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
         run: |
-          if [ -z "$COVERITY_TOKEN" ]; then
-            echo "Skipping: COVERITY_SCAN_TOKEN is not set."
+          if [ ! -d cov-analysis/bin ]; then
+            echo "Skipping cov-build: Coverity tool not installed."
             exit 0
           fi
           "$GITHUB_WORKSPACE/cov-analysis/bin/cov-build" --dir cov-int cmake --build build
