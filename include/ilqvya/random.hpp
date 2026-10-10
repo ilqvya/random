@@ -53,6 +53,7 @@ SOFTWARE.
 #include <cstddef>
 #include <stdexcept>
 #include <string>
+#include <thread>
 
 #if defined( _MSVC_LANG )
 #    define ILQVYA_CPLUSPLUS _MSVC_LANG
@@ -304,17 +305,26 @@ namespace ilqvya {
 
     private:
         // 8 x 32-bit words (256 bits) of std::random_device entropy, mixed with the high-resolution clock
-        // in case random_device is deterministic on the platform. std::seed_seq expands it to the full
-        // engine state. More words would not add practical value: 256 bits already makes seed collisions
-        // and brute-forcing infeasible, while each extra random_device call adds measurable cost.
+        // and thread ID in case random_device is deterministic or on concurrent threads.
+        // Queries clock and thread ID once and distributes both 32-bit halves across the words.
         struct seed_data {
             std::array<std::uint32_t, 8> data;
             seed_data( ) {
                 std::random_device rd;
+                const auto now = static_cast<std::uint64_t>(
+                    std::chrono::high_resolution_clock::now( ).time_since_epoch( ).count( ) );
+                const auto tid = static_cast<std::uint64_t>(
+                    std::hash<std::thread::id>{ }( std::this_thread::get_id( ) ) );
+
+                const std::uint32_t time_lo = static_cast<std::uint32_t>( now );
+                const std::uint32_t time_hi = static_cast<std::uint32_t>( now >> 32 );
+                const std::uint32_t tid_lo  = static_cast<std::uint32_t>( tid );
+                const std::uint32_t tid_hi  = static_cast<std::uint32_t>( tid >> 32 );
+
                 for ( std::size_t i = 0; i < data.size( ); ++i ) {
-                    data[i] = static_cast<std::uint32_t>( rd( ) ) ^
-                              static_cast<std::uint32_t>(
-                                  std::chrono::high_resolution_clock::now( ).time_since_epoch( ).count( ) );
+                    const std::uint32_t time_half = ( ( i & 1 ) == 0 ) ? time_lo : time_hi;
+                    const std::uint32_t tid_half  = ( ( i & 2 ) == 0 ) ? tid_lo : tid_hi;
+                    data[i] = static_cast<std::uint32_t>( rd( ) ) ^ time_half ^ tid_half ^ static_cast<std::uint32_t>( i );
                 }
             }
         };
