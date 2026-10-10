@@ -83,10 +83,8 @@ TEST_CASE( "Type deduction for random integer numbers" ) {
 
 TEST_CASE( "Random integer numbers is truly random" ) {
     bool isDifferentNumber{ false };
-    auto count = 1000;
 
-    do {
-
+    for ( int i = 0; i < 1000 && !isDifferentNumber; ++i ) {
         const auto firstRandomNumber =
             Random.get( std::numeric_limits<long long>::min( ), std::numeric_limits<long long>::max( ) );
 
@@ -94,7 +92,7 @@ TEST_CASE( "Random integer numbers is truly random" ) {
             Random.get( std::numeric_limits<long long>::min( ), std::numeric_limits<long long>::max( ) );
 
         isDifferentNumber = firstRandomNumber != secondRandomNumber;
-    } while ( !isDifferentNumber && count-- );
+    }
 
     CHECK( isDifferentNumber );
 }
@@ -135,9 +133,8 @@ TEST_CASE( "Type deduction for random real numbers" ) {
 
 TEST_CASE( "Random real numbers is truly random" ) {
     bool isDifferentNumber{ false };
-    auto count = std::numeric_limits<std::uintmax_t>::min( );
 
-    do {
+    for ( int i = 0; i < 1000 && !isDifferentNumber; ++i ) {
         const auto firstRandomNumber =
             Random.get( std::numeric_limits<float>::min( ), std::numeric_limits<float>::max( ) );
 
@@ -145,7 +142,7 @@ TEST_CASE( "Random real numbers is truly random" ) {
             Random.get( std::numeric_limits<float>::min( ), std::numeric_limits<float>::max( ) );
 
         isDifferentNumber = firstRandomNumber != secondRandomNumber;
-    } while ( !isDifferentNumber && count-- );
+    }
 
     CHECK( isDifferentNumber );
 }
@@ -193,9 +190,8 @@ TEST_CASE( "Type deduction for random byte numbers" ) {
 
 TEST_CASE( "Random byte numbers is truly random" ) {
     bool isDifferentNumber{ false };
-    auto count = 1000;
 
-    do {
+    for ( int i = 0; i < 1000 && !isDifferentNumber; ++i ) {
         const auto firstRandomNumber =
             Random.get( std::numeric_limits<signed char>::min( ), std::numeric_limits<signed char>::max( ) );
 
@@ -203,7 +199,7 @@ TEST_CASE( "Random byte numbers is truly random" ) {
             Random.get( std::numeric_limits<signed char>::min( ), std::numeric_limits<signed char>::max( ) );
 
         isDifferentNumber = firstRandomNumber != secondRandomNumber;
-    } while ( !isDifferentNumber && count-- );
+    }
 
     CHECK( isDifferentNumber );
 }
@@ -253,10 +249,8 @@ TEST_CASE( "Type deduction for random common_type numbers" ) {
 
 TEST_CASE( "Random common type numbers is truly random" ) {
     bool isDifferentNumber{ false };
-    auto count = 1000;
 
-    do {
-
+    for ( int i = 0; i < 1000 && !isDifferentNumber; ++i ) {
         const auto firstRandomNumber = Random.get<Random_t::common>( std::numeric_limits<float>::min( ),
                                                                      std::numeric_limits<signed char>::max( ) );
 
@@ -264,7 +258,7 @@ TEST_CASE( "Random common type numbers is truly random" ) {
                                                                       std::numeric_limits<float>::max( ) );
 
         isDifferentNumber = firstRandomNumber != secondRandomNumber;
-    } while ( !isDifferentNumber && count-- );
+    }
 
     CHECK( isDifferentNumber );
 }
@@ -741,16 +735,12 @@ TEST_CASE( "return randomly generated containers" ) {
     {
         bool unique = false;
 
-        auto try_count = 1000;
-        while ( try_count-- > 0 ) {
+        for ( int try_idx = 0; try_idx < 1000 && !unique; ++try_idx ) {
             auto vec2 = Random.get<std::vector>( 1, 100, 3 );
             auto set2 = Random.get<std::set>( 1.0, 200.0, 4 );
             auto arr2 = Random.get<std::array, 5>( '1', '9' );
 
             unique = vec != vec2 && set != set2 && arr != arr2;
-
-            if ( unique )
-                break;
         }
 
         REQUIRE( true == unique );
@@ -759,16 +749,12 @@ TEST_CASE( "return randomly generated containers" ) {
     {
         bool unique2 = false;
 
-        auto try_count = 1000;
-        while ( try_count-- > 0 ) {
+        for ( int try_idx = 0; try_idx < 1000 && !unique2; ++try_idx ) {
             auto vec2_common = Random.get<std::vector, Random_t::common>( 1u, 200ul, 6 );
             auto set2_common = Random.get<std::set, Random_t::common>( 1.f, 200.l, 7 );
             auto arr2_common = Random.get<std::array, 8, Random_t::common>( 1, 200l );
 
             unique2 = vec_common != vec2_common && set_common != set2_common && arr_common != arr2_common;
-
-            if ( unique2 )
-                break;
         }
 
         REQUIRE( true == unique2 );
@@ -805,7 +791,10 @@ TEST_CASE( "std::array value initialization" ) {
 
 TEST_CASE( "Signed integer weights in maps" ) {
     std::map<std::string, int> signed_map = { { "Orange", 1 }, { "Apple", 2 }, { "Banana", 3 } };
-    std::unordered_map<std::string, int> signed_umap = { { "Orange", 1 }, { "Apple", 2 }, { "Banana", 3 } };
+    std::unordered_map<std::string, int> signed_umap;
+    signed_umap["Orange"] = 1;
+    signed_umap["Apple"] = 2;
+    signed_umap["Banana"] = 3;
 
     REQUIRE( Random.get<Random_t::weight>( signed_map ) != signed_map.end( ) );
     REQUIRE( Random.get<Random_t::weight>( signed_umap ) != signed_umap.end( ) );
@@ -856,10 +845,8 @@ TEST_CASE( "Type deduction for random character" ) {
 
 TEST_CASE( "Random characters is truly random" ) {
     bool isDifferentNumber{ false };
-    auto count = 1000;
 
-    do {
-
+    for ( int i = 0; i < 1000 && !isDifferentNumber; ++i ) {
         const auto firstRandomNumber =
             Random.get<char>( std::numeric_limits<char>::min( ), std::numeric_limits<char>::max( ) );
 
@@ -867,7 +854,7 @@ TEST_CASE( "Random characters is truly random" ) {
             Random.get<char>( std::numeric_limits<char>::min( ), std::numeric_limits<char>::max( ) );
 
         isDifferentNumber = firstRandomNumber != secondRandomNumber;
-    } while ( !isDifferentNumber && count-- );
+    }
 
     CHECK( isDifferentNumber );
 }
@@ -876,7 +863,9 @@ TEST_CASE( "Random iterator assignment" ) {
     std::vector<int> testData{ 1, 2, 3, 4 };
     int newVal = 5;
 
-    *( Random.get( testData.begin( ), testData.end( ) ) ) = newVal;
+    auto it = Random.get( testData.begin( ), testData.end( ) );
+    REQUIRE( it != testData.end( ) );
+    *it = newVal;
 
     bool testDataHasNewVal = std::find( testData.cbegin( ), testData.cend( ), newVal ) != testData.end( );
     CHECK( testDataHasNewVal );
@@ -886,7 +875,9 @@ TEST_CASE( "Random container assignment" ) {
     std::vector<int> testData{ 1, 2, 3, 4 };
     int newVal = 5;
 
-    *( Random.get( testData ) ) = newVal;
+    auto it = Random.get( testData );
+    REQUIRE( it != testData.end( ) );
+    *it = newVal;
 
     bool testDataHasNewVal = std::find( testData.cbegin( ), testData.cend( ), newVal ) != testData.end( );
     CHECK( testDataHasNewVal );
@@ -1007,13 +998,25 @@ TEST_CASE( "Empty map and maps with zero total weight tests" ) {
     REQUIRE( Random.get<Random_t::weight>( empty_double_map ) == empty_double_map.end( ) );
 
     // Zero weighted maps
-    std::unordered_map<std::string, unsigned long> zero_long_umap = {
-        { "Orange", 0ul }, { "Apple", 0ul }, { "Banana", 0ul } };
-    std::unordered_map<std::string, unsigned> zero_uint_umap = { { "Orange", 0u }, { "Apple", 0u }, { "Banana", 0u } };
-    std::unordered_map<std::string, float> zero_float_umap = {
-        { "Orange", 0.0f }, { "Apple", 0.0f }, { "Banana", 0.0f } };
-    std::unordered_map<std::string, double> zero_double_umap = {
-        { "Orange", 0.0 }, { "Apple", 0.0 }, { "Banana", 0.0 } };
+    std::unordered_map<std::string, unsigned long> zero_long_umap;
+    zero_long_umap["Orange"] = 0ul;
+    zero_long_umap["Apple"] = 0ul;
+    zero_long_umap["Banana"] = 0ul;
+
+    std::unordered_map<std::string, unsigned> zero_uint_umap;
+    zero_uint_umap["Orange"] = 0u;
+    zero_uint_umap["Apple"] = 0u;
+    zero_uint_umap["Banana"] = 0u;
+
+    std::unordered_map<std::string, float> zero_float_umap;
+    zero_float_umap["Orange"] = 0.0f;
+    zero_float_umap["Apple"] = 0.0f;
+    zero_float_umap["Banana"] = 0.0f;
+
+    std::unordered_map<std::string, double> zero_double_umap;
+    zero_double_umap["Orange"] = 0.0;
+    zero_double_umap["Apple"] = 0.0;
+    zero_double_umap["Banana"] = 0.0;
 
     std::map<std::string, unsigned long> zero_ulong_map = { { "Orange", 0ul }, { "Apple", 0ul }, { "Banana", 0ul } };
     std::map<std::string, unsigned> zero_uint_map = { { "Orange", 0u }, { "Apple", 0u }, { "Banana", 0u } };
@@ -1032,14 +1035,25 @@ TEST_CASE( "Empty map and maps with zero total weight tests" ) {
 }
 
 TEST_CASE( "Maps with non-zero total weight tests" ) {
-    std::unordered_map<std::string, unsigned long> nonzero_ulong_umap = {
-        { "Orange", 1ul }, { "Apple", 2ul }, { "Banana", 3ul } };
-    std::unordered_map<std::string, unsigned> nonzero_uint_umap = {
-        { "Orange", 1u }, { "Apple", 2u }, { "Banana", 3u } };
-    std::unordered_map<std::string, float> nonzero_float_umap = {
-        { "Orange", 1.0f }, { "Apple", 2.0f }, { "Banana", 3.0f } };
-    std::unordered_map<std::string, double> nonzero_double_umap = {
-        { "Orange", 1.0 }, { "Apple", 2.0 }, { "Banana", 3.0 } };
+    std::unordered_map<std::string, unsigned long> nonzero_ulong_umap;
+    nonzero_ulong_umap["Orange"] = 1ul;
+    nonzero_ulong_umap["Apple"] = 2ul;
+    nonzero_ulong_umap["Banana"] = 3ul;
+
+    std::unordered_map<std::string, unsigned> nonzero_uint_umap;
+    nonzero_uint_umap["Orange"] = 1u;
+    nonzero_uint_umap["Apple"] = 2u;
+    nonzero_uint_umap["Banana"] = 3u;
+
+    std::unordered_map<std::string, float> nonzero_float_umap;
+    nonzero_float_umap["Orange"] = 1.0f;
+    nonzero_float_umap["Apple"] = 2.0f;
+    nonzero_float_umap["Banana"] = 3.0f;
+
+    std::unordered_map<std::string, double> nonzero_double_umap;
+    nonzero_double_umap["Orange"] = 1.0;
+    nonzero_double_umap["Apple"] = 2.0;
+    nonzero_double_umap["Banana"] = 3.0;
 
     std::map<std::string, unsigned long> nonzero_ulong_map = { { "Orange", 1ul }, { "Apple", 2ul }, { "Banana", 3ul } };
     std::map<std::string, unsigned> nonzero_uint_map = { { "Orange", 1u }, { "Apple", 2u }, { "Banana", 3u } };
@@ -1145,7 +1159,9 @@ TEST_CASE( "Correctness: Signed integer weights in maps" ) {
     }
 
     // Signed long
-    std::unordered_map<std::string, long> long_map = { { "X", 100l }, { "Y", 0l } };
+    std::unordered_map<std::string, long> long_map;
+    long_map["X"] = 100l;
+    long_map["Y"] = 0l;
     for ( int i = 0; i < 20; ++i ) {
         auto it = Random.get<Random_t::weight>( long_map );
         REQUIRE( it != long_map.end( ) );
