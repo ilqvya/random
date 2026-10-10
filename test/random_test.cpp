@@ -1459,3 +1459,34 @@ TEST_CASE( "weighted_result pair constructors and variadic get" ) {
     REQUIRE( rl.get( w1, w2, w3, w4, w5, w6, w7, w8, w9 ) >= 1 );
     REQUIRE( rl.get( w1, w2, w3, w4, w5, w6, w7, w8, w9, w10 ) >= 1 );
 }
+
+TEST_CASE( "random_local remaining methods and empty iterator get" ) {
+    ilqvya::random_local rl;
+    std::gamma_distribution<> gamma{ };
+    auto g1 = rl.get<std::gamma_distribution<>>( 1. );
+    auto g2 = rl.get( gamma );
+    (void)g1;
+    (void)g2;
+
+    std::array<int, 3> arr{ 1, 2, 3 };
+    rl.shuffle( arr );
+    rl.shuffle( arr.begin( ), arr.end( ) );
+
+    rl.discard( 10 );
+
+    std::stringstream ss;
+    rl.serialize( ss );
+    rl.deserialize( ss );
+
+    std::mt19937 engine_copy = rl.get_engine( );
+    REQUIRE( rl.is_equal( engine_copy ) );
+    std::mt19937 different_engine{ 99999u };
+    REQUIRE( !rl.is_equal( different_engine ) );
+    REQUIRE( !Random.is_equal( different_engine ) );
+
+    std::vector<int> empty_vec;
+    REQUIRE( Random.get( empty_vec.begin( ), empty_vec.end( ) ) == empty_vec.end( ) );
+    REQUIRE( Random.get( empty_vec ) == empty_vec.end( ) );
+    REQUIRE( rl.get( empty_vec.begin( ), empty_vec.end( ) ) == empty_vec.end( ) );
+    REQUIRE( rl.get( empty_vec ) == empty_vec.end( ) );
+}
