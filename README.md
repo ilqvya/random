@@ -213,7 +213,16 @@ auto vec = Random::get<MyContainer>(1, 9, 5); // decltype(vec) is std::MyContain
 
 ```
 ### Weighted random values
-Returns a random iterator from map-like containers based on weights:
+* Inline weighted selection (returns chosen value directly):
+```cpp
+    // Variadic syntax
+    auto val = Random::get<int>({1, 3}, {4, 4}, {10, 5}); // returns chosen int based on weights 3, 4, 5
+    auto f   = Random::get<float>({1.1f, 1}, {1.2f, 2});
+
+    // Initializer list syntax
+    auto str = Random::get<std::string>({ {"Apple", 10}, {"Banana", 20}, {"Orange", 30} });
+```
+* Containers of pairs or map-like containers (returns iterator):
 ```cpp
     std::unordered_map<std::string, unsigned long> nonzero_ulong_umap = {{"Orange", 1ul}, {"Apple", 2ul}, {"Banana", 3ul}};
     std::unordered_map<std::string, unsigned> nonzero_uint_umap = {{"Orange", 1u}, {"Apple", 2u}, {"Banana", 3u}};
@@ -221,10 +230,13 @@ Returns a random iterator from map-like containers based on weights:
     std::map<std::string, float> nonzero_float_map = {{"Orange", 1.0f}, {"Apple", 2.0f}, {"Banana", 3.0f}};
     std::map<std::string, double> nonzero_double_map = {{"Orange", 1.0}, {"Apple", 2.0}, {"Banana", 3.0}};
 
+    std::vector<std::pair<std::string, int>> nonzero_vec = {{"Orange", 1}, {"Apple", 2}, {"Banana", 3}};
+
     Random::get<Random_t::weight>(nonzero_ulong_umap);
     Random::get<Random_t::weight>(nonzero_uint_umap);
     Random::get<Random_t::weight>(nonzero_float_map);
     Random::get<Random_t::weight>(nonzero_double_map);
+    Random::get<Random_t::weight>(nonzero_vec);
 ```
 ### Shuffle
 Reorders the elements in a given range or container [ref](http://en.cppreference.com/w/cpp/algorithm/random_shuffle):

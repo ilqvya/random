@@ -1303,4 +1303,93 @@ TEST_CASE("Correctness: Expression SFINAE for has_reserve and has_insert with ov
     static_assert(effolkronium::details::has_reserve<OverloadedMembers>::value, "overloaded reserve matches");
 }
 
+TEST_CASE("Discussion #38: Variadic custom weighted distribution syntax") {
+    // 2-element variadic
+    for (int i = 0; i < 50; ++i) {
+        float f = Random.get<float>({1.1f, 1}, {1.2f, 2});
+        REQUIRE((f == 1.1f || f == 1.2f));
+    }
+
+    // 3-element variadic
+    for (int i = 0; i < 50; ++i) {
+        int val = Random.get<int>({1, 3}, {4, 4}, {10, 5});
+        REQUIRE((val == 1 || val == 4 || val == 10));
+    }
+
+    // 4-element and 5-element variadic
+    for (int i = 0; i < 50; ++i) {
+        int val4 = Random.get<int>({1, 1}, {2, 2}, {3, 3}, {4, 4});
+        REQUIRE((val4 >= 1 && val4 <= 4));
+
+        int val5 = Random.get<int>({10, 1}, {20, 1}, {30, 1}, {40, 1}, {50, 1});
+        REQUIRE((val5 == 10 || val5 == 20 || val5 == 30 || val5 == 40 || val5 == 50));
+    }
+
+    // Explicit integer weights
+    for (int i = 0; i < 50; ++i) {
+        int val = Random.get<int, int>({1, 5}, {2, 10});
+        REQUIRE((val == 1 || val == 2));
+    }
+}
+
+TEST_CASE("Discussion #38: Initializer list weighted distribution") {
+    // String choices
+    for (int i = 0; i < 50; ++i) {
+        std::string fruit = Random.get<std::string>({ {"Apple", 10}, {"Banana", 20}, {"Orange", 30} });
+        REQUIRE((fruit == "Apple" || fruit == "Banana" || fruit == "Orange"));
+    }
+
+    // Zero-weight elements are never picked when positive weight exists
+    for (int i = 0; i < 50; ++i) {
+        int zero_test = Random.get<int>({ {1, 0}, {2, 100}, {3, 0} });
+        REQUIRE(zero_test == 2);
+
+        float zero_real_test = Random.get<float>({ {1.5f, 0.0}, {2.5f, 1.0}, {3.5f, 0.0} });
+        REQUIRE(zero_real_test == 2.5f);
+    }
+
+    // Single-element list
+    int single = Random.get<int>({ {42, 10} });
+    REQUIRE(single == 42);
+
+    // Statistical check: 90% vs 10%
+    int count_high = 0;
+    const int iterations = 1000;
+    for (int i = 0; i < iterations; ++i) {
+        int pick = Random.get<int>({ {1, 1}, {2, 9} });
+        if (pick == 2) {
+            ++count_high;
+        }
+    }
+    // High weight item (90%) should occur far more than low weight (10%)
+    REQUIRE(count_high > 750);
+}
+
+TEST_CASE("Discussion #38: Sequential pair containers (vector of pairs)") {
+    // Integer weights in std::vector
+    std::vector<std::pair<std::string, int>> vec_int = {
+        {"First", 1},
+        {"Second", 2},
+        {"Third", 3}
+    };
+    for (int i = 0; i < 50; ++i) {
+        auto it = Random.get<Random_t::weight>(vec_int);
+        REQUIRE(it != vec_int.end());
+        REQUIRE((it->first == "First" || it->first == "Second" || it->first == "Third"));
+    }
+
+    // Real weights in std::vector
+    std::vector<std::pair<char, double>> vec_real = {
+        {'A', 0.5},
+        {'B', 1.5},
+        {'C', 2.0}
+    };
+    for (int i = 0; i < 50; ++i) {
+        auto it = Random.get<Random_t::weight>(vec_real);
+        REQUIRE(it != vec_real.end());
+        REQUIRE((it->first == 'A' || it->first == 'B' || it->first == 'C'));
+    }
+}
+
+
 

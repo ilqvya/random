@@ -166,7 +166,33 @@ namespace effolkronium {
         template<typename Type>
         struct is_map<Type, void_t<typename Type::key_type, typename Type::mapped_type, typename Type::value_type>> : public std::true_type{};
 
+        template<typename Container, typename = void>
+        struct is_pair_container : public std::false_type {};
+
+        template<typename Container>
+        struct is_pair_container<Container, void_t<
+            typename Container::value_type::first_type,
+            typename Container::value_type::second_type
+        >> : public std::true_type {};
+
+        template<typename Value, typename Weight = double>
+        struct weighted_result {
+            Value value;
+            Weight weight;
+
+            constexpr weighted_result() = default;
+            constexpr weighted_result(Value val, Weight w)
+                : value(std::move(val)), weight(std::move(w)) {}
+            constexpr weighted_result(const std::pair<Value, Weight>& p)
+                : value(p.first), weight(p.second) {}
+            constexpr weighted_result(std::pair<Value, Weight>&& p)
+                : value(std::move(p.first)), weight(std::move(p.second)) {}
+        };
+
     } // namespace details
+
+    template<typename Value, typename Weight = double>
+    using weighted_result = details::weighted_result<Value, Weight>;
 
     /// Default seeder for 'random' classes
     struct seeder_default {
@@ -410,66 +436,125 @@ namespace effolkronium {
                 return dist( engine );
             }
 
-            template<typename Key, class MapContainer>
-            EFFOLKRONIUM_NODISCARD static auto get(Engine& engine, const MapContainer& map_container) ->
+            template<typename Key, class PairContainer>
+            EFFOLKRONIUM_NODISCARD static auto get(Engine& engine, const PairContainer& pair_container) ->
                 typename std::enable_if<
-                    details::is_map<MapContainer>::value &&
-                    details::is_iterator<decltype(std::begin(map_container))>::value &&
-                    details::is_uniform_int<typename MapContainer::mapped_type>::value &&
+                    details::is_pair_container<PairContainer>::value &&
+                    details::is_iterator<decltype(std::begin(pair_container))>::value &&
+                    details::is_uniform_int<typename PairContainer::value_type::second_type>::value &&
                     std::is_same<Key, details::weight>::value,
-                decltype(std::begin(map_container))>::type {
-                using MappedType = typename MapContainer::mapped_type;
-                using IteratorType = decltype(std::begin(map_container));
+                decltype(std::begin(pair_container))>::type {
+                using WeightType = typename PairContainer::value_type::second_type;
+                using IteratorType = decltype(std::begin(pair_container));
                 
-                MappedType total_weight = 0;
-                IteratorType last_nonzero_it = std::end(map_container);
-                for (IteratorType it = std::begin(map_container); it != std::end(map_container); ++it) {
-                    assert(it->second >= MappedType(0));
-                    if (it->second > MappedType(0)) {
+                WeightType total_weight = 0;
+                IteratorType last_nonzero_it = std::end(pair_container);
+                for (IteratorType it = std::begin(pair_container); it != std::end(pair_container); ++it) {
+                    assert(it->second >= WeightType(0));
+                    if (it->second > WeightType(0)) {
                         last_nonzero_it = it;
                     }
                     total_weight += it->second;
                 }
-                if(total_weight == MappedType(0)) return std::end(map_container);
+                if(total_weight == WeightType(0)) return std::end(pair_container);
 
-                MappedType random_weight = get(engine, MappedType(0), total_weight - 1);
-                MappedType sum = 0;
-                for(IteratorType it = std::begin(map_container); it != std::end(map_container); ++it) {
+                WeightType random_weight = get(engine, WeightType(0), total_weight - 1);
+                WeightType sum = 0;
+                for(IteratorType it = std::begin(pair_container); it != std::end(pair_container); ++it) {
                     sum += it->second;
                     if(sum > random_weight) return it;
                 }
                 return last_nonzero_it;
             }
 
-            template<typename Key, class MapContainer>
-            EFFOLKRONIUM_NODISCARD static auto get(Engine& engine, const MapContainer& map_container) ->
+            template<typename Key, class PairContainer>
+            EFFOLKRONIUM_NODISCARD static auto get(Engine& engine, const PairContainer& pair_container) ->
                 typename std::enable_if<
-                    details::is_map<MapContainer>::value &&
-                    details::is_iterator<decltype(std::begin(map_container))>::value &&
-                    details::is_uniform_real<typename MapContainer::mapped_type>::value &&
+                    details::is_pair_container<PairContainer>::value &&
+                    details::is_iterator<decltype(std::begin(pair_container))>::value &&
+                    details::is_uniform_real<typename PairContainer::value_type::second_type>::value &&
                     std::is_same<Key, details::weight>::value,
-                decltype(std::begin(map_container))>::type {
-                using MappedType = typename MapContainer::mapped_type;
-                using IteratorType = decltype(std::begin(map_container));
+                decltype(std::begin(pair_container))>::type {
+                using WeightType = typename PairContainer::value_type::second_type;
+                using IteratorType = decltype(std::begin(pair_container));
                 
-                MappedType total_weight = 0;
-                IteratorType last_nonzero_it = std::end(map_container);
-                for (IteratorType it = std::begin(map_container); it != std::end(map_container); ++it) {
-                    assert(it->second >= MappedType(0));
-                    if (it->second > MappedType(0)) {
+                WeightType total_weight = 0;
+                IteratorType last_nonzero_it = std::end(pair_container);
+                for (IteratorType it = std::begin(pair_container); it != std::end(pair_container); ++it) {
+                    assert(it->second >= WeightType(0));
+                    if (it->second > WeightType(0)) {
                         last_nonzero_it = it;
                     }
                     total_weight += it->second;
                 }
-                if(total_weight <= MappedType(0)) return std::end(map_container);
+                if(total_weight <= WeightType(0)) return std::end(pair_container);
 
-                MappedType random_weight = get(engine, MappedType(0), total_weight);
-                MappedType sum = 0;
-                for(IteratorType it = std::begin(map_container); it != std::end(map_container); ++it) {
+                WeightType random_weight = get(engine, WeightType(0), total_weight);
+                WeightType sum = 0;
+                for(IteratorType it = std::begin(pair_container); it != std::end(pair_container); ++it) {
                     sum += it->second;
                     if(sum > random_weight) return it;
                 }
                 return last_nonzero_it;
+            }
+
+            template<typename Target, typename Weight>
+            EFFOLKRONIUM_NODISCARD static typename std::enable_if<details::is_uniform_int<Weight>::value, Target>::type
+            get_weighted_list( Engine& engine, std::initializer_list<details::weighted_result<Target, Weight>> list ) {
+                assert( list.size( ) > 0 );
+                Weight total_weight = 0;
+                const details::weighted_result<Target, Weight>* last_nonzero = nullptr;
+                for( const auto& item : list ) {
+                    assert( item.weight >= Weight(0) );
+                    if( item.weight > Weight(0) ) {
+                        last_nonzero = &item;
+                    }
+                    total_weight += item.weight;
+                }
+                if( total_weight == Weight(0) ) {
+                    return list.begin( )->value;
+                }
+                Weight random_weight = get( engine, Weight(0), total_weight - 1 );
+                Weight sum = 0;
+                for( const auto& item : list ) {
+                    sum += item.weight;
+                    if( sum > random_weight ) {
+                        return item.value;
+                    }
+                }
+                return last_nonzero ? last_nonzero->value : list.begin( )->value;
+            }
+
+            template<typename Target, typename Weight>
+            EFFOLKRONIUM_NODISCARD static typename std::enable_if<details::is_uniform_real<Weight>::value, Target>::type
+            get_weighted_list( Engine& engine, std::initializer_list<details::weighted_result<Target, Weight>> list ) {
+                assert( list.size( ) > 0 );
+                Weight total_weight = 0;
+                const details::weighted_result<Target, Weight>* last_nonzero = nullptr;
+                for( const auto& item : list ) {
+                    assert( item.weight >= Weight(0) );
+                    if( item.weight > Weight(0) ) {
+                        last_nonzero = &item;
+                    }
+                    total_weight += item.weight;
+                }
+                if( total_weight <= Weight(0) ) {
+                    return list.begin( )->value;
+                }
+                Weight random_weight = get( engine, Weight(0), total_weight );
+                Weight sum = 0;
+                for( const auto& item : list ) {
+                    sum += item.weight;
+                    if( sum > random_weight ) {
+                        return item.value;
+                    }
+                }
+                return last_nonzero ? last_nonzero->value : list.begin( )->value;
+            }
+
+            template<typename Target, typename Weight = double>
+            EFFOLKRONIUM_NODISCARD static Target get( Engine& engine, std::initializer_list<details::weighted_result<Target, Weight>> list ) {
+                return get_weighted_list<Target, Weight>( engine, list );
             }
 
             template<typename RandomIt>
@@ -484,6 +569,44 @@ namespace effolkronium {
         };
 
     } // namespace details
+
+#define EFFOLKRONIUM_WEIGHTED_VARIADIC_MEMBERS(STATIC_KEYWORD) \
+    template<typename Target, typename Weight = double> \
+    EFFOLKRONIUM_NODISCARD STATIC_KEYWORD Target get( details::weighted_result<Target, Weight> p1, details::weighted_result<Target, Weight> p2 ) { \
+        return get<Target, Weight>({ p1, p2 }); \
+    } \
+    template<typename Target, typename Weight = double> \
+    EFFOLKRONIUM_NODISCARD STATIC_KEYWORD Target get( details::weighted_result<Target, Weight> p1, details::weighted_result<Target, Weight> p2, details::weighted_result<Target, Weight> p3 ) { \
+        return get<Target, Weight>({ p1, p2, p3 }); \
+    } \
+    template<typename Target, typename Weight = double> \
+    EFFOLKRONIUM_NODISCARD STATIC_KEYWORD Target get( details::weighted_result<Target, Weight> p1, details::weighted_result<Target, Weight> p2, details::weighted_result<Target, Weight> p3, details::weighted_result<Target, Weight> p4 ) { \
+        return get<Target, Weight>({ p1, p2, p3, p4 }); \
+    } \
+    template<typename Target, typename Weight = double> \
+    EFFOLKRONIUM_NODISCARD STATIC_KEYWORD Target get( details::weighted_result<Target, Weight> p1, details::weighted_result<Target, Weight> p2, details::weighted_result<Target, Weight> p3, details::weighted_result<Target, Weight> p4, details::weighted_result<Target, Weight> p5 ) { \
+        return get<Target, Weight>({ p1, p2, p3, p4, p5 }); \
+    } \
+    template<typename Target, typename Weight = double> \
+    EFFOLKRONIUM_NODISCARD STATIC_KEYWORD Target get( details::weighted_result<Target, Weight> p1, details::weighted_result<Target, Weight> p2, details::weighted_result<Target, Weight> p3, details::weighted_result<Target, Weight> p4, details::weighted_result<Target, Weight> p5, details::weighted_result<Target, Weight> p6 ) { \
+        return get<Target, Weight>({ p1, p2, p3, p4, p5, p6 }); \
+    } \
+    template<typename Target, typename Weight = double> \
+    EFFOLKRONIUM_NODISCARD STATIC_KEYWORD Target get( details::weighted_result<Target, Weight> p1, details::weighted_result<Target, Weight> p2, details::weighted_result<Target, Weight> p3, details::weighted_result<Target, Weight> p4, details::weighted_result<Target, Weight> p5, details::weighted_result<Target, Weight> p6, details::weighted_result<Target, Weight> p7 ) { \
+        return get<Target, Weight>({ p1, p2, p3, p4, p5, p6, p7 }); \
+    } \
+    template<typename Target, typename Weight = double> \
+    EFFOLKRONIUM_NODISCARD STATIC_KEYWORD Target get( details::weighted_result<Target, Weight> p1, details::weighted_result<Target, Weight> p2, details::weighted_result<Target, Weight> p3, details::weighted_result<Target, Weight> p4, details::weighted_result<Target, Weight> p5, details::weighted_result<Target, Weight> p6, details::weighted_result<Target, Weight> p7, details::weighted_result<Target, Weight> p8 ) { \
+        return get<Target, Weight>({ p1, p2, p3, p4, p5, p6, p7, p8 }); \
+    } \
+    template<typename Target, typename Weight = double> \
+    EFFOLKRONIUM_NODISCARD STATIC_KEYWORD Target get( details::weighted_result<Target, Weight> p1, details::weighted_result<Target, Weight> p2, details::weighted_result<Target, Weight> p3, details::weighted_result<Target, Weight> p4, details::weighted_result<Target, Weight> p5, details::weighted_result<Target, Weight> p6, details::weighted_result<Target, Weight> p7, details::weighted_result<Target, Weight> p8, details::weighted_result<Target, Weight> p9 ) { \
+        return get<Target, Weight>({ p1, p2, p3, p4, p5, p6, p7, p8, p9 }); \
+    } \
+    template<typename Target, typename Weight = double> \
+    EFFOLKRONIUM_NODISCARD STATIC_KEYWORD Target get( details::weighted_result<Target, Weight> p1, details::weighted_result<Target, Weight> p2, details::weighted_result<Target, Weight> p3, details::weighted_result<Target, Weight> p4, details::weighted_result<Target, Weight> p5, details::weighted_result<Target, Weight> p6, details::weighted_result<Target, Weight> p7, details::weighted_result<Target, Weight> p8, details::weighted_result<Target, Weight> p9, details::weighted_result<Target, Weight> p10 ) { \
+        return get<Target, Weight>({ p1, p2, p3, p4, p5, p6, p7, p8, p9, p10 }); \
+    }
 
     /**
     * \brief Base template class for random with static API and static internal member storage
@@ -506,6 +629,7 @@ namespace effolkronium {
         using bool_dist_t = BoolDist;
         using common = details::common;
         using weight = details::weight;
+        template<typename Value, typename Weight = double> using weighted_result = details::weighted_result<Value, Weight>;
 
         constexpr basic_random_base( ) = default;
 
@@ -624,25 +748,32 @@ namespace effolkronium {
             return impl::get( engine_instance( ), dist );
         }
 
-        template<typename Key, class MapContainer>
-        EFFOLKRONIUM_NODISCARD static auto get(const MapContainer& map_container) -> typename std::enable_if<
-            details::is_map<MapContainer>::value &&
-            details::is_iterator<decltype(std::begin(map_container))>::value &&
-            details::is_uniform_int<typename MapContainer::mapped_type>::value &&
+        template<typename Key, class PairContainer>
+        EFFOLKRONIUM_NODISCARD static auto get(const PairContainer& pair_container) -> typename std::enable_if<
+            details::is_pair_container<PairContainer>::value &&
+            details::is_iterator<decltype(std::begin(pair_container))>::value &&
+            details::is_uniform_int<typename PairContainer::value_type::second_type>::value &&
             std::is_same<Key, details::weight>::value,
-        decltype(std::begin(map_container))>::type {
-            return impl::template get<Key>( engine_instance( ), map_container );
+        decltype(std::begin(pair_container))>::type {
+            return impl::template get<Key>( engine_instance( ), pair_container );
         }
 
-        template<typename Key, class MapContainer>
-        EFFOLKRONIUM_NODISCARD static auto get(const MapContainer& map_container) -> typename std::enable_if<
-            details::is_map<MapContainer>::value &&
-            details::is_iterator<decltype(std::begin(map_container))>::value &&
-            details::is_uniform_real<typename MapContainer::mapped_type>::value &&
+        template<typename Key, class PairContainer>
+        EFFOLKRONIUM_NODISCARD static auto get(const PairContainer& pair_container) -> typename std::enable_if<
+            details::is_pair_container<PairContainer>::value &&
+            details::is_iterator<decltype(std::begin(pair_container))>::value &&
+            details::is_uniform_real<typename PairContainer::value_type::second_type>::value &&
             std::is_same<Key, details::weight>::value,
-        decltype(std::begin(map_container))>::type {
-            return impl::template get<Key>( engine_instance( ), map_container );
+        decltype(std::begin(pair_container))>::type {
+            return impl::template get<Key>( engine_instance( ), pair_container );
         }
+
+        template<typename Target, typename Weight = double>
+        EFFOLKRONIUM_NODISCARD static Target get( std::initializer_list<details::weighted_result<Target, Weight>> list ) {
+            return impl::template get<Target, Weight>( engine_instance( ), list );
+        }
+
+        EFFOLKRONIUM_WEIGHTED_VARIADIC_MEMBERS(static)
 
         template<typename RandomIt>
         static void shuffle( RandomIt first, RandomIt last ) { impl::shuffle( engine_instance( ), first, last ); }
@@ -679,6 +810,7 @@ namespace effolkronium {
         using bool_dist_t = BoolDist;
         using common = details::common;
         using weight = details::weight;
+        template<typename Value, typename Weight = double> using weighted_result = details::weighted_result<Value, Weight>;
 
         basic_random_static( ) = default;
 
@@ -711,6 +843,7 @@ namespace effolkronium {
         using bool_dist_t = BoolDist;
         using common = details::common;
         using weight = details::weight;
+        template<typename Value, typename Weight = double> using weighted_result = details::weighted_result<Value, Weight>;
 
         basic_random_thread_local( ) = default;
 
@@ -743,6 +876,7 @@ namespace effolkronium {
         using bool_dist_t = BoolDist;
         using common = details::common;
         using weight = details::weight;
+        template<typename Value, typename Weight = double> using weighted_result = details::weighted_result<Value, Weight>;
 
         basic_random_local( ) = default;
 
@@ -861,25 +995,32 @@ namespace effolkronium {
             return impl::get( m_engine, dist );
         }
 
-        template<typename Key, class MapContainer>
-        EFFOLKRONIUM_NODISCARD auto get(const MapContainer& map_container) -> typename std::enable_if<
-            details::is_map<MapContainer>::value &&
-            details::is_iterator<decltype(std::begin(map_container))>::value &&
-            details::is_uniform_int<typename MapContainer::mapped_type>::value &&
+        template<typename Key, class PairContainer>
+        EFFOLKRONIUM_NODISCARD auto get(const PairContainer& pair_container) -> typename std::enable_if<
+            details::is_pair_container<PairContainer>::value &&
+            details::is_iterator<decltype(std::begin(pair_container))>::value &&
+            details::is_uniform_int<typename PairContainer::value_type::second_type>::value &&
             std::is_same<Key, details::weight>::value,
-        decltype(std::begin(map_container))>::type {
-            return impl::template get<Key>( m_engine, map_container );
+        decltype(std::begin(pair_container))>::type {
+            return impl::template get<Key>( m_engine, pair_container );
         }
 
-        template<typename Key, class MapContainer>
-        EFFOLKRONIUM_NODISCARD auto get(const MapContainer& map_container) -> typename std::enable_if<
-            details::is_map<MapContainer>::value &&
-            details::is_iterator<decltype(std::begin(map_container))>::value &&
-            details::is_uniform_real<typename MapContainer::mapped_type>::value &&
+        template<typename Key, class PairContainer>
+        EFFOLKRONIUM_NODISCARD auto get(const PairContainer& pair_container) -> typename std::enable_if<
+            details::is_pair_container<PairContainer>::value &&
+            details::is_iterator<decltype(std::begin(pair_container))>::value &&
+            details::is_uniform_real<typename PairContainer::value_type::second_type>::value &&
             std::is_same<Key, details::weight>::value,
-        decltype(std::begin(map_container))>::type {
-            return impl::template get<Key>( m_engine, map_container );
+        decltype(std::begin(pair_container))>::type {
+            return impl::template get<Key>( m_engine, pair_container );
         }
+
+        template<typename Target, typename Weight = double>
+        EFFOLKRONIUM_NODISCARD Target get( std::initializer_list<details::weighted_result<Target, Weight>> list ) {
+            return impl::template get<Target, Weight>( m_engine, list );
+        }
+
+        EFFOLKRONIUM_WEIGHTED_VARIADIC_MEMBERS()
 
         template<typename RandomIt>
         void shuffle( RandomIt first, RandomIt last ) { impl::shuffle( m_engine, first, last ); }
@@ -898,6 +1039,8 @@ namespace effolkronium {
         static Engine make_seeded_engine( ) { return Engine{ Seeder{ }( ) }; }
         Engine m_engine{ make_seeded_engine( ) };
     };
+
+#undef EFFOLKRONIUM_WEIGHTED_VARIADIC_MEMBERS
 
     /** 
     * \brief The basic static random alias based on a std::mt19937
