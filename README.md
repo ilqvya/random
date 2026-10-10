@@ -166,6 +166,7 @@ auto val = Random::get<bool>(-1); // Error: assert occurred! Out of [0.0, 1.0] r
 ```
 ### Random value from std::initializer_list
 Returns a random value from values in a std::initializer_list.
+Throws `std::invalid_argument` if the list is empty.
 ```cpp
 auto val = Random::get({1, 2, 3}); // val = 1 or 2 or 3
 ```
