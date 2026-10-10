@@ -933,6 +933,20 @@ TEST_CASE( "Random characters is truly random" ) {
     }
 
     CHECK( isDifferentNumber );
+
+    auto wc = Random.get<wchar_t>( );
+    (void)wc;
+
+    auto c16 = Random.get<char16_t>( );
+    (void)c16;
+
+    auto c32 = Random.get<char32_t>( );
+    (void)c32;
+
+#if defined( __cpp_char8_t )
+    auto c8 = Random.get<char8_t>( );
+    (void)c8;
+#endif
 }
 
 TEST_CASE( "Random iterator assignment" ) {
@@ -1480,6 +1494,17 @@ TEST_CASE( "Random characters inverted range" ) {
 
     wchar_t wc = Random.get<wchar_t>( L'z', L'a' );
     REQUIRE( wc >= L'a' && wc <= L'z' );
+
+    char16_t c16 = Random.get<char16_t>( u'z', u'a' );
+    REQUIRE( c16 >= u'a' && c16 <= u'z' );
+
+    char32_t c32 = Random.get<char32_t>( U'z', U'a' );
+    REQUIRE( c32 >= U'a' && c32 <= U'z' );
+
+#if defined( __cpp_char8_t )
+    char8_t c8 = Random.get<char8_t>( u8'z', u8'a' );
+    REQUIRE( c8 >= u8'a' && c8 <= u8'z' );
+#endif
 }
 
 TEST_CASE( "Random real numbers inverted range" ) {

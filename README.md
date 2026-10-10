@@ -153,6 +153,11 @@ auto val = Random::get(L'㋐', L'㋾');
 ```cpp
 auto val = Random::get<wchar_t>();
 ```
+```cpp
+auto val = Random::get(u'a', u'z'); // char16_t
+auto val = Random::get(U'a', U'z'); // char32_t
+auto val = Random::get<char32_t>(); // default limits
+```
 ### Bool
 Generates true with a probability in [0.0, 1.0].
 ```cpp
