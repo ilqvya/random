@@ -12,7 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        std: [11, 14, 17, 20]
+        std: [11, 14, 17, 20, 23, 26]
         compiler: [gcc]
         include:
           - os: ubuntu-latest
@@ -27,10 +27,48 @@ jobs:
           - os: ubuntu-latest
             compiler: clang
             std: 20
+          - os: ubuntu-latest
+            compiler: clang
+            std: 23
+          - os: ubuntu-latest
+            compiler: clang
+            std: 26
           - os: macos-latest
             compiler: appleclang
+            std: 11
+          - os: macos-latest
+            compiler: appleclang
+            std: 14
+          - os: macos-latest
+            compiler: appleclang
+            std: 17
+          - os: macos-latest
+            compiler: appleclang
+            std: 20
+          - os: macos-latest
+            compiler: appleclang
+            std: 23
+          - os: macos-latest
+            compiler: appleclang
+            std: 26
           - os: windows-latest
             compiler: msvc
+            std: 11
+          - os: windows-latest
+            compiler: msvc
+            std: 14
+          - os: windows-latest
+            compiler: msvc
+            std: 17
+          - os: windows-latest
+            compiler: msvc
+            std: 20
+          - os: windows-latest
+            compiler: msvc
+            std: 23
+          - os: windows-latest
+            compiler: msvc
+            std: 26
         exclude:
           - os: macos-latest
             compiler: gcc
