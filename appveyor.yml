@@ -2,6 +2,7 @@ version: '{build}'
 
 image:
   - Ubuntu
+  - Ubuntu1804
   - Ubuntu2004
   - Ubuntu2204
   - Ubuntu2404
@@ -27,6 +28,7 @@ for:
   - matrix:
       only:
         - image: Ubuntu
+        - image: Ubuntu1804
         - image: Ubuntu2004
         - image: Ubuntu2204
         - image: Ubuntu2404
