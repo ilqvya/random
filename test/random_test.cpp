@@ -1510,6 +1510,19 @@ TEST_CASE( "random_local remaining methods and empty iterator get" ) {
     REQUIRE( Random.get( empty_vec ) == empty_vec.end( ) );
     REQUIRE( rl.get( empty_vec.begin( ), empty_vec.end( ) ) == empty_vec.end( ) );
     REQUIRE( rl.get( empty_vec ) == empty_vec.end( ) );
+
+    // Test const engine() access without copying
+    const ilqvya::random_local const_rl;
+    const std::mt19937& const_engine_ref = const_rl.engine( );
+    REQUIRE( const_rl.is_equal( const_engine_ref ) );
+
+    const ilqvya::random_static const_rs;
+    const std::mt19937& const_rs_engine = const_rs.engine( );
+    (void)const_rs_engine;
+
+    const ilqvya::random_thread_local const_rtl;
+    const std::mt19937& const_rtl_engine = const_rtl.engine( );
+    (void)const_rtl_engine;
 }
 
 TEST_CASE( "Forward iterator support for get" ) {

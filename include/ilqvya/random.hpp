@@ -1231,6 +1231,7 @@ namespace ilqvya {
         }
 
         ILQVYA_NODISCARD Engine get_engine( ) const noexcept { return m_engine; }
+        ILQVYA_NODISCARD const Engine& engine( ) const noexcept { return m_engine; }
         Engine& engine( ) noexcept { return m_engine; }
 
     private:
