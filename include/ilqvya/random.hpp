@@ -229,9 +229,17 @@ namespace ilqvya {
             Weight weight;
 
             constexpr weighted_result( ) = default;
-            constexpr weighted_result( Value val, Weight w ) : value( std::move( val ) ), weight( std::move( w ) ) {}
-            constexpr weighted_result( const std::pair<Value, Weight>& p ) : value( p.first ), weight( p.second ) {}
-            constexpr weighted_result( std::pair<Value, Weight>&& p )
+            constexpr weighted_result( Value val, Weight w ) noexcept(
+                std::is_nothrow_move_constructible<Value>::value &&
+                std::is_nothrow_move_constructible<Weight>::value )
+                : value( std::move( val ) ), weight( std::move( w ) ) {}
+            constexpr weighted_result( const std::pair<Value, Weight>& p ) noexcept(
+                std::is_nothrow_constructible<Value, const Value&>::value &&
+                std::is_nothrow_constructible<Weight, const Weight&>::value )
+                : value( p.first ), weight( p.second ) {}
+            constexpr weighted_result( std::pair<Value, Weight>&& p ) noexcept(
+                std::is_nothrow_constructible<Value, Value&&>::value &&
+                std::is_nothrow_constructible<Weight, Weight&&>::value )
                 : value( std::move( p.first ) ), weight( std::move( p.second ) ) {}
 
             friend constexpr bool operator==( const weighted_result& lhs, const weighted_result& rhs ) noexcept(
@@ -330,25 +338,33 @@ namespace ilqvya {
                 return (Engine::max)( );
             }
 
-            static void discard( Engine& engine, const unsigned long long z ) noexcept { engine.discard( z ); }
+            static void discard( Engine& engine, const unsigned long long z ) noexcept(
+                noexcept( engine.discard( z ) ) ) {
+                engine.discard( z );
+            }
 
             static void reseed( Engine& engine ) {
                 Seeder seeder;
                 seed( engine, seeder( ) );
             }
 
-            static void seed( Engine& engine, const typename Engine::result_type value = Engine::default_seed ) {
+            static void seed( Engine& engine, const typename Engine::result_type value = Engine::default_seed ) noexcept(
+                noexcept( engine.seed( value ) ) ) {
                 engine.seed( value );
             }
 
             template<typename Sseq>
-            static void seed( Engine& engine, Sseq& seq ) {
+            static void seed( Engine& engine, Sseq& seq ) noexcept( noexcept( engine.seed( seq ) ) ) {
                 engine.seed( seq );
             }
 
-            ILQVYA_NODISCARD static typename Engine::result_type get( Engine& engine ) { return engine( ); }
+            ILQVYA_NODISCARD static typename Engine::result_type get( Engine& engine ) noexcept(
+                noexcept( engine( ) ) ) {
+                return engine( );
+            }
 
-            ILQVYA_NODISCARD static bool is_equal( const Engine& engine, const Engine& other ) noexcept {
+            ILQVYA_NODISCARD static bool is_equal( const Engine& engine, const Engine& other ) noexcept(
+                noexcept( engine == other ) ) {
                 return engine == other;
             }
 
@@ -797,17 +813,25 @@ namespace ilqvya {
 
         ILQVYA_NODISCARD static constexpr typename Engine::result_type( min )( ) noexcept { return impl::min( ); }
         ILQVYA_NODISCARD static constexpr typename Engine::result_type( max )( ) noexcept { return impl::max( ); }
-        static void discard( const unsigned long long z ) noexcept { impl::discard( engine_instance( ), z ); }
+        static void discard( const unsigned long long z ) noexcept(
+            noexcept( impl::discard( engine_instance( ), z ) ) ) {
+            impl::discard( engine_instance( ), z );
+        }
         static void reseed( ) { impl::reseed( engine_instance( ) ); }
-        static void seed( const typename Engine::result_type value = Engine::default_seed ) {
+        static void seed( const typename Engine::result_type value = Engine::default_seed ) noexcept(
+            noexcept( impl::seed( engine_instance( ), value ) ) ) {
             impl::seed( engine_instance( ), value );
         }
         template<typename Sseq>
-        static void seed( Sseq& seq ) {
+        static void seed( Sseq& seq ) noexcept( noexcept( impl::seed( engine_instance( ), seq ) ) ) {
             impl::seed( engine_instance( ), seq );
         }
-        ILQVYA_NODISCARD static typename Engine::result_type get( ) { return impl::get( engine_instance( ) ); }
-        ILQVYA_NODISCARD static bool is_equal( const Engine& other ) noexcept {
+        ILQVYA_NODISCARD static typename Engine::result_type get( ) noexcept(
+            noexcept( impl::get( engine_instance( ) ) ) ) {
+            return impl::get( engine_instance( ) );
+        }
+        ILQVYA_NODISCARD static bool is_equal( const Engine& other ) noexcept(
+            noexcept( impl::is_equal( engine_instance( ), other ) ) ) {
             return impl::is_equal( engine_instance( ), other );
         }
         template<typename CharT, typename Traits>
@@ -1107,16 +1131,22 @@ namespace ilqvya {
 
         basic_random_local( ) = default;
 
-        explicit basic_random_local( const typename Engine::result_type seed_val ) : m_engine( seed_val ) {}
+        explicit basic_random_local( const typename Engine::result_type seed_val ) noexcept(
+            std::is_nothrow_constructible<Engine, typename Engine::result_type>::value )
+            : m_engine( seed_val ) {}
 
         template<typename Sseq,
                  typename = typename std::enable_if<!std::is_same<typename std::decay<Sseq>::type, basic_random_local>::value &&
                                                     !std::is_same<typename std::decay<Sseq>::type, Engine>::value &&
                                                     !std::is_same<typename std::decay<Sseq>::type, Seeder>::value &&
                                                     !std::is_convertible<Sseq, typename Engine::result_type>::value>::type>
-        explicit basic_random_local( Sseq& sseq ) : m_engine( sseq ) {}
+        explicit basic_random_local( Sseq& sseq ) noexcept(
+            std::is_nothrow_constructible<Engine, Sseq&>::value )
+            : m_engine( sseq ) {}
 
-        explicit basic_random_local( Engine engine ) : m_engine( std::move( engine ) ) {}
+        explicit basic_random_local( Engine engine ) noexcept(
+            std::is_nothrow_move_constructible<Engine>::value )
+            : m_engine( std::move( engine ) ) {}
 
         explicit basic_random_local( Seeder& seeder ) : m_engine( make_seeded_engine( seeder ) ) {}
 
@@ -1127,26 +1157,39 @@ namespace ilqvya {
 
         ILQVYA_NODISCARD static constexpr typename Engine::result_type( min )( ) noexcept { return impl::min( ); }
         ILQVYA_NODISCARD static constexpr typename Engine::result_type( max )( ) noexcept { return impl::max( ); }
-        void discard( const unsigned long long z ) noexcept { impl::discard( m_engine, z ); }
+        void discard( const unsigned long long z ) noexcept(
+            noexcept( impl::discard( m_engine, z ) ) ) {
+            impl::discard( m_engine, z );
+        }
         void reseed( ) { impl::reseed( m_engine ); }
-        void seed( const typename Engine::result_type value = Engine::default_seed ) { impl::seed( m_engine, value ); }
+        void seed( const typename Engine::result_type value = Engine::default_seed ) noexcept(
+            noexcept( impl::seed( m_engine, value ) ) ) {
+            impl::seed( m_engine, value );
+        }
         template<typename Sseq>
-        void seed( Sseq& seq ) {
+        void seed( Sseq& seq ) noexcept( noexcept( impl::seed( m_engine, seq ) ) ) {
             impl::seed( m_engine, seq );
         }
-        ILQVYA_NODISCARD typename Engine::result_type get( ) { return impl::get( m_engine ); }
-        ILQVYA_NODISCARD bool is_equal( const Engine& other ) const noexcept {
+        ILQVYA_NODISCARD typename Engine::result_type get( ) noexcept(
+            noexcept( impl::get( m_engine ) ) ) {
+            return impl::get( m_engine );
+        }
+        ILQVYA_NODISCARD bool is_equal( const Engine& other ) const noexcept(
+            noexcept( impl::is_equal( m_engine, other ) ) ) {
             return impl::is_equal( m_engine, other );
         }
-        ILQVYA_NODISCARD bool is_equal( const basic_random_local& other ) const noexcept {
+        ILQVYA_NODISCARD bool is_equal( const basic_random_local& other ) const noexcept(
+            noexcept( is_equal( other.m_engine ) ) ) {
             return is_equal( other.m_engine );
         }
 
-        friend bool operator==( const basic_random_local& lhs, const basic_random_local& rhs ) noexcept {
+        friend bool operator==( const basic_random_local& lhs, const basic_random_local& rhs ) noexcept(
+            noexcept( lhs.is_equal( rhs ) ) ) {
             return lhs.is_equal( rhs );
         }
 
-        friend bool operator!=( const basic_random_local& lhs, const basic_random_local& rhs ) noexcept {
+        friend bool operator!=( const basic_random_local& lhs, const basic_random_local& rhs ) noexcept(
+            noexcept( !( lhs == rhs ) ) ) {
             return !( lhs == rhs );
         }
         template<typename CharT, typename Traits>

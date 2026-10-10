@@ -1790,3 +1790,66 @@ TEST_CASE( "Negative weights throw invalid_argument" ) {
     }
     REQUIRE( caught_list_real );
 }
+
+TEST_CASE( "noexcept specifications for observers, discard, seed, comparisons and weighted_result" ) {
+    ilqvya::random_local rl;
+
+    // Unconditional observers
+    static_assert( noexcept( ilqvya::random_local::min( ) ), "random_local::min must be noexcept" );
+    static_assert( noexcept( ilqvya::random_local::max( ) ), "random_local::max must be noexcept" );
+    static_assert( noexcept( rl.get_engine( ) ), "random_local::get_engine must be noexcept" );
+    static_assert( noexcept( rl.engine( ) ), "random_local::engine must be noexcept" );
+
+    static_assert( noexcept( Random_t::min( ) ), "Random::min must be noexcept" );
+    static_assert( noexcept( Random_t::max( ) ), "Random::max must be noexcept" );
+    static_assert( noexcept( Random.get_engine( ) ), "Random::get_engine must be noexcept" );
+    static_assert( noexcept( Random.engine( ) ), "Random::engine must be noexcept" );
+
+    // weighted_result
+    Random_t::weighted_result<int, double> wr{ 42, 1.0 };
+    static_assert( noexcept( Random_t::weighted_result<int, double>{ 42, 1.0 } ),
+                   "weighted_result constructor must be noexcept for nothrow types" );
+    static_assert( noexcept( wr == wr ), "weighted_result operator== must be noexcept" );
+    static_assert( noexcept( wr != wr ), "weighted_result operator!= must be noexcept" );
+}
+
+namespace {
+    struct nothrow_mock_engine {
+        using result_type = unsigned int;
+        static constexpr result_type min( ) noexcept { return 0; }
+        static constexpr result_type max( ) noexcept { return 100; }
+        nothrow_mock_engine( ) = default;
+        explicit nothrow_mock_engine( result_type ) noexcept {}
+        template<typename Sseq>
+        explicit nothrow_mock_engine( Sseq& ) noexcept {}
+        void discard( unsigned long long ) noexcept {}
+        void seed( result_type ) noexcept {}
+        template<typename Sseq>
+        void seed( Sseq& ) noexcept {}
+        result_type operator( )( ) noexcept { return 42; }
+        bool operator==( const nothrow_mock_engine& ) const noexcept { return true; }
+        bool operator!=( const nothrow_mock_engine& ) const noexcept { return false; }
+    };
+} // namespace
+
+TEST_CASE( "conditional noexcept with nothrow engine" ) {
+    using nothrow_local = ilqvya::basic_random_local<nothrow_mock_engine>;
+    nothrow_mock_engine nt_eng;
+    nothrow_local nt_rl;
+
+    static_assert( noexcept( nothrow_local{ 12345u } ), "nothrow_local(seed) must be noexcept" );
+    static_assert( noexcept( nothrow_local{ nt_eng } ), "nothrow_local(Engine) must be noexcept" );
+    static_assert( noexcept( nt_rl.discard( 10 ) ), "nothrow_local::discard must be noexcept" );
+    static_assert( noexcept( nt_rl.seed( 12345u ) ), "nothrow_local::seed must be noexcept" );
+    static_assert( noexcept( nt_rl.get( ) ), "nothrow_local::get() must be noexcept" );
+    static_assert( noexcept( nt_rl.is_equal( nt_eng ) ), "nothrow_local::is_equal(Engine) must be noexcept" );
+    static_assert( noexcept( nt_rl.is_equal( nt_rl ) ), "nothrow_local::is_equal(nothrow_local) must be noexcept" );
+    static_assert( noexcept( nt_rl == nt_rl ), "nothrow_local operator== must be noexcept" );
+    static_assert( noexcept( nt_rl != nt_rl ), "nothrow_local operator!= must be noexcept" );
+
+    using nothrow_static = ilqvya::basic_random_static<nothrow_mock_engine>;
+    static_assert( noexcept( nothrow_static::discard( 10 ) ), "nothrow_static::discard must be noexcept" );
+    static_assert( noexcept( nothrow_static::seed( 12345u ) ), "nothrow_static::seed must be noexcept" );
+    static_assert( noexcept( nothrow_static::get( ) ), "nothrow_static::get() must be noexcept" );
+    static_assert( noexcept( nothrow_static::is_equal( nt_eng ) ), "nothrow_static::is_equal must be noexcept" );
+}
