@@ -1,7 +1,7 @@
 # Random for modern C++ with convenient API
 [![CI](https://github.com/ilqvya/random/actions/workflows/ci.yml/badge.svg)](https://github.com/ilqvya/random/actions/workflows/ci.yml)
 [![Build status](https://ci.appveyor.com/api/projects/status/nukrsqimulgel7nk?svg=true)](https://ci.appveyor.com/project/ilqvya/random)
-[![Coverage Status](https://coveralls.io/repos/github/effolkronium/random/badge.svg?branch=master&unused=0)](https://coveralls.io/github/effolkronium/random?branch=master&unused=0)
+[![Coverage Status](https://coveralls.io/repos/github/ilqvya/random/badge.svg?branch=master&unused=0)](https://coveralls.io/github/ilqvya/random?branch=master&unused=0)
 <a href="https://scan.coverity.com/projects/ilqvya-random"><img alt="Coverity Scan Build Status" src="https://scan.coverity.com/projects/31956/badge.svg"/></a>
 - [Design goals](#design-goals)
 - [Supported compilers](#supported-compilers)
@@ -54,7 +54,7 @@ There are a few ways to work with random in C++:
   * Must choose, create, and manage a chain of various objects like engines and distributions
   * [mt19937](http://en.cppreference.com/w/cpp/numeric/random/mersenne_twister_engine) uses ~5000 bytes of internal state for each instance (which hurts performance if created repeatedly)
   * Cumbersome and not intuitive to use
-- **effolkronium random style**
+- **ilqvya random style**
 ```cpp
   // auto seeded
   auto random_number = Random::get(1, 9); // invoke 'get' method to generate a pseudo-random integer in [1; 9] range
@@ -62,10 +62,10 @@ There are a few ways to work with random in C++:
 ```
 * Advantages:
   * **Intuitive syntax**. You can do almost everything with random via a simple 'get' method: generating numbers, bools, random elements from a given container or set, or using custom distributions.
-  * **Trivial integration**. All code consists of a single header file [`random.hpp`](https://github.com/effolkronium/random/blob/master/include/effolkronium/random.hpp). That's it. No compiled library, no subproject, no external dependencies, no complex build system. Written in vanilla C++11 and compatible with modern C++.
-  * **Usability**. There are 3 versions of random: 
-    * *random_static*: static methods and static internal state. Fast, but not thread-safe.
-    * *random_thread_local*: static methods and [thread_local](http://en.cppreference.com/w/cpp/keyword/thread_local) internal state. Fully thread-safe.
+  * **Trivial integration**. All code consists of a single header file [`random.hpp`](https://github.com/ilqvya/random/blob/master/include/effolkronium/random.hpp). That's it. No compiled library, no subproject, no external dependencies, no complex build system. Written in vanilla C++11 and compatible with modern C++.
+  * **Usability**. Available generator types: 
+    * *random* (or *random_thread_local*): static methods and [thread_local](http://en.cppreference.com/w/cpp/keyword/thread_local) internal state. Fully thread-safe default!
+    * *random_static*: static methods and static internal state. Fast, but not thread-safe across concurrent threads.
     * *random_local*: non-static member methods and local member state. Can be created on the stack at local scope.
 ## Supported compilers
 * GCC 4.9+ (and later)
@@ -77,7 +77,7 @@ There are a few ways to work with random in C++:
 ```cmake
 add_subdirectory(random) # path to the 'random' library root
 ... # create target
-target_link_libraries(${TARGET} effolkronium::random) # or effolkronium_random
+target_link_libraries(${TARGET} ilqvya::random) # or effolkronium::random
 ```
 * As external project
 
@@ -94,19 +94,19 @@ Then, find the package via CMake:
 ```cmake
 find_package(effolkronium_random REQUIRED)
 ... # create target
-target_link_libraries(${TARGET} effolkronium::random)
+target_link_libraries(${TARGET} ilqvya::random) # or effolkronium::random
 ```
 #### Manually
-The single required source file, [`random.hpp`](https://github.com/effolkronium/random/blob/master/include/effolkronium/random.hpp), is located in the [`include/effolkronium`](https://github.com/effolkronium/random/tree/master/include/effolkronium) directory.
+The single required source file, [`random.hpp`](https://github.com/ilqvya/random/blob/master/include/effolkronium/random.hpp), is located in the [`include/effolkronium`](https://github.com/ilqvya/random/tree/master/include/effolkronium) directory.
 #### Then
 All you need to do is add
 ```cpp
 #include "effolkronium/random.hpp"
 
-// get base random alias which is auto seeded and has static API and internal state
-using Random = effolkronium::random_static;
+// default thread-local random alias (thread-safe, auto-seeded)
+using Random = ilqvya::random;
 ```
-to files where you want to use the effolkronium random class. That's it! Ensure C++11 or newer is enabled in your compiler settings (e.g., `-std=c++11` for GCC and Clang).
+to files where you want to use the random class. That's it! (For backward compatibility, `namespace effolkronium = ilqvya;` is also provided). Ensure C++11 or newer is enabled in your compiler settings (e.g., `-std=c++11` for GCC and Clang).
 ## Five-minute tutorial
 ### Number range
 Returns a pseudo-random number in a [first; second] range.
@@ -283,7 +283,7 @@ struct MySeeder {
 };
     
 // Seeded by 42
-using Random = effolkronium::basic_random_static<std::mt19937, MySeeder>;
+using Random = ilqvya::basic_random_static<std::mt19937, MySeeder>;
 ```
 * Seed sequence
 
@@ -298,7 +298,7 @@ struct MySeeder {
 };
     
 // Seeded by seed_seq_ from MySeeder
-using Random = effolkronium::basic_random_static<std::mt19937, MySeeder>;
+using Random = ilqvya::basic_random_static<std::mt19937, MySeeder>;
 ```
 * Reseed
 
@@ -307,9 +307,9 @@ Seeds the internal random engine using a newly created Seeder instance:
 Random::reseed( );
 ```
 ### Thread local random
-Uses static method API with [thread_local](http://en.cppreference.com/w/cpp/keyword/thread_local) storage, which is fully **thread-safe**:
+Uses static method API with [thread_local](http://en.cppreference.com/w/cpp/keyword/thread_local) storage, which is fully **thread-safe** (and available as default alias `ilqvya::random`):
 ```cpp
-using Random = effolkronium::random_thread_local;
+using Random = ilqvya::random; // or ilqvya::random_thread_local
 
 // use in the same way as random_static. Thread safe
 std::thread first{ [ ] { Random::get( ); } };
@@ -320,7 +320,7 @@ Uses member method API with local member storage, created on the stack at local 
 ```cpp
 #include "effolkronium/random.hpp"
 
-using Random_t = effolkronium::random_local;
+using Random_t = ilqvya::random_local;
 
 int main( ) {
   Random_t localRandom{ }; // Construct on the stack

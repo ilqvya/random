@@ -15,18 +15,18 @@
 #include "effolkronium/random.hpp"
 
 #ifdef RANDOM_LOCAL
-auto Random = effolkronium::random_local{ };
-using Random_t = effolkronium::random_local;
+auto Random = ilqvya::random_local{ };
+using Random_t = ilqvya::random_local;
 #endif
 
 #ifdef RANDOM_STATIC
-auto Random = effolkronium::random_static{ };
-using Random_t = effolkronium::random_static;
+auto Random = ilqvya::random_static{ };
+using Random_t = ilqvya::random_static;
 #endif
 
 #ifdef RANDOM_THREAD_LOCAL
-auto Random = effolkronium::random_thread_local{ };
-using Random_t = effolkronium::random_thread_local;
+auto Random = ilqvya::random_thread_local{ };
+using Random_t = ilqvya::random_thread_local;
 #endif
 
 TEST_CASE( "Range overflow for random integer numbers" ) {
@@ -545,13 +545,13 @@ TEST_CASE( "custom seeder" ) {
     std::mt19937 mt{ currentSeed };
 
     #ifdef RANDOM_STATIC
-    effolkronium::basic_random_static<std::mt19937, Seeder> tRandom;
+    ilqvya::basic_random_static<std::mt19937, Seeder> tRandom;
     #endif
     #ifdef RANDOM_THREAD_LOCAL
-    effolkronium::basic_random_thread_local<std::mt19937, Seeder> tRandom;
+    ilqvya::basic_random_thread_local<std::mt19937, Seeder> tRandom;
     #endif
     #ifdef RANDOM_LOCAL
-    effolkronium::basic_random_local<std::mt19937, Seeder> tRandom;
+    ilqvya::basic_random_local<std::mt19937, Seeder> tRandom;
     #endif
 
     REQUIRE( mt( ) == tRandom.get( ) );
@@ -565,13 +565,13 @@ TEST_CASE( "seed by default seeder" ) {
     };
 
     #ifdef RANDOM_STATIC
-    effolkronium::basic_random_static<std::mt19937_64, Seeder_42> tRandom;
+    ilqvya::basic_random_static<std::mt19937_64, Seeder_42> tRandom;
     #endif
     #ifdef RANDOM_THREAD_LOCAL
-    effolkronium::basic_random_thread_local<std::mt19937_64, Seeder_42> tRandom;
+    ilqvya::basic_random_thread_local<std::mt19937_64, Seeder_42> tRandom;
     #endif
     #ifdef RANDOM_LOCAL
-    effolkronium::basic_random_local<std::mt19937_64, Seeder_42> tRandom;
+    ilqvya::basic_random_local<std::mt19937_64, Seeder_42> tRandom;
     #endif
 
     std::mt19937_64 engine{ 42u };
@@ -600,13 +600,13 @@ TEST_CASE( "custom seeder with seedSeq" ) {
     std::mt19937 mt{ seed_seq_ };
 
     #ifdef RANDOM_STATIC
-    effolkronium::basic_random_static<std::mt19937, Seeder> tRandom;
+    ilqvya::basic_random_static<std::mt19937, Seeder> tRandom;
     #endif
     #ifdef RANDOM_THREAD_LOCAL
-    effolkronium::basic_random_thread_local<std::mt19937, Seeder> tRandom;
+    ilqvya::basic_random_thread_local<std::mt19937, Seeder> tRandom;
     #endif
     #ifdef RANDOM_LOCAL
-    effolkronium::basic_random_local<std::mt19937, Seeder> tRandom;
+    ilqvya::basic_random_local<std::mt19937, Seeder> tRandom;
     #endif
 
     REQUIRE( mt( ) == tRandom.get( ) );
@@ -617,13 +617,13 @@ TEST_CASE( "default Seeder generate random seed" ) {
     std::vector<std::seed_seq::result_type> seeds_first( 10u );
     bool isSeedRandom{ false };
 
-    effolkronium::seeder_default{ }( ).generate( seeds_first.begin( ),
+    ilqvya::seeder_default{ }( ).generate( seeds_first.begin( ),
                                                  seeds_first.end( ) );
     do {
         std::vector<std::seed_seq::result_type> seeds_second( 10u );
-        effolkronium::seeder_default{ }( ).generate( seeds_second.begin( ),
+        ilqvya::seeder_default{ }( ).generate( seeds_second.begin( ),
                                                      seeds_second.end( ) );
-        effolkronium::seeder_default seeder;
+        ilqvya::seeder_default seeder;
         isSeedRandom = seeds_first != seeds_second;
     } while( !isSeedRandom && 0 != counter-- );
 
@@ -883,7 +883,7 @@ TEST_CASE( "is truly thread local" ) {
     };
 
     using customRandom =
-        effolkronium::basic_random_thread_local<std::mt19937, Seeder>;
+        ilqvya::basic_random_thread_local<std::mt19937, Seeder>;
 
     std::thread thread_t{ [ ] {
         firstThreadNumber = customRandom::get( );
@@ -1013,13 +1013,13 @@ TEST_CASE("Construct Seeder only once") {
 	};
 
 #ifdef RANDOM_STATIC
-	effolkronium::basic_random_static<std::mt19937, Seeder> tRandom;
+	ilqvya::basic_random_static<std::mt19937, Seeder> tRandom;
 #endif
 #ifdef RANDOM_THREAD_LOCAL
-	effolkronium::basic_random_thread_local<std::mt19937, Seeder> tRandom;
+	ilqvya::basic_random_thread_local<std::mt19937, Seeder> tRandom;
 #endif
 #ifdef RANDOM_LOCAL
-	effolkronium::basic_random_local<std::mt19937, Seeder> tRandom;
+	ilqvya::basic_random_local<std::mt19937, Seeder> tRandom;
 #endif
 
 	std::vector<int> randomValues;
@@ -1038,20 +1038,20 @@ TEST_CASE("Construct Seeder only once") {
 }
 
 TEST_CASE("is_map trait"){
-    static_assert(effolkronium::details::is_map<std::unordered_map<int ,int>>::value, "");
-    static_assert(effolkronium::details::is_map<std::map<int ,int>>::value, "");
+    static_assert(ilqvya::details::is_map<std::unordered_map<int ,int>>::value, "");
+    static_assert(ilqvya::details::is_map<std::map<int ,int>>::value, "");
     // This should also count as a map
     struct CustomMap{
         using key_type = int;
         using mapped_type = int;
         using value_type = int;
     };
-    static_assert(effolkronium::details::is_map<CustomMap>::value, "");
+    static_assert(ilqvya::details::is_map<CustomMap>::value, "");
 
     // Some datatypes that shouldn't be classified as a map
-    static_assert(!effolkronium::details::is_map<int>::value, "");
-    static_assert(!effolkronium::details::is_map<std::vector<int>>::value, "");
-    static_assert(!effolkronium::details::is_map<std::string>::value, "");
+    static_assert(!ilqvya::details::is_map<int>::value, "");
+    static_assert(!ilqvya::details::is_map<std::vector<int>>::value, "");
+    static_assert(!ilqvya::details::is_map<std::string>::value, "");
 }
 
 TEST_CASE("Empty map and maps with zero total weight tests"){
@@ -1143,11 +1143,11 @@ TEST_CASE("Functor operator() invocation") {
 
 TEST_CASE("Uniform instance and static calling syntax across all generator types") {
     // Static engine supports both static and instance calls
-    auto s_val_static = effolkronium::random_static::get(1, 10);
+    auto s_val_static = ilqvya::random_static::get(1, 10);
     REQUIRE(s_val_static >= 1);
     REQUIRE(s_val_static <= 10);
 
-    effolkronium::random_static s_inst;
+    ilqvya::random_static s_inst;
     auto s_val_member = s_inst.get(1, 10);
     REQUIRE(s_val_member >= 1);
     REQUIRE(s_val_member <= 10);
@@ -1157,11 +1157,11 @@ TEST_CASE("Uniform instance and static calling syntax across all generator types
     REQUIRE(s_val_functor <= 10);
 
     // Thread-local engine supports both static and instance calls
-    auto tl_val_static = effolkronium::random_thread_local::get(1, 10);
+    auto tl_val_static = ilqvya::random_thread_local::get(1, 10);
     REQUIRE(tl_val_static >= 1);
     REQUIRE(tl_val_static <= 10);
 
-    effolkronium::random_thread_local tl_inst;
+    ilqvya::random_thread_local tl_inst;
     auto tl_val_member = tl_inst.get(1, 10);
     REQUIRE(tl_val_member >= 1);
     REQUIRE(tl_val_member <= 10);
@@ -1171,7 +1171,7 @@ TEST_CASE("Uniform instance and static calling syntax across all generator types
     REQUIRE(tl_val_functor <= 10);
 
     // Local engine supports instance and functor calls
-    effolkronium::random_local loc_inst;
+    ilqvya::random_local loc_inst;
     auto loc_val_member = loc_inst.get(1, 10);
     REQUIRE(loc_val_member >= 1);
     REQUIRE(loc_val_member <= 10);
@@ -1291,16 +1291,16 @@ TEST_CASE("Correctness: Expression SFINAE for has_reserve and has_insert with ov
         void insert(int) {}
     };
 
-    static_assert(effolkronium::details::has_reserve<std::vector<int>>::value, "vector has reserve");
-    static_assert(!effolkronium::details::has_reserve<std::array<int, 4>>::value, "array does not have reserve");
-    static_assert(!effolkronium::details::has_reserve<std::set<int>>::value, "set does not have reserve");
+    static_assert(ilqvya::details::has_reserve<std::vector<int>>::value, "vector has reserve");
+    static_assert(!ilqvya::details::has_reserve<std::array<int, 4>>::value, "array does not have reserve");
+    static_assert(!ilqvya::details::has_reserve<std::set<int>>::value, "set does not have reserve");
 
-    static_assert(effolkronium::details::has_insert<std::vector<int>>::value, "vector has insert");
-    static_assert(effolkronium::details::has_insert<std::set<int>>::value, "set has insert");
-    static_assert(!effolkronium::details::has_insert<std::array<int, 4>>::value, "array does not have insert");
+    static_assert(ilqvya::details::has_insert<std::vector<int>>::value, "vector has insert");
+    static_assert(ilqvya::details::has_insert<std::set<int>>::value, "set has insert");
+    static_assert(!ilqvya::details::has_insert<std::array<int, 4>>::value, "array does not have insert");
 
     // Overloaded reserve matches expression SFINAE reserve(size_t) without ambiguous address taking
-    static_assert(effolkronium::details::has_reserve<OverloadedMembers>::value, "overloaded reserve matches");
+    static_assert(ilqvya::details::has_reserve<OverloadedMembers>::value, "overloaded reserve matches");
 }
 
 TEST_CASE("Discussion #38: Variadic custom weighted distribution syntax") {
@@ -1391,7 +1391,7 @@ TEST_CASE("Discussion #38: Sequential pair containers (vector of pairs)") {
     }
 }
 
-#if defined(EFFOLKRONIUM_HAS_REFLECTION)
+#if defined(ILQVYA_HAS_REFLECTION)
 enum class TestDifficulty { Easy, Medium, Hard, Expert };
 enum TestStatus { Disconnected = 0, Connecting = 10, Connected = 100 };
 enum class TestSingle { OnlyOne = 777 };
@@ -1423,6 +1423,58 @@ TEST_CASE("Discussion #37: Choosing random value from an enum (C++26 Reflection)
     REQUIRE(seen.size() == 4);
 }
 #endif
+
+TEST_CASE("ilqvya::random alias and effolkronium backward compatibility") {
+    // ilqvya::random is alias for ilqvya::random_thread_local
+    static_assert(std::is_same<ilqvya::random, ilqvya::random_thread_local>::value,
+                  "ilqvya::random must be an alias for ilqvya::random_thread_local");
+
+    auto val_static = ilqvya::random::get(1, 10);
+    REQUIRE(val_static >= 1);
+    REQUIRE(val_static <= 10);
+
+    ilqvya::random rnd;
+    auto val_member = rnd.get(1, 10);
+    REQUIRE(val_member >= 1);
+    REQUIRE(val_member <= 10);
+
+    auto val_call = rnd(1, 10);
+    REQUIRE(val_call >= 1);
+    REQUIRE(val_call <= 10);
+
+    // effolkronium namespace alias backward compatibility
+    static_assert(std::is_same<effolkronium::random, ilqvya::random>::value,
+                  "effolkronium::random must be identical to ilqvya::random");
+    static_assert(std::is_same<effolkronium::random_static, ilqvya::random_static>::value,
+                  "effolkronium::random_static must be identical to ilqvya::random_static");
+    static_assert(std::is_same<effolkronium::random_thread_local, ilqvya::random_thread_local>::value,
+                  "effolkronium::random_thread_local must be identical to ilqvya::random_thread_local");
+    static_assert(std::is_same<effolkronium::random_local, ilqvya::random_local>::value,
+                  "effolkronium::random_local must be identical to ilqvya::random_local");
+
+    auto eff_val1 = effolkronium::random::get(1, 10);
+    REQUIRE(eff_val1 >= 1);
+    REQUIRE(eff_val1 <= 10);
+
+    auto eff_val2 = effolkronium::random_static::get(1, 10);
+    REQUIRE(eff_val2 >= 1);
+    REQUIRE(eff_val2 <= 10);
+
+    auto eff_val3 = effolkronium::random_thread_local::get(1, 10);
+    REQUIRE(eff_val3 >= 1);
+    REQUIRE(eff_val3 <= 10);
+
+    effolkronium::random_local eff_loc;
+    auto eff_val4 = eff_loc.get(1, 10);
+    REQUIRE(eff_val4 >= 1);
+    REQUIRE(eff_val4 <= 10);
+
+#if defined(ILQVYA_HAS_REFLECTION)
+    static_assert(EFFOLKRONIUM_HAS_REFLECTION == 1,
+                  "EFFOLKRONIUM_HAS_REFLECTION macro must be defined when ILQVYA_HAS_REFLECTION is defined");
+#endif
+}
+
 
 
 

@@ -19,6 +19,7 @@ set(EFFOLKRONIUM_RANDOM_INCLUDE_DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 # create and configure the library target
 add_library(${EFFOLKRONIUM_RANDOM_TARGET_NAME} INTERFACE)
 add_library(effolkronium::random ALIAS ${EFFOLKRONIUM_RANDOM_TARGET_NAME})
+add_library(ilqvya::random ALIAS ${EFFOLKRONIUM_RANDOM_TARGET_NAME})
 
 target_compile_features(${EFFOLKRONIUM_RANDOM_TARGET_NAME} INTERFACE cxx_std_11)
 

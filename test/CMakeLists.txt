@@ -20,7 +20,7 @@ function(add_basic_test TARGET COMPILE_DEFS TEST_SOURCES)
     add_executable(${TARGET} ${TEST_SOURCES})
     
     set_up_warnings(${TARGET})
-    target_link_libraries(${TARGET} Threads::Threads effolkronium::random)
+    target_link_libraries(${TARGET} Threads::Threads ilqvya::random)
     target_compile_definitions(${TARGET} PRIVATE ${COMPILE_DEFS})
     target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     
