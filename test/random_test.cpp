@@ -2048,5 +2048,26 @@ TEST_CASE( "Random::sample" ) {
     std::vector<int> rl_iter_sampled;
     rl.sample( population.begin( ), population.end( ), std::back_inserter( rl_iter_sampled ), 3 );
     REQUIRE( rl_iter_sampled.size( ) == 3 );
+
+    // 8. String literal sample (excludes '\0')
+    auto sampled_str = Random.sample( "abcdef", 3 );
+    static_assert( std::is_same<decltype( sampled_str ), std::string>::value,
+                   "Random.sample on string literal must return std::string" );
+    REQUIRE( sampled_str.size( ) == 3 );
+    for ( char c : sampled_str ) {
+        REQUIRE( ( c >= 'a' && c <= 'f' ) );
+    }
+
+    // 9. sample_string on container and literal
+    std::string charset = "0123456789";
+    auto sampled_digits = Random.sample_string( charset, 4 );
+    REQUIRE( sampled_digits.size( ) == 4 );
+    for ( char c : sampled_digits ) {
+        REQUIRE( charset.find( c ) != std::string::npos );
+    }
+
+    auto rl_str = rl.sample( "WXYZ", 2 );
+    REQUIRE( rl_str.size( ) == 2 );
 }
+
 

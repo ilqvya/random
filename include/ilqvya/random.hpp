@@ -740,6 +740,36 @@ namespace ilqvya {
                 return result;
             }
 
+            template<typename CharT, std::size_t N>
+            ILQVYA_NODISCARD static typename std::enable_if<details::is_supported_character<CharT>::value,
+                                                            std::basic_string<CharT>>::type
+            sample( Engine& engine, const CharT ( &literal )[N], std::size_t n ) {
+                static_assert( N > 1, "Random::sample: string literal must not be empty" );
+                std::basic_string<CharT> result;
+                const std::size_t actual_n = ( std::min )( n, N - 1 );
+                result.reserve( actual_n );
+                sample( engine, literal, literal + ( N - 1 ), std::back_inserter( result ), actual_n );
+                return result;
+            }
+
+            template<typename Range>
+            ILQVYA_NODISCARD static auto sample_string( Engine& engine, const Range& range, std::size_t n ) ->
+                typename std::enable_if<
+                    details::is_iterator<decltype( std::begin( range ) )>::value &&
+                        details::is_supported_character<
+                            typename std::iterator_traits<decltype( std::begin( range ) )>::value_type>::value,
+                    std::basic_string<
+                        typename std::iterator_traits<decltype( std::begin( range ) )>::value_type>>::type {
+                return sample<std::basic_string>( engine, range, n );
+            }
+
+            template<typename CharT, std::size_t N>
+            ILQVYA_NODISCARD static typename std::enable_if<details::is_supported_character<CharT>::value,
+                                                            std::basic_string<CharT>>::type
+            sample_string( Engine& engine, const CharT ( &literal )[N], std::size_t n ) {
+                return sample( engine, literal, n );
+            }
+
 #if __cplusplus < 201703L
         private:
             template<typename PopulationIt, typename SampleIt, typename Distance>
@@ -1144,6 +1174,29 @@ namespace ilqvya {
             return impl::template sample<Container>( engine_instance( ), range, n );
         }
 
+        template<typename CharT, std::size_t N>
+        ILQVYA_NODISCARD static typename std::enable_if<details::is_supported_character<CharT>::value,
+                                                        std::basic_string<CharT>>::type
+        sample( const CharT ( &literal )[N], std::size_t n ) {
+            return impl::sample( engine_instance( ), literal, n );
+        }
+
+        template<typename Range>
+        ILQVYA_NODISCARD static auto sample_string( const Range& range, std::size_t n ) -> typename std::enable_if<
+            details::is_iterator<decltype( std::begin( range ) )>::value &&
+                details::is_supported_character<
+                    typename std::iterator_traits<decltype( std::begin( range ) )>::value_type>::value,
+            std::basic_string<typename std::iterator_traits<decltype( std::begin( range ) )>::value_type>>::type {
+            return impl::sample_string( engine_instance( ), range, n );
+        }
+
+        template<typename CharT, std::size_t N>
+        ILQVYA_NODISCARD static typename std::enable_if<details::is_supported_character<CharT>::value,
+                                                        std::basic_string<CharT>>::type
+        sample_string( const CharT ( &literal )[N], std::size_t n ) {
+            return impl::sample_string( engine_instance( ), literal, n );
+        }
+
         template<typename CharT>
         ILQVYA_NODISCARD static typename std::enable_if<details::is_supported_character<CharT>::value,
                                                         std::basic_string<CharT>>::type
@@ -1533,6 +1586,29 @@ namespace ilqvya {
             details::is_iterator<decltype( std::begin( range ) )>::value,
             Container<typename std::iterator_traits<decltype( std::begin( range ) )>::value_type>>::type {
             return impl::template sample<Container>( m_engine, range, n );
+        }
+
+        template<typename CharT, std::size_t N>
+        ILQVYA_NODISCARD typename std::enable_if<details::is_supported_character<CharT>::value,
+                                                std::basic_string<CharT>>::type
+        sample( const CharT ( &literal )[N], std::size_t n ) {
+            return impl::sample( m_engine, literal, n );
+        }
+
+        template<typename Range>
+        ILQVYA_NODISCARD auto sample_string( const Range& range, std::size_t n ) -> typename std::enable_if<
+            details::is_iterator<decltype( std::begin( range ) )>::value &&
+                details::is_supported_character<
+                    typename std::iterator_traits<decltype( std::begin( range ) )>::value_type>::value,
+            std::basic_string<typename std::iterator_traits<decltype( std::begin( range ) )>::value_type>>::type {
+            return impl::sample_string( m_engine, range, n );
+        }
+
+        template<typename CharT, std::size_t N>
+        ILQVYA_NODISCARD typename std::enable_if<details::is_supported_character<CharT>::value,
+                                                std::basic_string<CharT>>::type
+        sample_string( const CharT ( &literal )[N], std::size_t n ) {
+            return impl::sample_string( m_engine, literal, n );
         }
 
         template<typename CharT>
