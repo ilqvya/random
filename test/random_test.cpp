@@ -1720,8 +1720,22 @@ TEST_CASE( "Weighted get with lvalue container remains valid" ) {
     REQUIRE( it != pairs.end( ) );
     REQUIRE( ( it->first == 1 || it->first == 2 ) );
 
+    // Modifying selected element through mutable iterator
+    static_assert( std::is_same<decltype( it ), std::vector<std::pair<int, int>>::iterator>::value,
+                   "Random.get<weight> on non-const container must return mutable iterator" );
+    it->second += 100;
+    REQUIRE( it->second > 100 );
+
+    const auto& const_pairs = pairs;
+    auto const_it = Random.get<Random_t::weight>( const_pairs );
+    static_assert( std::is_same<decltype( const_it ), std::vector<std::pair<int, int>>::const_iterator>::value,
+                   "Random.get<weight> on const container must return const_iterator" );
+    REQUIRE( const_it != pairs.end( ) );
+
     ilqvya::random_local rl;
     auto it_rl = rl.get<Random_t::weight>( pairs );
+    static_assert( std::is_same<decltype( it_rl ), std::vector<std::pair<int, int>>::iterator>::value,
+                   "random_local.get<weight> on non-const container must return mutable iterator" );
     REQUIRE( it_rl != pairs.end( ) );
 }
 
