@@ -1,6 +1,5 @@
 # Random for modern C++ with convenient API
 [![CI](https://github.com/ilqvya/random/actions/workflows/ci.yml/badge.svg)](https://github.com/ilqvya/random/actions/workflows/ci.yml)
-[![Build status](https://ci.appveyor.com/api/projects/status/nukrsqimulgel7nk?svg=true)](https://ci.appveyor.com/project/ilqvya/random)
 [![Coverage Status](https://coveralls.io/repos/github/ilqvya/random/badge.svg?branch=master&unused=0)](https://coveralls.io/github/ilqvya/random?branch=master&unused=0)
 <a href="https://scan.coverity.com/projects/ilqvya-random"><img alt="Coverity Scan Build Status" src="https://scan.coverity.com/projects/31956/badge.svg"/></a>
 - [Design goals](#design-goals)
