@@ -130,6 +130,9 @@ jobs:
             lcov --remove coverage.raw '/usr/*' '*/test/*' '*/tests/*' '*/build/*' --output-file coverage.info --ignore-errors mismatch,unused,inconsistent 2>/dev/null || true
           fi
           lcov --list coverage.info --ignore-errors mismatch,unused,inconsistent 2>/dev/null || true
+          echo "=== UNCOVERED LINES IN COVERAGE.INFO ==="
+          grep ',0$' coverage.info || true
+          awk -F: '/SF:/{file=$2} /DA:[0-9]+,0/{split($0,a,":"); split(a[2],b,","); print file " line " b[1]}' coverage.info || true
 
       - name: Upload to Coveralls
         uses: coverallsapp/github-action@v2
