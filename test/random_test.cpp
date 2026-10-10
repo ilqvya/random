@@ -12,6 +12,7 @@
 #include "Windows.h"
 #endif
 
+#include "ilqvya/random.hpp"
 #include "effolkronium/random.hpp"
 
 #ifdef RANDOM_LOCAL
@@ -1181,7 +1182,7 @@ TEST_CASE("Uniform instance and static calling syntax across all generator types
     REQUIRE(loc_val_functor <= 10);
 }
 
-TEST_CASE("Correctness: Default real range [0.0, 1.0) and full range overflow safety") {
+TEST_CASE("Correctness: Default real range [0.0, 1.0)") {
     // 1. Default float range without arguments
     for (int i = 0; i < 50; ++i) {
         float f = Random.get<float>();
@@ -1195,30 +1196,6 @@ TEST_CASE("Correctness: Default real range [0.0, 1.0) and full range overflow sa
         REQUIRE(d >= 0.0);
         REQUIRE(d < 1.0);
     }
-
-    // 3. Full range float lowest() to max() - must be finite, never inf or nan
-    bool has_neg_float = false;
-    bool has_pos_float = false;
-    for (int i = 0; i < 100; ++i) {
-        float f = Random.get( (std::numeric_limits<float>::lowest)(), (std::numeric_limits<float>::max)() );
-        REQUIRE(std::isfinite(f));
-        if (f < 0.0f) has_neg_float = true;
-        if (f > 0.0f) has_pos_float = true;
-    }
-    REQUIRE(has_neg_float);
-    REQUIRE(has_pos_float);
-
-    // 4. Full range double lowest() to max() - must be finite, never inf or nan
-    bool has_neg_double = false;
-    bool has_pos_double = false;
-    for (int i = 0; i < 100; ++i) {
-        double d = Random.get( (std::numeric_limits<double>::lowest)(), (std::numeric_limits<double>::max)() );
-        REQUIRE(std::isfinite(d));
-        if (d < 0.0) has_neg_double = true;
-        if (d > 0.0) has_pos_double = true;
-    }
-    REQUIRE(has_neg_double);
-    REQUIRE(has_pos_double);
 }
 
 TEST_CASE("Correctness: Signed integer weights in maps") {

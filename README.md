@@ -62,7 +62,7 @@ There are a few ways to work with random in C++:
 ```
 * Advantages:
   * **Intuitive syntax**. You can do almost everything with random via a simple 'get' method: generating numbers, bools, random elements from a given container or set, or using custom distributions.
-  * **Trivial integration**. All code consists of a single header file [`random.hpp`](https://github.com/ilqvya/random/blob/master/include/effolkronium/random.hpp). That's it. No compiled library, no subproject, no external dependencies, no complex build system. Written in vanilla C++11 and compatible with modern C++.
+  * **Trivial integration**. All code consists of a single header file [`random.hpp`](https://github.com/ilqvya/random/blob/master/include/ilqvya/random.hpp). That's it. No compiled library, no subproject, no external dependencies, no complex build system. Written in vanilla C++11 and compatible with modern C++.
   * **Usability**. Available generator types: 
     * *random* (or *random_thread_local*): static methods and [thread_local](http://en.cppreference.com/w/cpp/keyword/thread_local) internal state. Fully thread-safe default!
     * *random_static*: static methods and static internal state. Fast, but not thread-safe across concurrent threads.
@@ -97,11 +97,11 @@ find_package(effolkronium_random REQUIRED)
 target_link_libraries(${TARGET} ilqvya::random) # or effolkronium::random
 ```
 #### Manually
-The single required source file, [`random.hpp`](https://github.com/ilqvya/random/blob/master/include/effolkronium/random.hpp), is located in the [`include/effolkronium`](https://github.com/ilqvya/random/tree/master/include/effolkronium) directory.
+The single required source file, [`random.hpp`](https://github.com/ilqvya/random/blob/master/include/ilqvya/random.hpp), is located in the [`include/ilqvya`](https://github.com/ilqvya/random/tree/master/include/ilqvya) directory (a backward-compatible forwarding header is also preserved in `include/effolkronium`).
 #### Then
 All you need to do is add
 ```cpp
-#include "effolkronium/random.hpp"
+#include "ilqvya/random.hpp"
 
 // default thread-local random alias (thread-safe, auto-seeded)
 using Random = ilqvya::random;
@@ -318,7 +318,7 @@ std::thread second{ [ ] { Random::get( ); } };
 ### Local random
 Uses member method API with local member storage, created on the stack at local scope:
 ```cpp
-#include "effolkronium/random.hpp"
+#include "ilqvya/random.hpp"
 
 using Random_t = ilqvya::random_local;
 

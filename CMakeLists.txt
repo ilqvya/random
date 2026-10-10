@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 # define the project
-project(effolkronium_random VERSION 1.5.0 LANGUAGES CXX)
+project(effolkronium_random VERSION 2.0.0 LANGUAGES CXX)
 
 include(GNUInstallDirs)
 
@@ -48,6 +48,8 @@ export(TARGETS ${EFFOLKRONIUM_RANDOM_TARGET_NAME}
 # install library target and config files
 install(TARGETS ${EFFOLKRONIUM_RANDOM_TARGET_NAME}
         EXPORT ${EFFOLKRONIUM_RANDOM_PACKAGE_NAME})
+install(DIRECTORY "include/ilqvya"
+        DESTINATION ${EFFOLKRONIUM_RANDOM_INCLUDE_DESTINATION})
 install(DIRECTORY "include/effolkronium"
         DESTINATION ${EFFOLKRONIUM_RANDOM_INCLUDE_DESTINATION})
 install(EXPORT ${EFFOLKRONIUM_RANDOM_PACKAGE_NAME}
