@@ -464,6 +464,25 @@ TEST_CASE( "custom distribution by argument" ) {
     std::gamma_distribution<> gamma{ };
     auto res = Random.get( gamma );
     (void)res;
+
+    // Test temporary (rvalue) distribution
+    auto r_res = Random.get( std::uniform_int_distribution<int>{ 10, 20 } );
+    REQUIRE( r_res >= 10 );
+    REQUIRE( r_res <= 20 );
+
+    // Test const distribution (for distributions with const operator())
+    struct ConstDistribution {
+        using result_type = int;
+        int operator( )( std::mt19937& ) const { return 42; }
+    };
+    const ConstDistribution const_dist{ };
+    REQUIRE( Random.get( const_dist ) == 42 );
+
+    ilqvya::random_local rl;
+    auto rl_res = rl.get( std::uniform_int_distribution<int>{ 100, 200 } );
+    REQUIRE( rl_res >= 100 );
+    REQUIRE( rl_res <= 200 );
+    REQUIRE( rl.get( const_dist ) == 42 );
 }
 
 TEST_CASE( "custom seeder" ) {

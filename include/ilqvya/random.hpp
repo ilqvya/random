@@ -479,8 +479,8 @@ namespace ilqvya {
             }
 
             template<typename Dist>
-            ILQVYA_NODISCARD static typename Dist::result_type get( Engine& engine, Dist& dist ) {
-                return dist( engine );
+            ILQVYA_NODISCARD static typename std::decay<Dist>::type::result_type get( Engine& engine, Dist&& dist ) {
+                return std::forward<Dist>( dist )( engine );
             }
 
             template<typename Key, class PairContainer>
@@ -875,8 +875,8 @@ namespace ilqvya {
         }
 
         template<typename Dist>
-        ILQVYA_NODISCARD static typename Dist::result_type get( Dist& dist ) {
-            return impl::get( engine_instance( ), dist );
+        ILQVYA_NODISCARD static typename std::decay<Dist>::type::result_type get( Dist&& dist ) {
+            return impl::get( engine_instance( ), std::forward<Dist>( dist ) );
         }
 
         template<typename Key, class PairContainer>
@@ -1166,8 +1166,8 @@ namespace ilqvya {
         }
 
         template<typename Dist>
-        ILQVYA_NODISCARD typename Dist::result_type get( Dist& dist ) {
-            return impl::get( m_engine, dist );
+        ILQVYA_NODISCARD typename std::decay<Dist>::type::result_type get( Dist&& dist ) {
+            return impl::get( m_engine, std::forward<Dist>( dist ) );
         }
 
         template<typename Key, class PairContainer>

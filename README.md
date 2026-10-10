@@ -266,10 +266,13 @@ Returns the result from operator() of a distribution using the internal engine:
 // 1.f and 2.f will be forwarded to std::gamma_distribution constructor
 auto result = Random::get<std::gamma_distribution<>>( 1.f, 2.f );
 ```
-* Argument by reference
+* Argument by reference or temporary
 ```cpp
 std::gamma_distribution<> gamma{ 1.f, 2.f };
 auto result = Random::get( gamma ); // returns result of gamma.operator()( engine )
+
+// Or pass temporary distribution directly:
+auto inline_result = Random::get( std::uniform_int_distribution<int>{ 1, 6 } );
 ```
 ### Custom Seeder
 Specify a seed with which the random engine will be initialized at construction time:
