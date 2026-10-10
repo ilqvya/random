@@ -2090,6 +2090,17 @@ TEST_CASE( "Random::sample" ) {
 
     auto rl_str = rl.sample( "WXYZ", 2 );
     REQUIRE( rl_str.size( ) == 2 );
+
+    // 10. Built-in non-char array sample
+    const int arr[5] = { 100, 200, 300, 400, 500 };
+    auto sampled_arr = Random.sample( arr, 3 );
+    REQUIRE( sampled_arr.size( ) == 3 );
+    for ( int val : sampled_arr ) {
+        REQUIRE( ( val == 100 || val == 200 || val == 300 || val == 400 || val == 500 ) );
+    }
+
+    auto rl_arr = rl.sample( arr, 2 );
+    REQUIRE( rl_arr.size( ) == 2 );
 }
 
 

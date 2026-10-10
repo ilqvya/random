@@ -727,10 +727,16 @@ namespace ilqvya {
                 shuffle( engine, std::begin( container ), std::end( container ) );
             }
 
+            template<typename Container>
+            static void shuffle( Engine&, const Container&& ) = delete;
+
             template<typename T, std::size_t N>
             static void shuffle( Engine& engine, T ( &array )[N] ) {
                 shuffle( engine, std::begin( array ), std::end( array ) );
             }
+
+            template<typename T, std::size_t N>
+            static void shuffle( Engine&, const T ( &&array )[N] ) = delete;
 
             template<typename PopulationIt, typename SampleIt, typename Distance>
             static SampleIt sample( Engine& engine, PopulationIt first, PopulationIt last, SampleIt out, Distance n ) {
@@ -751,6 +757,18 @@ namespace ilqvya {
                 Container<ValueType> result;
                 details::reserve_if_supported( result, n );
                 sample( engine, std::begin( range ), std::end( range ), std::back_inserter( result ), n );
+                return result;
+            }
+
+            template<template<typename...> class Container = std::vector, typename T, std::size_t N>
+            ILQVYA_NODISCARD static typename std::enable_if<!details::is_supported_character<T>::value,
+                                                            Container<typename std::remove_cv<T>::type>>::type
+            sample( Engine& engine, const T ( &array )[N], std::size_t n ) {
+                static_assert( N > 0, "Random::sample: built-in array must not be empty" );
+                const std::size_t actual_n = ( std::min )( n, N );
+                Container<typename std::remove_cv<T>::type> result;
+                details::reserve_if_supported( result, actual_n );
+                sample( engine, array, array + N, std::back_inserter( result ), actual_n );
                 return result;
             }
 
@@ -1180,10 +1198,16 @@ namespace ilqvya {
             impl::shuffle( engine_instance( ), container );
         }
 
+        template<typename Container>
+        static void shuffle( const Container&& ) = delete;
+
         template<typename T, std::size_t N>
         static void shuffle( T ( &array )[N] ) {
             impl::shuffle( engine_instance( ), array );
         }
+
+        template<typename T, std::size_t N>
+        static void shuffle( const T ( &&array )[N] ) = delete;
 
         template<typename PopulationIt, typename SampleIt, typename Distance>
         static SampleIt sample( PopulationIt first, PopulationIt last, SampleIt out, Distance n ) {
@@ -1195,6 +1219,13 @@ namespace ilqvya {
             details::is_iterator<decltype( std::begin( range ) )>::value,
             Container<typename std::iterator_traits<decltype( std::begin( range ) )>::value_type>>::type {
             return impl::template sample<Container>( engine_instance( ), range, n );
+        }
+
+        template<template<typename...> class Container = std::vector, typename T, std::size_t N>
+        ILQVYA_NODISCARD static typename std::enable_if<!details::is_supported_character<T>::value,
+                                                        Container<typename std::remove_cv<T>::type>>::type
+        sample( const T ( &array )[N], std::size_t n ) {
+            return impl::template sample<Container>( engine_instance( ), array, n );
         }
 
         template<typename CharT, std::size_t N>
@@ -1603,10 +1634,16 @@ namespace ilqvya {
             impl::shuffle( m_engine, container );
         }
 
+        template<typename Container>
+        void shuffle( const Container&& ) = delete;
+
         template<typename T, std::size_t N>
         void shuffle( T ( &array )[N] ) {
             impl::shuffle( m_engine, array );
         }
+
+        template<typename T, std::size_t N>
+        void shuffle( const T ( &&array )[N] ) = delete;
 
         template<typename PopulationIt, typename SampleIt, typename Distance>
         SampleIt sample( PopulationIt first, PopulationIt last, SampleIt out, Distance n ) {
@@ -1618,6 +1655,13 @@ namespace ilqvya {
             details::is_iterator<decltype( std::begin( range ) )>::value,
             Container<typename std::iterator_traits<decltype( std::begin( range ) )>::value_type>>::type {
             return impl::template sample<Container>( m_engine, range, n );
+        }
+
+        template<template<typename...> class Container = std::vector, typename T, std::size_t N>
+        ILQVYA_NODISCARD typename std::enable_if<!details::is_supported_character<T>::value,
+                                                Container<typename std::remove_cv<T>::type>>::type
+        sample( const T ( &array )[N], std::size_t n ) {
+            return impl::template sample<Container>( m_engine, array, n );
         }
 
         template<typename CharT, std::size_t N>
