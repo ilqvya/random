@@ -1464,11 +1464,14 @@ TEST_CASE( "ilqvya::random alias and effolkronium backward compatibility" ) {
     auto eff_val4 = eff_loc.get( 1, 10 );
     REQUIRE( eff_val4 >= 1 );
     REQUIRE( eff_val4 <= 10 );
+}
 
-#if defined( ILQVYA_HAS_REFLECTION )
-    static_assert( EFFOLKRONIUM_HAS_REFLECTION == 1,
-                   "EFFOLKRONIUM_HAS_REFLECTION macro must be defined when ILQVYA_HAS_REFLECTION is defined" );
-#endif
+TEST_CASE( "Version macros" ) {
+    static_assert( ILQVYA_RANDOM_VERSION_MAJOR == 2, "Major version must be 2" );
+    static_assert( ILQVYA_RANDOM_VERSION_MINOR == 0, "Minor version must be 0" );
+    static_assert( ILQVYA_RANDOM_VERSION_PATCH == 0, "Patch version must be 0" );
+    static_assert( ILQVYA_RANDOM_VERSION == 20000, "Full version number must be 20000" );
+    REQUIRE( ILQVYA_RANDOM_VERSION == 20000 );
 }
 
 TEST_CASE( "Random characters inverted range" ) {

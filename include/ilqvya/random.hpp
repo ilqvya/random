@@ -31,10 +31,11 @@ SOFTWARE.
 #ifndef ILQVYA_RANDOM_HPP
 #define ILQVYA_RANDOM_HPP
 
-// For backward compatibility
-#ifndef EFFOLKRONIUM_RANDOM_HPP
-#    define EFFOLKRONIUM_RANDOM_HPP
-#endif
+#define ILQVYA_RANDOM_VERSION_MAJOR 2
+#define ILQVYA_RANDOM_VERSION_MINOR 0
+#define ILQVYA_RANDOM_VERSION_PATCH 0
+#define ILQVYA_RANDOM_VERSION                                                                                          \
+    ( ILQVYA_RANDOM_VERSION_MAJOR * 10000 + ILQVYA_RANDOM_VERSION_MINOR * 100 + ILQVYA_RANDOM_VERSION_PATCH )
 
 #include <random>
 #include <chrono> // timed seed
@@ -67,16 +68,10 @@ SOFTWARE.
 #    define ILQVYA_NODISCARD
 #endif
 
-// Backward compatibility alias
-#ifndef EFFOLKRONIUM_NODISCARD
-#    define EFFOLKRONIUM_NODISCARD ILQVYA_NODISCARD
-#endif
-
 #if ILQVYA_CPLUSPLUS > 202302L && ( defined( __cpp_impl_reflection ) || defined( __cpp_reflection ) )
 #    if __has_include( <meta>)
 #        include <meta>
 #        define ILQVYA_HAS_REFLECTION 1
-#        define EFFOLKRONIUM_HAS_REFLECTION 1
 #    endif
 #endif
 
