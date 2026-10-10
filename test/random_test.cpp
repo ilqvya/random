@@ -778,6 +778,35 @@ TEST_CASE( "return random pointer from built-in array" ) {
         REQUIRE( rl_ptr != nullptr );
         REQUIRE( ( *rl_ptr == 10 || *rl_ptr == 20 || *rl_ptr == 30 ) );
     }
+
+    SECTION( "string literal" ) {
+        const char* p = Random.get( "abc" );
+        REQUIRE( p != nullptr );
+        REQUIRE( ( *p == 'a' || *p == 'b' || *p == 'c' ) );
+
+        // Ensure '\0' is never returned
+        bool has_null = false;
+        for ( int i = 0; i < 1000; ++i ) {
+            const char* sample_p = Random.get( "x" );
+            if ( *sample_p == '\0' ) {
+                has_null = true;
+                break;
+            }
+        }
+        REQUIRE_FALSE( has_null );
+
+        ilqvya::random_local rl;
+        const char* rl_p = rl.get( "xyz" );
+        REQUIRE( ( *rl_p == 'x' || *rl_p == 'y' || *rl_p == 'z' ) );
+    }
+
+    SECTION( "rvalue array" ) {
+        using Arr = int[3];
+        auto val = Random.get( Arr{ 10, 20, 30 } );
+        static_assert( std::is_same<decltype( val ), int>::value,
+                       "Random.get on rvalue array must return value by copy" );
+        REQUIRE( ( val == 10 || val == 20 || val == 30 ) );
+    }
 }
 
 static thread_local int reserve_count = 0;
@@ -1759,6 +1788,28 @@ TEST_CASE( "Weighted get with lvalue container remains valid" ) {
     std::vector<int> lvalue_vec = { 1, 2, 3 };
     auto it_lval = Random.get( lvalue_vec );
     REQUIRE( it_lval != lvalue_vec.end( ) );
+}
+
+TEST_CASE( "Random::get on rvalue container returns element by value" ) {
+    auto val = Random.get( std::vector<int>{ 100, 200, 300 } );
+    static_assert( std::is_same<decltype( val ), int>::value,
+                   "Random.get on rvalue container must return value_type by value" );
+    REQUIRE( ( val == 100 || val == 200 || val == 300 ) );
+
+    ilqvya::random_local rl;
+    auto rl_val = rl.get( std::vector<std::string>{ "alpha", "beta", "gamma" } );
+    static_assert( std::is_same<decltype( rl_val ), std::string>::value,
+                   "rl.get on rvalue container must return string by value" );
+    REQUIRE( ( rl_val == "alpha" || rl_val == "beta" || rl_val == "gamma" ) );
+
+    // Empty rvalue container throws invalid_argument
+    bool caught_empty = false;
+    try {
+        (void)Random.get( std::vector<int>{ } );
+    } catch ( const std::invalid_argument& ) {
+        caught_empty = true;
+    }
+    REQUIRE( caught_empty );
 }
 
 TEST_CASE( "Empty initializer_list throws invalid_argument" ) {

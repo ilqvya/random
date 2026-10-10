@@ -501,9 +501,15 @@ namespace ilqvya {
             }
 
             template<typename Container>
-            static auto get( Engine&, const Container&& ) -> typename std::enable_if<
-                details::is_iterator<decltype( std::begin( std::declval<const Container&>( ) ) )>::value,
-                void>::type = delete;
+            ILQVYA_NODISCARD static auto get( Engine& engine, Container&& container ) ->
+                typename std::enable_if<
+                    !std::is_lvalue_reference<Container>::value &&
+                        details::is_iterator<decltype( std::begin( container ) )>::value,
+                    typename std::iterator_traits<decltype( std::begin( container ) )>::value_type>::type {
+                if ( std::begin( container ) == std::end( container ) )
+                    throw std::invalid_argument( "Random::get: container must not be empty" );
+                return *get( engine, std::begin( container ), std::end( container ) );
+            }
 
             template<template<typename...> class Container, typename A>
             ILQVYA_NODISCARD static Container<A>
@@ -548,14 +554,28 @@ namespace ilqvya {
                 return container;
             }
 
+            template<typename CharT, std::size_t N>
+            ILQVYA_NODISCARD static typename std::enable_if<details::is_supported_character<CharT>::value,
+                                                            const CharT*>::type
+            get( Engine& engine, const CharT ( &literal )[N] ) {
+                static_assert( N > 1, "Random::get: string literal must not be empty" );
+                return std::addressof( literal[get<std::size_t>( engine, 0, N - 2 )] );
+            }
+
             template<typename T, std::size_t N>
-            ILQVYA_NODISCARD static T* get( Engine& engine, T ( &array )[N] ) {
+            ILQVYA_NODISCARD static typename std::enable_if<!details::is_supported_character<T>::value, T*>::type
+            get( Engine& engine, T ( &array )[N] ) {
                 static_assert( N > 0, "Random::get: built-in array must not be empty" );
                 return std::addressof( array[get<std::size_t>( engine, 0, N - 1 )] );
             }
 
             template<typename T, std::size_t N>
-            static T* get( Engine&, const T ( &&array )[N] ) = delete;
+            ILQVYA_NODISCARD static typename std::enable_if<!details::is_supported_character<T>::value,
+                                                            typename std::remove_cv<T>::type>::type
+            get( Engine& engine, T ( &&array )[N] ) {
+                static_assert( N > 0, "Random::get: built-in array must not be empty" );
+                return array[get<std::size_t>( engine, 0, N - 1 )];
+            }
 
             template<typename Dist, typename... Args>
             ILQVYA_NODISCARD static typename Dist::result_type get( Engine& engine, Args&&... args ) {
@@ -723,20 +743,16 @@ namespace ilqvya {
             }
 
             template<typename Container>
-            static void shuffle( Engine& engine, Container& container ) {
+            static typename std::enable_if<!std::is_const<Container>::value>::type
+            shuffle( Engine& engine, Container& container ) {
                 shuffle( engine, std::begin( container ), std::end( container ) );
             }
 
-            template<typename Container>
-            static void shuffle( Engine&, const Container&& ) = delete;
-
             template<typename T, std::size_t N>
-            static void shuffle( Engine& engine, T ( &array )[N] ) {
+            static typename std::enable_if<!std::is_const<T>::value>::type
+            shuffle( Engine& engine, T ( &array )[N] ) {
                 shuffle( engine, std::begin( array ), std::end( array ) );
             }
-
-            template<typename T, std::size_t N>
-            static void shuffle( Engine&, const T ( &&array )[N] ) = delete;
 
             template<typename PopulationIt, typename SampleIt, typename Distance>
             static SampleIt sample( Engine& engine, PopulationIt first, PopulationIt last, SampleIt out, Distance n ) {
@@ -1094,9 +1110,13 @@ namespace ilqvya {
         }
 
         template<typename Container>
-        static auto get( const Container&& ) -> typename std::enable_if<
-            details::is_iterator<decltype( std::begin( std::declval<const Container&>( ) ) )>::value,
-            void>::type = delete;
+        ILQVYA_NODISCARD static auto get( Container&& container ) ->
+            typename std::enable_if<
+                !std::is_lvalue_reference<Container>::value &&
+                    details::is_iterator<decltype( std::begin( container ) )>::value,
+                typename std::iterator_traits<decltype( std::begin( container ) )>::value_type>::type {
+            return impl::get( engine_instance( ), std::forward<Container>( container ) );
+        }
 
         template<template<typename...> class Container, typename A>
         ILQVYA_NODISCARD static Container<A> get( A from, A to, std::size_t size ) {
@@ -1127,14 +1147,28 @@ namespace ilqvya {
             return impl::template get<Container, N, Key, A, B, C>( engine_instance( ), start, end );
         }
 
+        template<typename CharT, std::size_t N>
+        ILQVYA_NODISCARD static typename std::enable_if<details::is_supported_character<CharT>::value,
+                                                        const CharT*>::type
+        get( const CharT ( &literal )[N] ) {
+            static_assert( N > 1, "Random::get: string literal must not be empty" );
+            return impl::get( engine_instance( ), literal );
+        }
+
         template<typename T, std::size_t N>
-        ILQVYA_NODISCARD static T* get( T ( &array )[N] ) {
+        ILQVYA_NODISCARD static typename std::enable_if<!details::is_supported_character<T>::value, T*>::type
+        get( T ( &array )[N] ) {
             static_assert( N > 0, "Random::get: built-in array must not be empty" );
             return impl::get( engine_instance( ), array );
         }
 
         template<typename T, std::size_t N>
-        static T* get( const T ( &&array )[N] ) = delete;
+        ILQVYA_NODISCARD static typename std::enable_if<!details::is_supported_character<T>::value,
+                                                        typename std::remove_cv<T>::type>::type
+        get( T ( &&array )[N] ) {
+            static_assert( N > 0, "Random::get: built-in array must not be empty" );
+            return impl::get( engine_instance( ), std::move( array ) );
+        }
 
         template<typename Dist, typename... Args>
         ILQVYA_NODISCARD static typename Dist::result_type get( Args&&... args ) {
@@ -1200,20 +1234,16 @@ namespace ilqvya {
         }
 
         template<typename Container>
-        static void shuffle( Container& container ) {
+        static typename std::enable_if<!std::is_const<Container>::value>::type
+        shuffle( Container& container ) {
             impl::shuffle( engine_instance( ), container );
         }
 
-        template<typename Container>
-        static void shuffle( const Container&& ) = delete;
-
         template<typename T, std::size_t N>
-        static void shuffle( T ( &array )[N] ) {
+        static typename std::enable_if<!std::is_const<T>::value>::type
+        shuffle( T ( &array )[N] ) {
             impl::shuffle( engine_instance( ), array );
         }
-
-        template<typename T, std::size_t N>
-        static void shuffle( const T ( &&array )[N] ) = delete;
 
         template<typename PopulationIt, typename SampleIt, typename Distance>
         static SampleIt sample( PopulationIt first, PopulationIt last, SampleIt out, Distance n ) {
@@ -1531,9 +1561,13 @@ namespace ilqvya {
         }
 
         template<typename Container>
-        auto get( const Container&& ) -> typename std::enable_if<
-            details::is_iterator<decltype( std::begin( std::declval<const Container&>( ) ) )>::value,
-            void>::type = delete;
+        ILQVYA_NODISCARD auto get( Container&& container ) ->
+            typename std::enable_if<
+                !std::is_lvalue_reference<Container>::value &&
+                    details::is_iterator<decltype( std::begin( container ) )>::value,
+                typename std::iterator_traits<decltype( std::begin( container ) )>::value_type>::type {
+            return impl::get( m_engine, std::forward<Container>( container ) );
+        }
 
         template<template<typename...> class Container, typename A>
         ILQVYA_NODISCARD Container<A> get( A from, A to, std::size_t size ) {
@@ -1563,14 +1597,27 @@ namespace ilqvya {
             return impl::template get<Container, N, Key, A, B, C>( m_engine, start, end );
         }
 
+        template<typename CharT, std::size_t N>
+        ILQVYA_NODISCARD typename std::enable_if<details::is_supported_character<CharT>::value, const CharT*>::type
+        get( const CharT ( &literal )[N] ) {
+            static_assert( N > 1, "Random::get: string literal must not be empty" );
+            return impl::get( m_engine, literal );
+        }
+
         template<typename T, std::size_t N>
-        ILQVYA_NODISCARD T* get( T ( &array )[N] ) {
+        ILQVYA_NODISCARD typename std::enable_if<!details::is_supported_character<T>::value, T*>::type
+        get( T ( &array )[N] ) {
             static_assert( N > 0, "Random::get: built-in array must not be empty" );
             return impl::get( m_engine, array );
         }
 
         template<typename T, std::size_t N>
-        T* get( const T ( &&array )[N] ) = delete;
+        ILQVYA_NODISCARD typename std::enable_if<!details::is_supported_character<T>::value,
+                                                typename std::remove_cv<T>::type>::type
+        get( T ( &&array )[N] ) {
+            static_assert( N > 0, "Random::get: built-in array must not be empty" );
+            return impl::get( m_engine, std::move( array ) );
+        }
 
         template<typename Dist, typename... Args>
         ILQVYA_NODISCARD typename Dist::result_type get( Args&&... args ) {
@@ -1636,20 +1683,16 @@ namespace ilqvya {
         }
 
         template<typename Container>
-        void shuffle( Container& container ) {
+        typename std::enable_if<!std::is_const<Container>::value>::type
+        shuffle( Container& container ) {
             impl::shuffle( m_engine, container );
         }
 
-        template<typename Container>
-        void shuffle( const Container&& ) = delete;
-
         template<typename T, std::size_t N>
-        void shuffle( T ( &array )[N] ) {
+        typename std::enable_if<!std::is_const<T>::value>::type
+        shuffle( T ( &array )[N] ) {
             impl::shuffle( m_engine, array );
         }
-
-        template<typename T, std::size_t N>
-        void shuffle( const T ( &&array )[N] ) = delete;
 
         template<typename PopulationIt, typename SampleIt, typename Distance>
         SampleIt sample( PopulationIt first, PopulationIt last, SampleIt out, Distance n ) {
