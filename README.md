@@ -77,7 +77,7 @@ There are a few ways to work with random in C++:
 ```cmake
 add_subdirectory(random) # path to the 'random' library root
 ... # create target
-target_link_libraries(${TARGET} ilqvya::random) # or effolkronium::random
+target_link_libraries(${TARGET} ilqvya::random)
 ```
 * As external project
 
@@ -92,12 +92,12 @@ ctest -C Release
 ```
 Then, find the package via CMake:
 ```cmake
-find_package(effolkronium_random REQUIRED)
+find_package(ilqvya_random REQUIRED)
 ... # create target
-target_link_libraries(${TARGET} ilqvya::random) # or effolkronium::random
+target_link_libraries(${TARGET} ilqvya::random)
 ```
 #### Manually
-The single required source file, [`random.hpp`](https://github.com/ilqvya/random/blob/master/include/ilqvya/random.hpp), is located in the [`include/ilqvya`](https://github.com/ilqvya/random/tree/master/include/ilqvya) directory (a backward-compatible forwarding header is also preserved in `include/effolkronium`).
+The single required source file, [`random.hpp`](https://github.com/ilqvya/random/blob/master/include/ilqvya/random.hpp), is located in the [`include/ilqvya`](https://github.com/ilqvya/random/tree/master/include/ilqvya) directory.
 #### Then
 All you need to do is add
 ```cpp
@@ -106,7 +106,7 @@ All you need to do is add
 // default thread-local random alias (thread-safe, auto-seeded)
 using Random = ilqvya::random;
 ```
-to files where you want to use the random class. That's it! (For backward compatibility, `namespace effolkronium = ilqvya;` is also provided). Ensure C++11 or newer is enabled in your compiler settings (e.g., `-std=c++11` for GCC and Clang).
+to files where you want to use the random class. That's it! Ensure C++11 or newer is enabled in your compiler settings (e.g., `-std=c++11` for GCC and Clang).
 ## Five-minute tutorial
 ### Number range
 Returns a pseudo-random number in a [first; second] range.

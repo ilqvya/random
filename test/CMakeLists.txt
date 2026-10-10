@@ -1,4 +1,4 @@
-project(effolkronium_random_test) # Enable C language support for pthread
+project(ilqvya_random_test) # Enable C language support for pthread
 
 find_package(Threads REQUIRED)
 
