@@ -50,8 +50,14 @@ SOFTWARE.
 #include <array>
 #include <cstdint>
 
+#if defined( _MSVC_LANG )
+#    define ILQVYA_CPLUSPLUS _MSVC_LANG
+#else
+#    define ILQVYA_CPLUSPLUS __cplusplus
+#endif
+
 #if defined( __has_cpp_attribute )
-#    if __has_cpp_attribute( nodiscard ) && __cplusplus >= 201703L
+#    if __has_cpp_attribute( nodiscard ) && ILQVYA_CPLUSPLUS >= 201703L
 #        define ILQVYA_NODISCARD [[nodiscard]]
 #    endif
 #endif
@@ -64,7 +70,7 @@ SOFTWARE.
 #    define EFFOLKRONIUM_NODISCARD ILQVYA_NODISCARD
 #endif
 
-#if __cplusplus > 202302L && ( defined( __cpp_impl_reflection ) || defined( __cpp_reflection ) )
+#if ILQVYA_CPLUSPLUS > 202302L && ( defined( __cpp_impl_reflection ) || defined( __cpp_reflection ) )
 #    if __has_include( <meta>)
 #        include <meta>
 #        define ILQVYA_HAS_REFLECTION 1
