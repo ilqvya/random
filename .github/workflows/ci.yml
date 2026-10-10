@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    name: ${{ matrix.os }} - ${{ matrix.compiler }} - C++${{ matrix.std }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        std: [11, 14, 17, 20]
+        compiler: [gcc]
+        include:
+          - os: ubuntu-latest
+            compiler: clang
+            std: 11
+          - os: ubuntu-latest
+            compiler: clang
+            std: 14
+          - os: ubuntu-latest
+            compiler: clang
+            std: 17
+          - os: ubuntu-latest
+            compiler: clang
+            std: 20
+          - os: macos-latest
+            compiler: appleclang
+          - os: windows-latest
+            compiler: msvc
+        exclude:
+          - os: macos-latest
+            compiler: gcc
+          - os: windows-latest
+            compiler: gcc
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Clang on Linux
+        if: matrix.os == 'ubuntu-latest' && matrix.compiler == 'clang'
+        run: |
+          echo "CC=clang" >> $GITHUB_ENV
+          echo "CXX=clang++" >> $GITHUB_ENV
+
+      - name: Configure CMake
+        run: >
+          cmake -B build
+          -DRandom_BuildTests=ON
+          -DCMAKE_CXX_STANDARD=${{ matrix.std }}
+          -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Test
+        run: ctest --test-dir build -C Release --output-on-failure

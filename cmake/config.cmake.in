@@ -1,5 +1,15 @@
 @PACKAGE_INIT@
-set_and_check(EFFOLKRONIUM_RANDOM_INCLUDE_DIR
- "@PACKAGE_EFFOLKRONIUM_RANDOM_INCLUDE_DESTINATION@")
+set_and_check(ILQVYA_RANDOM_INCLUDE_DIR
+ "@PACKAGE_ILQVYA_RANDOM_INCLUDE_DESTINATION@")
 
-include(${CMAKE_CURRENT_LIST_DIR}/effolkronium_randomTargets.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/ilqvya_randomTargets.cmake)
+
+if(TARGET ilqvya_random AND NOT TARGET ilqvya::random)
+    add_library(ilqvya::random ALIAS ilqvya_random)
+endif()
+if(TARGET ilqvya_random AND NOT TARGET effolkronium::random)
+    add_library(effolkronium::random ALIAS ilqvya_random)
+endif()
+if(TARGET ilqvya_random AND NOT TARGET effolkronium_random)
+    add_library(effolkronium_random ALIAS ilqvya_random)
+endif()

@@ -1,0 +1,41 @@
+---
+Language: Cpp
+BasedOnStyle: LLVM
+Standard: Latest
+
+# Indentation
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+NamespaceIndentation: All
+AccessModifierOffset: -4
+
+# Line length
+ColumnLimit: 120
+
+# Braces & Breaks
+BreakBeforeBraces: Attach
+BreakTemplateDeclarations: Yes
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortRecordOnASingleLine: EmptyAndAttached
+
+# Templates
+SpaceAfterTemplateKeyword: false
+SpacesInAngles: Never
+
+# Pointers and references
+PointerAlignment: Left
+
+# Parentheses spacing
+SpacesInParens: Custom
+SpacesInParensOptions:
+  InConditionalStatements: true
+  InEmptyParentheses: true
+  Other: true
+
+# Preprocessor
+IndentPPDirectives: AfterHash
+
+# Includes
+SortIncludes: false
+IncludeBlocks: Preserve

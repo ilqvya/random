@@ -1,4 +1,4 @@
-project(effolkronium_random_test) # Enable C language support for pthread
+project(ilqvya_random_test) # Enable C language support for pthread
 
 find_package(Threads REQUIRED)
 
@@ -20,14 +20,24 @@ function(add_basic_test TARGET COMPILE_DEFS TEST_SOURCES)
     add_executable(${TARGET} ${TEST_SOURCES})
     
     set_up_warnings(${TARGET})
-    target_link_libraries(${TARGET} Threads::Threads)
+    target_link_libraries(${TARGET} Threads::Threads ilqvya::random)
     target_compile_definitions(${TARGET} PRIVATE ${COMPILE_DEFS})
-    target_include_directories(${TARGET} PRIVATE "../include" ${CMAKE_CURRENT_SOURCE_DIR})
+    target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     
-    set_target_properties(${TARGET} PROPERTIES
-        CXX_STANDARD 11
-        CXX_STANDARD_REQUIRED ON
-    )
+    if(NOT CMAKE_CXX_STANDARD)
+        set_target_properties(${TARGET} PROPERTIES
+            CXX_STANDARD 11
+            CXX_STANDARD_REQUIRED ON
+        )
+    endif()
+
+    if(CMAKE_CXX_STANDARD AND (CMAKE_CXX_STANDARD GREATER_EQUAL 26))
+        if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+            target_compile_options(${TARGET} PRIVATE "-std=c++26" "-freflection")
+        else()
+            target_compile_options(${TARGET} PRIVATE "-std=c++26")
+        endif()
+    endif()
     
     add_test(NAME ${TARGET} COMMAND ${TARGET})
 endfunction(add_basic_test)

@@ -4830,7 +4830,7 @@ namespace Clara {
         class OptBuilder : public ArgBuilder {
         public:
             OptBuilder( Arg* arg ) : ArgBuilder( arg ) {}
-            OptBuilder( OptBuilder& other ) : ArgBuilder( other ) {}
+            OptBuilder( OptBuilder const& other ) : ArgBuilder( other ) {}
 
             OptBuilder& operator[]( std::string const& optName ) {
                 addOptName( *ArgBuilder::m_arg, optName );
@@ -8321,7 +8321,11 @@ namespace Catch {
     {}
 
     ScopedMessage::~ScopedMessage() {
+#if defined(__cplusplus) && __cplusplus >= 201703L
+        if ( std::uncaught_exceptions() == 0 ){
+#else
         if ( !std::uncaught_exception() ){
+#endif
             getResultCapture().popScopedMessage(m_info);
         }
     }
@@ -8640,7 +8644,11 @@ namespace Catch {
     Section::~Section() {
         if( m_sectionIncluded ) {
             SectionEndInfo endInfo( m_info, m_assertions, m_timer.getElapsedSeconds() );
+#if defined(__cplusplus) && __cplusplus >= 201703L
+            if( std::uncaught_exceptions() > 0 )
+#else
             if( std::uncaught_exception() )
+#endif
                 getResultCapture().sectionEndedEarly( endInfo );
             else
                 getResultCapture().sectionEnded( endInfo );
