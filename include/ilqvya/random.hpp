@@ -203,6 +203,25 @@ namespace ilqvya {
         typename std::enable_if<!has_reserve<C>::value>::type reserve_if_supported( C&, std::size_t ) {}
 
         template<typename C, typename = void>
+        struct has_push_back : std::false_type {};
+
+        template<typename C>
+        struct has_push_back<C, void_t<decltype( std::declval<C&>( ).push_back( std::declval<typename C::value_type>( ) ) )>>
+            : std::true_type {};
+
+        template<typename C>
+        typename std::enable_if<has_push_back<C>::value, std::back_insert_iterator<C>>::type
+        make_inserter( C& container ) {
+            return std::back_inserter( container );
+        }
+
+        template<typename C>
+        typename std::enable_if<!has_push_back<C>::value, std::insert_iterator<C>>::type
+        make_inserter( C& container ) {
+            return std::inserter( container, std::end( container ) );
+        }
+
+        template<typename C, typename = void>
         struct has_insert_with_pos : std::false_type {};
 
         template<typename C>
@@ -774,7 +793,7 @@ namespace ilqvya {
                 using ValueType = typename std::iterator_traits<decltype( std::begin( range ) )>::value_type;
                 Container<ValueType> result;
                 details::reserve_if_supported( result, n );
-                sample( engine, std::begin( range ), std::end( range ), std::back_inserter( result ), n );
+                sample( engine, std::begin( range ), std::end( range ), details::make_inserter( result ), n );
                 return result;
             }
 
@@ -786,7 +805,7 @@ namespace ilqvya {
                 const std::size_t actual_n = ( std::min )( n, N );
                 Container<typename std::remove_cv<T>::type> result;
                 details::reserve_if_supported( result, actual_n );
-                sample( engine, array, array + N, std::back_inserter( result ), actual_n );
+                sample( engine, array, array + N, details::make_inserter( result ), actual_n );
                 return result;
             }
 

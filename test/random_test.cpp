@@ -9,6 +9,7 @@
 #include <map>
 #include <set>
 #include <unordered_map>
+#include <unordered_set>
 #include <forward_list>
 #include <iterator>
 #include <cstring>
@@ -2097,6 +2098,23 @@ TEST_CASE( "Random::sample" ) {
     auto sampled_deque = Random.sample<std::deque>( population, 3 );
     REQUIRE( sampled_deque.size( ) == 3 );
     for ( int val : sampled_deque ) {
+        REQUIRE( std::find( population.begin( ), population.end( ), val ) != population.end( ) );
+    }
+
+    // 3b. Associative container overloads (std::set, std::unordered_set)
+    auto sampled_set = Random.sample<std::set>( population, 4 );
+    static_assert( std::is_same<decltype( sampled_set ), std::set<int>>::value,
+                   "sample<std::set> must return std::set<int>" );
+    REQUIRE( sampled_set.size( ) == 4 );
+    for ( int val : sampled_set ) {
+        REQUIRE( std::find( population.begin( ), population.end( ), val ) != population.end( ) );
+    }
+
+    auto sampled_uset = Random.sample<std::unordered_set>( population, 4 );
+    static_assert( std::is_same<decltype( sampled_uset ), std::unordered_set<int>>::value,
+                   "sample<std::unordered_set> must return std::unordered_set<int>" );
+    REQUIRE( sampled_uset.size( ) == 4 );
+    for ( int val : sampled_uset ) {
         REQUIRE( std::find( population.begin( ), population.end( ), val ) != population.end( ) );
     }
 
