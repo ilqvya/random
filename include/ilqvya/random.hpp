@@ -496,7 +496,7 @@ namespace ilqvya {
 
                 WeightType random_weight = get( engine, WeightType( 0 ), total_weight - 1 );
                 WeightType sum = 0;
-                for ( IteratorType it = std::begin( pair_container ); it != std::end( pair_container ); ++it ) {
+                for ( IteratorType it = std::begin( pair_container ); it != last_nonzero_it; ++it ) {
                     sum += it->second;
                     if ( sum > random_weight )
                         return it;
@@ -529,7 +529,7 @@ namespace ilqvya {
 
                 WeightType random_weight = get( engine, WeightType( 0 ), total_weight );
                 WeightType sum = 0;
-                for ( IteratorType it = std::begin( pair_container ); it != std::end( pair_container ); ++it ) {
+                for ( IteratorType it = std::begin( pair_container ); it != last_nonzero_it; ++it ) {
                     sum += it->second;
                     if ( sum > random_weight )
                         return it;
@@ -555,13 +555,17 @@ namespace ilqvya {
                 }
                 Weight random_weight = get( engine, Weight( 0 ), total_weight - 1 );
                 Weight sum = 0;
+                const auto last = last_nonzero ? last_nonzero : ( list.end( ) - 1 );
                 for ( const auto& item : list ) {
+                    if ( &item == last ) {
+                        break;
+                    }
                     sum += item.weight;
                     if ( sum > random_weight ) {
                         return item.value;
                     }
                 }
-                return last_nonzero ? last_nonzero->value : list.begin( )->value;
+                return last->value;
             }
 
             template<typename Target, typename Weight>
@@ -582,13 +586,17 @@ namespace ilqvya {
                 }
                 Weight random_weight = get( engine, Weight( 0 ), total_weight );
                 Weight sum = 0;
+                const auto last = last_nonzero ? last_nonzero : ( list.end( ) - 1 );
                 for ( const auto& item : list ) {
+                    if ( &item == last ) {
+                        break;
+                    }
                     sum += item.weight;
                     if ( sum > random_weight ) {
                         return item.value;
                     }
                 }
-                return last_nonzero ? last_nonzero->value : list.begin( )->value;
+                return last->value;
             }
 
             template<typename Target, typename Weight = double>

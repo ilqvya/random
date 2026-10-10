@@ -1372,3 +1372,21 @@ TEST_CASE( "ilqvya::random alias and effolkronium backward compatibility" ) {
                    "EFFOLKRONIUM_HAS_REFLECTION macro must be defined when ILQVYA_HAS_REFLECTION is defined" );
 #endif
 }
+
+TEST_CASE( "Random characters inverted range" ) {
+    char c = Random.get<char>( 'z', 'a' );
+    REQUIRE( c >= 'a' && c <= 'z' );
+
+    wchar_t wc = Random.get<wchar_t>( L'z', L'a' );
+    REQUIRE( wc >= L'a' && wc <= L'z' );
+}
+
+TEST_CASE( "Weighted list with zero total weight fallback" ) {
+    auto res_int =
+        Random.get( { Random_t::weighted_result<int, int>{ 42, 0 }, Random_t::weighted_result<int, int>{ 43, 0 } } );
+    REQUIRE( res_int == 42 );
+
+    auto res_real = Random.get( { Random_t::weighted_result<std::string, double>{ "zero_fallback", 0.0 },
+                                  Random_t::weighted_result<std::string, double>{ "other", 0.0 } } );
+    REQUIRE( res_real == "zero_fallback" );
+}
