@@ -389,6 +389,20 @@ TEST_CASE( "Shuffle" ) {
             REQUIRE( shuffled );
         }
     }
+
+    {
+        SECTION( "RawArray" ) {
+            int raw_arr[4] = { 1, 2, 3, 4 };
+            int raw_copy[4] = { 1, 2, 3, 4 };
+            bool shuffled = false;
+            for ( int i = 0; i < 100 && !shuffled; ++i ) {
+                Random.shuffle( raw_arr );
+                shuffled = std::memcmp( raw_arr, raw_copy, sizeof( raw_arr ) ) != 0;
+            }
+
+            REQUIRE( shuffled );
+        }
+    }
 }
 
 TEST_CASE( "Get without arguments" ) {
@@ -1544,6 +1558,8 @@ TEST_CASE( "random_local remaining methods and empty iterator get" ) {
     std::array<int, 3> arr{ 1, 2, 3 };
     rl.shuffle( arr );
     rl.shuffle( arr.begin( ), arr.end( ) );
+    int raw_arr[3] = { 1, 2, 3 };
+    rl.shuffle( raw_arr );
 
     rl.discard( 10 );
 

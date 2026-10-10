@@ -684,6 +684,11 @@ namespace ilqvya {
             static void shuffle( Engine& engine, Container& container ) {
                 shuffle( engine, std::begin( container ), std::end( container ) );
             }
+
+            template<typename T, std::size_t N>
+            static void shuffle( Engine& engine, T ( &array )[N] ) {
+                shuffle( engine, std::begin( array ), std::end( array ) );
+            }
         };
 
     } // namespace details
@@ -969,6 +974,11 @@ namespace ilqvya {
         template<typename Container>
         static void shuffle( Container& container ) {
             impl::shuffle( engine_instance( ), container );
+        }
+
+        template<typename T, std::size_t N>
+        static void shuffle( T ( &array )[N] ) {
+            impl::shuffle( engine_instance( ), array );
         }
 
         template<typename... Args>
@@ -1277,6 +1287,11 @@ namespace ilqvya {
         template<typename Container>
         void shuffle( Container& container ) {
             impl::shuffle( m_engine, container );
+        }
+
+        template<typename T, std::size_t N>
+        void shuffle( T ( &array )[N] ) {
+            impl::shuffle( m_engine, array );
         }
 
         template<typename... Args>
