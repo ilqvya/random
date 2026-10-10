@@ -193,6 +193,14 @@ namespace ilqvya {
         struct has_reserve<C, void_t<decltype( std::declval<C&>( ).reserve( std::declval<std::size_t>( ) ) )>>
             : std::true_type {};
 
+        template<typename C>
+        typename std::enable_if<has_reserve<C>::value>::type reserve_if_supported( C& container, std::size_t size ) {
+            container.reserve( size );
+        }
+
+        template<typename C>
+        typename std::enable_if<!has_reserve<C>::value>::type reserve_if_supported( C&, std::size_t ) {}
+
         template<typename C, typename = void>
         struct has_insert_with_pos : std::false_type {};
 
@@ -478,50 +486,26 @@ namespace ilqvya {
             }
 
             template<template<typename...> class Container, typename A>
-            ILQVYA_NODISCARD static
-                typename std::enable_if<details::has_reserve<Container<A>>::value, Container<A>>::type
-                get( Engine& engine, A from, A to, std::size_t size ) {
+            ILQVYA_NODISCARD static Container<A>
+            get( Engine& engine, A from, A to, std::size_t size ) {
                 Container<A> container;
-                container.reserve( size );
+                details::reserve_if_supported( container, size );
                 for ( std::size_t i = 0; i < size; ++i )
                     container.insert( std::end( container ), get( engine, from, to ) );
                 return container;
-            } // LCOV_EXCL_LINE
+            }
 
             template<template<typename...> class Container, typename Key, typename A, typename B,
                      typename C = typename std::common_type<A, B>::type>
             ILQVYA_NODISCARD static
-                typename std::enable_if<std::is_same<Key, common>::value && details::has_reserve<Container<C>>::value,
-                                        Container<C>>::type
+                typename std::enable_if<std::is_same<Key, common>::value, Container<C>>::type
                 get( Engine& engine, A start, B end, std::size_t size ) {
                 Container<C> container;
-                container.reserve( size );
+                details::reserve_if_supported( container, size );
                 for ( std::size_t i = 0; i < size; ++i )
                     container.insert( std::end( container ), get<common>( engine, start, end ) );
                 return container;
-            } // LCOV_EXCL_LINE
-
-            template<template<typename...> class Container, typename A>
-            ILQVYA_NODISCARD static
-                typename std::enable_if<!details::has_reserve<Container<A>>::value, Container<A>>::type
-                get( Engine& engine, A start, A end, std::size_t size ) {
-                Container<A> container;
-                for ( std::size_t i = 0; i < size; ++i )
-                    container.insert( std::end( container ), get( engine, start, end ) );
-                return container;
-            } // LCOV_EXCL_LINE
-
-            template<template<typename...> class Container, typename Key, typename A, typename B,
-                     typename C = typename std::common_type<A, B>::type>
-            ILQVYA_NODISCARD static
-                typename std::enable_if<std::is_same<Key, common>::value && !details::has_reserve<Container<C>>::value,
-                                        Container<C>>::type
-                get( Engine& engine, A start, B end, std::size_t size ) {
-                Container<C> container;
-                for ( std::size_t i = 0; i < size; ++i )
-                    container.insert( std::end( container ), get<common>( engine, start, end ) );
-                return container;
-            } // LCOV_EXCL_LINE
+            }
 
             template<template<typename AA, std::size_t NN, typename...> class Container, std::size_t N, typename A>
             ILQVYA_NODISCARD static
@@ -975,31 +959,14 @@ namespace ilqvya {
         }
 
         template<template<typename...> class Container, typename A>
-        ILQVYA_NODISCARD static typename std::enable_if<details::has_reserve<Container<A>>::value, Container<A>>::type
-        get( A from, A to, std::size_t size ) {
+        ILQVYA_NODISCARD static Container<A> get( A from, A to, std::size_t size ) {
             return impl::template get<Container, A>( engine_instance( ), from, to, size );
         }
 
         template<template<typename...> class Container, typename Key, typename A, typename B,
                  typename C = typename std::common_type<A, B>::type>
         ILQVYA_NODISCARD static
-            typename std::enable_if<std::is_same<Key, common>::value && details::has_reserve<Container<C>>::value,
-                                    Container<C>>::type
-            get( A start, B end, std::size_t size ) {
-            return impl::template get<Container, Key, A, B, C>( engine_instance( ), start, end, size );
-        }
-
-        template<template<typename...> class Container, typename A>
-        ILQVYA_NODISCARD static typename std::enable_if<!details::has_reserve<Container<A>>::value, Container<A>>::type
-        get( A start, A end, std::size_t size ) {
-            return impl::template get<Container, A>( engine_instance( ), start, end, size );
-        }
-
-        template<template<typename...> class Container, typename Key, typename A, typename B,
-                 typename C = typename std::common_type<A, B>::type>
-        ILQVYA_NODISCARD static
-            typename std::enable_if<std::is_same<Key, common>::value && !details::has_reserve<Container<C>>::value,
-                                    Container<C>>::type
+            typename std::enable_if<std::is_same<Key, common>::value, Container<C>>::type
             get( A start, B end, std::size_t size ) {
             return impl::template get<Container, Key, A, B, C>( engine_instance( ), start, end, size );
         }
@@ -1363,31 +1330,14 @@ namespace ilqvya {
         }
 
         template<template<typename...> class Container, typename A>
-        ILQVYA_NODISCARD typename std::enable_if<details::has_reserve<Container<A>>::value, Container<A>>::type
-        get( A from, A to, std::size_t size ) {
+        ILQVYA_NODISCARD Container<A> get( A from, A to, std::size_t size ) {
             return impl::template get<Container, A>( m_engine, from, to, size );
         }
 
         template<template<typename...> class Container, typename Key, typename A, typename B,
                  typename C = typename std::common_type<A, B>::type>
         ILQVYA_NODISCARD
-            typename std::enable_if<std::is_same<Key, common>::value && details::has_reserve<Container<C>>::value,
-                                    Container<C>>::type
-            get( A start, B end, std::size_t size ) {
-            return impl::template get<Container, Key, A, B, C>( m_engine, start, end, size );
-        }
-
-        template<template<typename...> class Container, typename A>
-        ILQVYA_NODISCARD typename std::enable_if<!details::has_reserve<Container<A>>::value, Container<A>>::type
-        get( A start, A end, std::size_t size ) {
-            return impl::template get<Container, A>( m_engine, start, end, size );
-        }
-
-        template<template<typename...> class Container, typename Key, typename A, typename B,
-                 typename C = typename std::common_type<A, B>::type>
-        ILQVYA_NODISCARD
-            typename std::enable_if<std::is_same<Key, common>::value && !details::has_reserve<Container<C>>::value,
-                                    Container<C>>::type
+            typename std::enable_if<std::is_same<Key, common>::value, Container<C>>::type
             get( A start, B end, std::size_t size ) {
             return impl::template get<Container, Key, A, B, C>( m_engine, start, end, size );
         }
