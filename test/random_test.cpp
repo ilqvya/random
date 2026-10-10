@@ -7,6 +7,8 @@
 #include <map>
 #include <set>
 #include <unordered_map>
+#include <forward_list>
+#include <iterator>
 
 #ifdef _WIN32 // Unit test for case when builds fail 'cause of min\max macro included from Windows.h before random.hpp
 #    include "Windows.h"
@@ -1489,4 +1491,16 @@ TEST_CASE( "random_local remaining methods and empty iterator get" ) {
     REQUIRE( Random.get( empty_vec ) == empty_vec.end( ) );
     REQUIRE( rl.get( empty_vec.begin( ), empty_vec.end( ) ) == empty_vec.end( ) );
     REQUIRE( rl.get( empty_vec ) == empty_vec.end( ) );
+}
+
+TEST_CASE( "Forward iterator support for get" ) {
+    std::forward_list<int> flist = { 10, 20, 30 };
+    auto fit = Random.get( flist.begin( ), flist.end( ) );
+    REQUIRE( fit != flist.end( ) );
+    REQUIRE( ( *fit == 10 || *fit == 20 || *fit == 30 ) );
+
+    static_assert( ilqvya::details::is_forward_iterator<decltype( flist.begin( ) )>::value,
+                   "forward_list iterator must satisfy is_forward_iterator" );
+    static_assert( !ilqvya::details::is_forward_iterator<std::istream_iterator<int>>::value,
+                   "istream_iterator must not satisfy is_forward_iterator" );
 }

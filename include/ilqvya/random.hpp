@@ -138,6 +138,15 @@ namespace ilqvya {
             static constexpr bool value = std::is_same<decltype( test( std::declval<T>( ) ) ), long>::value;
         };
 
+        /// True if type T satisfies at least ForwardIterator
+        template<typename T>
+        struct is_forward_iterator {
+            static constexpr bool value =
+                is_iterator<T>::value &&
+                std::is_base_of<std::forward_iterator_tag,
+                                typename std::iterator_traits<T>::iterator_category>::value;
+        };
+
         template<typename...>
         using void_t = void;
 
@@ -372,13 +381,16 @@ namespace ilqvya {
                 return *get( engine, init_list.begin( ), init_list.end( ) );
             }
 
-            template<typename InputIt>
-            ILQVYA_NODISCARD static typename std::enable_if<details::is_iterator<InputIt>::value, InputIt>::type
-            get( Engine& engine, InputIt first, InputIt last ) {
+            template<typename ForwardIt>
+            ILQVYA_NODISCARD static typename std::enable_if<details::is_iterator<ForwardIt>::value, ForwardIt>::type
+            get( Engine& engine, ForwardIt first, ForwardIt last ) {
+                static_assert( details::is_forward_iterator<ForwardIt>::value,
+                               "Random::get(first, last) requires forward iterators. "
+                               "Single-pass input iterators (e.g., std::istream_iterator) cannot be traversed twice." );
                 const auto size = std::distance( first, last );
                 if ( 0 == size )
                     return last;
-                using diff_t = typename std::iterator_traits<InputIt>::difference_type;
+                using diff_t = typename std::iterator_traits<ForwardIt>::difference_type;
                 return std::next( first, get<diff_t>( engine, 0, size - 1 ) );
             }
 
@@ -788,9 +800,9 @@ namespace ilqvya {
             return impl::template get<T>( engine_instance( ), init_list );
         }
 
-        template<typename InputIt>
-        ILQVYA_NODISCARD static typename std::enable_if<details::is_iterator<InputIt>::value, InputIt>::type
-        get( InputIt first, InputIt last ) {
+        template<typename ForwardIt>
+        ILQVYA_NODISCARD static typename std::enable_if<details::is_iterator<ForwardIt>::value, ForwardIt>::type
+        get( ForwardIt first, ForwardIt last ) {
             return impl::get( engine_instance( ), first, last );
         }
 
@@ -1075,9 +1087,9 @@ namespace ilqvya {
             return impl::template get<T>( m_engine, init_list );
         }
 
-        template<typename InputIt>
-        ILQVYA_NODISCARD typename std::enable_if<details::is_iterator<InputIt>::value, InputIt>::type
-        get( InputIt first, InputIt last ) {
+        template<typename ForwardIt>
+        ILQVYA_NODISCARD typename std::enable_if<details::is_iterator<ForwardIt>::value, ForwardIt>::type
+        get( ForwardIt first, ForwardIt last ) {
             return impl::get( m_engine, first, last );
         }
 
