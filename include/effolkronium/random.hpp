@@ -55,6 +55,13 @@ SOFTWARE.
 #  define EFFOLKRONIUM_NODISCARD
 #endif
 
+#if __cplusplus > 202302L && (defined(__cpp_impl_reflection) || defined(__cpp_reflection))
+#  if __has_include(<meta>)
+#    include <meta>
+#    define EFFOLKRONIUM_HAS_REFLECTION 1
+#  endif
+#endif
+
 namespace effolkronium {
 
     namespace details {
@@ -188,6 +195,30 @@ namespace effolkronium {
             constexpr weighted_result(std::pair<Value, Weight>&& p)
                 : value(std::move(p.first)), weight(std::move(p.second)) {}
         };
+
+#if defined(EFFOLKRONIUM_HAS_REFLECTION)
+        template<typename E>
+        consteval std::size_t enum_count() {
+            auto enums = std::meta::enumerators_of(^^E);
+            return enums.size();
+        }
+
+        template<typename E>
+        struct enum_traits {
+            static constexpr std::size_t count = enum_count<E>();
+
+            static consteval auto make_array() {
+                std::array<E, count> arr{};
+                auto enums = std::meta::enumerators_of(^^E);
+                for (std::size_t i = 0; i < count; ++i) {
+                    arr[i] = std::meta::extract<E>(enums[i]);
+                }
+                return arr;
+            }
+
+            static constexpr std::array<E, count> values = make_array();
+        };
+#endif
 
     } // namespace details
 
@@ -557,6 +588,16 @@ namespace effolkronium {
                 return get_weighted_list<Target, Weight>( engine, list );
             }
 
+#if defined(EFFOLKRONIUM_HAS_REFLECTION)
+            template<typename T>
+            EFFOLKRONIUM_NODISCARD static typename std::enable_if<std::is_enum<T>::value, T>::type
+            get( Engine& engine ) {
+                static_assert( details::enum_traits<T>::count > 0, "Cannot pick random value from an empty enum" );
+                const auto idx = get( engine, std::size_t( 0 ), details::enum_traits<T>::count - 1 );
+                return details::enum_traits<T>::values[ idx ];
+            }
+#endif
+
             template<typename RandomIt>
             static void shuffle( Engine& engine, RandomIt first, RandomIt last ) {
                 std::shuffle( first, last, engine );
@@ -774,6 +815,14 @@ namespace effolkronium {
         }
 
         EFFOLKRONIUM_WEIGHTED_VARIADIC_MEMBERS(static)
+
+#if defined(EFFOLKRONIUM_HAS_REFLECTION)
+        template<typename T>
+        EFFOLKRONIUM_NODISCARD static typename std::enable_if<std::is_enum<T>::value, T>::type
+        get( ) {
+            return impl::template get<T>( engine_instance( ) );
+        }
+#endif
 
         template<typename RandomIt>
         static void shuffle( RandomIt first, RandomIt last ) { impl::shuffle( engine_instance( ), first, last ); }
@@ -1021,6 +1070,14 @@ namespace effolkronium {
         }
 
         EFFOLKRONIUM_WEIGHTED_VARIADIC_MEMBERS()
+
+#if defined(EFFOLKRONIUM_HAS_REFLECTION)
+        template<typename T>
+        EFFOLKRONIUM_NODISCARD typename std::enable_if<std::is_enum<T>::value, T>::type
+        get( ) {
+            return impl::template get<T>( m_engine );
+        }
+#endif
 
         template<typename RandomIt>
         void shuffle( RandomIt first, RandomIt last ) { impl::shuffle( m_engine, first, last ); }

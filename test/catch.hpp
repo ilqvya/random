@@ -4830,7 +4830,7 @@ namespace Clara {
         class OptBuilder : public ArgBuilder {
         public:
             OptBuilder( Arg* arg ) : ArgBuilder( arg ) {}
-            OptBuilder( OptBuilder& other ) : ArgBuilder( other ) {}
+            OptBuilder( OptBuilder const& other ) : ArgBuilder( other ) {}
 
             OptBuilder& operator[]( std::string const& optName ) {
                 addOptName( *ArgBuilder::m_arg, optName );

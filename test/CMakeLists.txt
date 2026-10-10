@@ -30,6 +30,14 @@ function(add_basic_test TARGET COMPILE_DEFS TEST_SOURCES)
             CXX_STANDARD_REQUIRED ON
         )
     endif()
+
+    if(CMAKE_CXX_STANDARD AND (CMAKE_CXX_STANDARD GREATER_EQUAL 26))
+        if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+            target_compile_options(${TARGET} PRIVATE "-std=c++26" "-freflection")
+        else()
+            target_compile_options(${TARGET} PRIVATE "-std=c++26")
+        endif()
+    endif()
     
     add_test(NAME ${TARGET} COMMAND ${TARGET})
 endfunction(add_basic_test)

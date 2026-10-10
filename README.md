@@ -238,6 +238,15 @@ auto vec = Random::get<MyContainer>(1, 9, 5); // decltype(vec) is std::MyContain
     Random::get<Random_t::weight>(nonzero_double_map);
     Random::get<Random_t::weight>(nonzero_vec);
 ```
+### Enum random values (C++26 Reflection)
+Returns a random enumerator from any `enum` or `enum class` (requires C++26 with reflection support, e.g. `-std=c++26 -freflection`):
+```cpp
+enum class Color { Red, Green, Blue };
+auto color = Random::get<Color>(); // Returns randomly chosen Color
+
+enum Status { Disconnected = 0, Connecting = 10, Connected = 100 };
+auto status = Random::get<Status>(); // Returns randomly chosen Status
+```
 ### Shuffle
 Reorders the elements in a given range or container [ref](http://en.cppreference.com/w/cpp/algorithm/random_shuffle):
 ```cpp

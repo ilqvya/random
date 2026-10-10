@@ -1391,5 +1391,38 @@ TEST_CASE("Discussion #38: Sequential pair containers (vector of pairs)") {
     }
 }
 
+#if defined(EFFOLKRONIUM_HAS_REFLECTION)
+enum class TestDifficulty { Easy, Medium, Hard, Expert };
+enum TestStatus { Disconnected = 0, Connecting = 10, Connected = 100 };
+enum class TestSingle { OnlyOne = 777 };
+
+TEST_CASE("Discussion #37: Choosing random value from an enum (C++26 Reflection)") {
+    // 1. Scoped enum class
+    for (int i = 0; i < 50; ++i) {
+        TestDifficulty d = Random.get<TestDifficulty>();
+        REQUIRE((d == TestDifficulty::Easy || d == TestDifficulty::Medium || d == TestDifficulty::Hard || d == TestDifficulty::Expert));
+    }
+
+    // 2. Unscoped enum with non-contiguous values
+    for (int i = 0; i < 50; ++i) {
+        TestStatus s = Random.get<TestStatus>();
+        REQUIRE((s == Disconnected || s == Connecting || s == Connected));
+    }
+
+    // 3. Single-element enum
+    for (int i = 0; i < 10; ++i) {
+        TestSingle val = Random.get<TestSingle>();
+        REQUIRE(val == TestSingle::OnlyOne);
+    }
+
+    // 4. All enum values reachable
+    std::set<TestDifficulty> seen;
+    for (int i = 0; i < 200; ++i) {
+        seen.insert(Random.get<TestDifficulty>());
+    }
+    REQUIRE(seen.size() == 4);
+}
+#endif
+
 
 
