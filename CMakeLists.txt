@@ -8,8 +8,8 @@ include(GNUInstallDirs)
 option(Random_BuildTests "Build the unit tests" ON)
 
 # define project variables
-set(ILQVYA_RANDOM_TARGET_NAME ${PROJECT_NAME})
-set(ILQVYA_RANDOM_PACKAGE_NAME ${ILQVYA_RANDOM_TARGET_NAME})
+set(ILQVYA_RANDOM_TARGET_NAME "random")
+set(ILQVYA_RANDOM_PACKAGE_NAME ${PROJECT_NAME})
 set(ILQVYA_RANDOM_TARGETS_FILENAME "${ILQVYA_RANDOM_PACKAGE_NAME}Targets.cmake")
 set(ILQVYA_RANDOM_CONFIG_FILENAME "${ILQVYA_RANDOM_PACKAGE_NAME}Config.cmake")
 set(ILQVYA_RANDOM_CONFIGVERSION_FILENAME "${ILQVYA_RANDOM_PACKAGE_NAME}ConfigVersion.cmake")
@@ -19,6 +19,7 @@ set(ILQVYA_RANDOM_INCLUDE_DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 # create and configure the library target
 add_library(${ILQVYA_RANDOM_TARGET_NAME} INTERFACE)
 add_library(ilqvya::random ALIAS ${ILQVYA_RANDOM_TARGET_NAME})
+add_library(ilqvya_random ALIAS ${ILQVYA_RANDOM_TARGET_NAME})
 add_library(effolkronium::random ALIAS ${ILQVYA_RANDOM_TARGET_NAME})
 add_library(effolkronium_random ALIAS ${ILQVYA_RANDOM_TARGET_NAME})
 
@@ -44,6 +45,7 @@ write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/${ILQVYA_RANDOM_CO
     
 # export the library target in build directory
 export(TARGETS ${ILQVYA_RANDOM_TARGET_NAME}
+       NAMESPACE ilqvya::
        FILE "${CMAKE_CURRENT_BINARY_DIR}/${ILQVYA_RANDOM_TARGETS_FILENAME}")
 
 # install library target and config files
@@ -54,6 +56,7 @@ install(DIRECTORY "include/ilqvya"
 install(DIRECTORY "include/effolkronium"
         DESTINATION ${ILQVYA_RANDOM_INCLUDE_DESTINATION})
 install(EXPORT ${ILQVYA_RANDOM_PACKAGE_NAME}
+        NAMESPACE ilqvya::
         FILE ${ILQVYA_RANDOM_TARGETS_FILENAME}
         DESTINATION ${ILQVYA_RANDOM_CONFIG_DESTINATION})
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${ILQVYA_RANDOM_CONFIG_FILENAME}"
