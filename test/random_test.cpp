@@ -188,6 +188,15 @@ TEST_CASE( "Type deduction for random byte numbers" ) {
     // std::uint8_t
     static_assert( std::is_same<std::uint8_t, decltype( Random.get( std::uint8_t{ 0 }, std::uint8_t{ 0 } ) )>::value,
                    "" );
+#if defined( __cpp_lib_byte ) || ( __cplusplus >= 201703L ) || ( defined( _MSVC_LANG ) && _MSVC_LANG >= 201703L )
+    static_assert( std::is_same<std::byte, decltype( Random.get<std::byte>( ) )>::value, "" );
+    static_assert( std::is_same<std::byte, decltype( Random.get( std::byte{ 0 }, std::byte{ 10 } ) )>::value, "" );
+    auto rand_byte = Random.get<std::byte>( );
+    (void)rand_byte;
+    auto bounded_byte = Random.get( std::byte{ 10 }, std::byte{ 20 } );
+    REQUIRE( static_cast<unsigned char>( bounded_byte ) >= 10 );
+    REQUIRE( static_cast<unsigned char>( bounded_byte ) <= 20 );
+#endif
 }
 
 TEST_CASE( "Random byte numbers is truly random" ) {

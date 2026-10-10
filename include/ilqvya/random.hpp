@@ -49,6 +49,7 @@ SOFTWARE.
 #include <istream>
 #include <array>
 #include <cstdint>
+#include <cstddef>
 
 #if defined( _MSVC_LANG )
 #    define ILQVYA_CPLUSPLUS _MSVC_LANG
@@ -107,8 +108,26 @@ namespace ilqvya {
         /// True if type T is plain byte
         template<typename T>
         struct is_byte {
-            static constexpr bool value = std::is_same<T, signed char>::value || std::is_same<T, unsigned char>::value;
+            static constexpr bool value = std::is_same<T, signed char>::value || std::is_same<T, unsigned char>::value
+#if ILQVYA_CPLUSPLUS >= 201703L
+                                          || std::is_same<T, std::byte>::value
+#endif
+                ;
         };
+
+        template<typename T>
+        struct byte_limits {
+            static constexpr T min( ) noexcept { return ( std::numeric_limits<T>::min )( ); }
+            static constexpr T max( ) noexcept { return ( std::numeric_limits<T>::max )( ); }
+        };
+
+#if ILQVYA_CPLUSPLUS >= 201703L
+        template<>
+        struct byte_limits<std::byte> {
+            static constexpr std::byte min( ) noexcept { return std::byte{ 0 }; }
+            static constexpr std::byte max( ) noexcept { return std::byte{ 255 }; }
+        };
+#endif
 
         /// True if type T is plain number type
         template<typename T>
@@ -356,10 +375,10 @@ namespace ilqvya {
 
             template<typename T>
             ILQVYA_NODISCARD static typename std::enable_if<details::is_byte<T>::value, T>::type
-            get( Engine& engine, T from = ( std::numeric_limits<T>::min )( ),
-                 T to = ( std::numeric_limits<T>::max )( ) ) {
+            get( Engine& engine, T from = details::byte_limits<T>::min( ),
+                 T to = details::byte_limits<T>::max( ) ) {
                 using short_t = typename std::conditional<std::is_signed<T>::value, short, unsigned short>::type;
-                return static_cast<T>( get<short_t>( engine, from, to ) );
+                return static_cast<T>( get<short_t>( engine, static_cast<short_t>( from ), static_cast<short_t>( to ) ) );
             }
 
             template<typename Key, typename A, typename B, typename C = typename std::common_type<A, B>::type>
@@ -789,7 +808,7 @@ namespace ilqvya {
 
         template<typename T>
         ILQVYA_NODISCARD static typename std::enable_if<details::is_byte<T>::value, T>::type
-        get( T from = ( std::numeric_limits<T>::min )( ), T to = ( std::numeric_limits<T>::max )( ) ) {
+        get( T from = details::byte_limits<T>::min( ), T to = details::byte_limits<T>::max( ) ) {
             return impl::template get<T>( engine_instance( ), from, to );
         }
 
@@ -1080,7 +1099,7 @@ namespace ilqvya {
 
         template<typename T>
         ILQVYA_NODISCARD typename std::enable_if<details::is_byte<T>::value, T>::type
-        get( T from = ( std::numeric_limits<T>::min )( ), T to = ( std::numeric_limits<T>::max )( ) ) {
+        get( T from = details::byte_limits<T>::min( ), T to = details::byte_limits<T>::max( ) ) {
             return impl::template get<T>( m_engine, from, to );
         }
 

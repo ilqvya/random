@@ -121,6 +121,11 @@ auto val = Random::get<uint8_t>(-1, 1); // decltype(val) is uint8_t
 auto val = Random::get(1.l, -1.l); // decltype(val) is long double
 ```
 ```cpp
+// std::byte support (C++17+)
+auto b = Random::get<std::byte>(); // random byte in [0, 255]
+auto bounded_b = Random::get(std::byte{0}, std::byte{128});
+```
+```cpp
 auto val = Random::get(1.f, -1); // Error: implicit conversions are not allowed here.
 ```
 ### Common type number range
