@@ -882,7 +882,7 @@ namespace ilqvya {
         public:
 #endif
 
-            template<typename CharT>
+            template<typename CharT = char>
             ILQVYA_NODISCARD static typename std::enable_if<details::is_supported_character<CharT>::value,
                                                             std::basic_string<CharT>>::type
             get_string( Engine& engine, std::size_t length, CharT from = ( std::numeric_limits<CharT>::min )( ),
@@ -1306,7 +1306,7 @@ namespace ilqvya {
             return impl::sample_string( engine_instance( ), literal, n );
         }
 
-        template<typename CharT>
+        template<typename CharT = char>
         ILQVYA_NODISCARD static typename std::enable_if<details::is_supported_character<CharT>::value,
                                                         std::basic_string<CharT>>::type
         get_string( std::size_t length, CharT from = ( std::numeric_limits<CharT>::min )( ),
@@ -1755,7 +1755,7 @@ namespace ilqvya {
             return impl::sample_string( m_engine, literal, n );
         }
 
-        template<typename CharT>
+        template<typename CharT = char>
         ILQVYA_NODISCARD typename std::enable_if<details::is_supported_character<CharT>::value,
                                                 std::basic_string<CharT>>::type
         get_string( std::size_t length, CharT from = ( std::numeric_limits<CharT>::min )( ),

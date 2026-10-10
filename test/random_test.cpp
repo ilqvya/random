@@ -2000,6 +2000,12 @@ TEST_CASE( "default_engine selection: philox4x64 in C++26 vs mt19937 fallback" )
 }
 
 TEST_CASE( "get_string helper methods" ) {
+    // 0. Default CharT = char (only length specified)
+    auto s_default = Random.get_string( 16 );
+    static_assert( std::is_same<decltype( s_default ), std::string>::value,
+                   "Random.get_string(length) must return std::string by default" );
+    REQUIRE( s_default.size( ) == 16 );
+
     // 1. Range of characters
     auto s_alpha = Random.get_string( 16, 'a', 'z' );
     REQUIRE( s_alpha.size( ) == 16 );
@@ -2067,6 +2073,11 @@ TEST_CASE( "get_string helper methods" ) {
 
     auto rl_hex = rl.get_string( 16, "0123456789ABCDEF" );
     REQUIRE( rl_hex.size( ) == 16 );
+
+    auto rl_default = rl.get_string( 12 );
+    static_assert( std::is_same<decltype( rl_default ), std::string>::value,
+                   "rl.get_string(length) must return std::string by default" );
+    REQUIRE( rl_default.size( ) == 12 );
 
     // 6. Wide characters (wchar_t)
     auto ws = Random.get_string( 10, L'a', L'z' );
