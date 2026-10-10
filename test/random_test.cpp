@@ -2101,6 +2101,28 @@ TEST_CASE( "Random::sample" ) {
 
     auto rl_arr = rl.sample( arr, 2 );
     REQUIRE( rl_arr.size( ) == 2 );
+
+    // 11. Sample with non-positive distance
+    std::vector<int> out_zero;
+    Random.sample( population.begin( ), population.end( ), std::back_inserter( out_zero ), 0 );
+    REQUIRE( out_zero.empty( ) );
+
+    std::vector<int> out_neg;
+    Random.sample( population.begin( ), population.end( ), std::back_inserter( out_neg ), -3 );
+    REQUIRE( out_neg.empty( ) );
+
+    // 12. Non-random-access iterators (std::forward_list)
+    std::forward_list<int> fl = { 10, 20, 30, 40, 50 };
+    std::vector<int> fl_sampled;
+    Random.sample( fl.begin( ), fl.end( ), std::back_inserter( fl_sampled ), 3 );
+    REQUIRE( fl_sampled.size( ) == 3 );
+    for ( int val : fl_sampled ) {
+        REQUIRE( ( val == 10 || val == 20 || val == 30 || val == 40 || val == 50 ) );
+    }
+
+    std::vector<int> fl_neg;
+    Random.sample( fl.begin( ), fl.end( ), std::back_inserter( fl_neg ), -2 );
+    REQUIRE( fl_neg.empty( ) );
 }
 
 

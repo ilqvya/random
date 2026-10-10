@@ -740,7 +740,9 @@ namespace ilqvya {
 
             template<typename PopulationIt, typename SampleIt, typename Distance>
             static SampleIt sample( Engine& engine, PopulationIt first, PopulationIt last, SampleIt out, Distance n ) {
-#if __cplusplus >= 201703L
+                if ( n <= 0 )
+                    return out;
+#if ILQVYA_CPLUSPLUS >= 201703L
                 return std::sample( first, last, out, n, engine );
 #else
                 using pop_category = typename std::iterator_traits<PopulationIt>::iterator_category;
@@ -802,11 +804,13 @@ namespace ilqvya {
                 return sample( engine, literal, n );
             }
 
-#if __cplusplus < 201703L
+#if ILQVYA_CPLUSPLUS < 201703L
         private:
             template<typename PopulationIt, typename SampleIt, typename Distance>
             static SampleIt sample_impl( Engine& engine, PopulationIt first, PopulationIt last,
                                         std::random_access_iterator_tag, SampleIt out, Distance n ) {
+                if ( n <= 0 )
+                    return out;
                 using dist_t = typename std::iterator_traits<PopulationIt>::difference_type;
                 dist_t unsampled_sz = std::distance( first, last );
                 for ( n = ( std::min )( static_cast<dist_t>( n ), unsampled_sz ); n != 0; ++first ) {
@@ -822,6 +826,8 @@ namespace ilqvya {
             template<typename PopulationIt, typename SampleIt, typename Distance>
             static SampleIt sample_impl( Engine& engine, PopulationIt first, PopulationIt last,
                                         std::input_iterator_tag, SampleIt out, Distance n ) {
+                if ( n <= 0 )
+                    return out;
                 using ValueType = typename std::iterator_traits<PopulationIt>::value_type;
                 std::vector<ValueType> reservoir;
                 reservoir.reserve( static_cast<std::size_t>( n ) );
