@@ -8321,7 +8321,7 @@ namespace Catch {
     {}
 
     ScopedMessage::~ScopedMessage() {
-#if defined(__cplusplus) && __cplusplus >= 201703L
+#if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
         if ( std::uncaught_exceptions() == 0 ){
 #else
         if ( !std::uncaught_exception() ){
@@ -8644,7 +8644,7 @@ namespace Catch {
     Section::~Section() {
         if( m_sectionIncluded ) {
             SectionEndInfo endInfo( m_info, m_assertions, m_timer.getElapsedSeconds() );
-#if defined(__cplusplus) && __cplusplus >= 201703L
+#if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
             if( std::uncaught_exceptions() > 0 )
 #else
             if( std::uncaught_exception() )

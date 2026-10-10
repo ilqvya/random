@@ -19,6 +19,7 @@ if(NOT MSVC)
 else()
 	target_compile_options(${TARGET} PRIVATE 
 		/EHsc # Warning fix!
+		/Zc:__cplusplus # Correct __cplusplus macro
 		/W4 
 		/WX # Treats all compilers warnings as errors
 		/wd4996 # Disable deprecation warnings in test framework (Catch1)
