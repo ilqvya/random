@@ -712,6 +712,67 @@ namespace ilqvya {
                 shuffle( engine, std::begin( array ), std::end( array ) );
             }
 
+            template<typename PopulationIt, typename SampleIt, typename Distance>
+            static SampleIt sample( Engine& engine, PopulationIt first, PopulationIt last, SampleIt out, Distance n ) {
+#if __cplusplus >= 201703L
+                return std::sample( first, last, out, n, engine );
+#else
+                using pop_category = typename std::iterator_traits<PopulationIt>::iterator_category;
+                return sample_impl( engine, first, last, pop_category( ), out, n );
+#endif
+            }
+
+            template<template<typename...> class Container = std::vector, typename Range>
+            ILQVYA_NODISCARD static auto sample( Engine& engine, const Range& range, std::size_t n ) ->
+                typename std::enable_if<
+                    details::is_iterator<decltype( std::begin( range ) )>::value,
+                    Container<typename std::iterator_traits<decltype( std::begin( range ) )>::value_type>>::type {
+                using ValueType = typename std::iterator_traits<decltype( std::begin( range ) )>::value_type;
+                Container<ValueType> result;
+                details::reserve_if_supported( result, n );
+                sample( engine, std::begin( range ), std::end( range ), std::back_inserter( result ), n );
+                return result;
+            }
+
+#if __cplusplus < 201703L
+        private:
+            template<typename PopulationIt, typename SampleIt, typename Distance>
+            static SampleIt sample_impl( Engine& engine, PopulationIt first, PopulationIt last,
+                                        std::random_access_iterator_tag, SampleIt out, Distance n ) {
+                using dist_t = typename std::iterator_traits<PopulationIt>::difference_type;
+                dist_t unsampled_sz = std::distance( first, last );
+                for ( n = ( std::min )( static_cast<dist_t>( n ), unsampled_sz ); n != 0; ++first ) {
+                    dist_t r = get<dist_t>( engine, 0, --unsampled_sz );
+                    if ( r < n ) {
+                        *out++ = *first;
+                        --n;
+                    }
+                }
+                return out;
+            }
+
+            template<typename PopulationIt, typename SampleIt, typename Distance>
+            static SampleIt sample_impl( Engine& engine, PopulationIt first, PopulationIt last,
+                                        std::input_iterator_tag, SampleIt out, Distance n ) {
+                using ValueType = typename std::iterator_traits<PopulationIt>::value_type;
+                std::vector<ValueType> reservoir;
+                reservoir.reserve( static_cast<std::size_t>( n ) );
+                for ( ; first != last && reservoir.size( ) < static_cast<std::size_t>( n ); ++first ) {
+                    reservoir.push_back( *first );
+                }
+                std::size_t k = reservoir.size( );
+                std::size_t i = k;
+                for ( ; first != last; ++first, ++i ) {
+                    std::size_t j = get<std::size_t>( engine, 0, i );
+                    if ( j < k ) {
+                        reservoir[j] = *first;
+                    }
+                }
+                return std::copy( reservoir.begin( ), reservoir.end( ), out );
+            }
+        public:
+#endif
+
             template<typename CharT>
             ILQVYA_NODISCARD static typename std::enable_if<details::is_supported_character<CharT>::value,
                                                             std::basic_string<CharT>>::type
@@ -1054,6 +1115,18 @@ namespace ilqvya {
         template<typename T, std::size_t N>
         static void shuffle( T ( &array )[N] ) {
             impl::shuffle( engine_instance( ), array );
+        }
+
+        template<typename PopulationIt, typename SampleIt, typename Distance>
+        static SampleIt sample( PopulationIt first, PopulationIt last, SampleIt out, Distance n ) {
+            return impl::sample( engine_instance( ), first, last, out, n );
+        }
+
+        template<template<typename...> class Container = std::vector, typename Range>
+        ILQVYA_NODISCARD static auto sample( const Range& range, std::size_t n ) -> typename std::enable_if<
+            details::is_iterator<decltype( std::begin( range ) )>::value,
+            Container<typename std::iterator_traits<decltype( std::begin( range ) )>::value_type>>::type {
+            return impl::template sample<Container>( engine_instance( ), range, n );
         }
 
         template<typename CharT>
@@ -1424,6 +1497,18 @@ namespace ilqvya {
         template<typename T, std::size_t N>
         void shuffle( T ( &array )[N] ) {
             impl::shuffle( m_engine, array );
+        }
+
+        template<typename PopulationIt, typename SampleIt, typename Distance>
+        SampleIt sample( PopulationIt first, PopulationIt last, SampleIt out, Distance n ) {
+            return impl::sample( m_engine, first, last, out, n );
+        }
+
+        template<template<typename...> class Container = std::vector, typename Range>
+        ILQVYA_NODISCARD auto sample( const Range& range, std::size_t n ) -> typename std::enable_if<
+            details::is_iterator<decltype( std::begin( range ) )>::value,
+            Container<typename std::iterator_traits<decltype( std::begin( range ) )>::value_type>>::type {
+            return impl::template sample<Container>( m_engine, range, n );
         }
 
         template<typename CharT>

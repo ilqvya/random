@@ -1988,3 +1988,51 @@ TEST_CASE( "get_string helper methods" ) {
     }
 }
 
+TEST_CASE( "Random::sample" ) {
+    std::vector<int> population = { 10, 20, 30, 40, 50, 60, 70, 80, 90, 100 };
+
+    // 1. Iterator range with output iterator
+    std::vector<int> out_sample;
+    Random.sample( population.begin( ), population.end( ), std::back_inserter( out_sample ), 4 );
+    REQUIRE( out_sample.size( ) == 4 );
+    for ( int val : out_sample ) {
+        REQUIRE( std::find( population.begin( ), population.end( ), val ) != population.end( ) );
+    }
+
+    // 2. Container to container overload (returns std::vector by default)
+    auto sampled_vec = Random.sample( population, 5 );
+    REQUIRE( sampled_vec.size( ) == 5 );
+    for ( int val : sampled_vec ) {
+        REQUIRE( std::find( population.begin( ), population.end( ), val ) != population.end( ) );
+    }
+
+    // 3. Container to custom container overload (e.g. std::deque)
+    auto sampled_deque = Random.sample<std::deque>( population, 3 );
+    REQUIRE( sampled_deque.size( ) == 3 );
+    for ( int val : sampled_deque ) {
+        REQUIRE( std::find( population.begin( ), population.end( ), val ) != population.end( ) );
+    }
+
+    // 4. Sample size 0
+    auto sample_zero = Random.sample( population, 0 );
+    REQUIRE( sample_zero.empty( ) );
+
+    // 5. Sample size >= population size
+    auto sample_all = Random.sample( population, population.size( ) + 5 );
+    REQUIRE( sample_all.size( ) == population.size( ) );
+
+    // 6. Random.sample with raw array
+    int raw_pop[] = { 1, 2, 3, 4, 5 };
+    auto sample_raw = Random.sample( raw_pop, 2 );
+    REQUIRE( sample_raw.size( ) == 2 );
+
+    // 7. random_local test
+    ilqvya::random_local rl;
+    auto rl_sampled = rl.sample( population, 4 );
+    REQUIRE( rl_sampled.size( ) == 4 );
+
+    std::vector<int> rl_iter_sampled;
+    rl.sample( population.begin( ), population.end( ), std::back_inserter( rl_iter_sampled ), 3 );
+    REQUIRE( rl_iter_sampled.size( ) == 3 );
+}
+
