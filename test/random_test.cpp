@@ -1411,6 +1411,12 @@ TEST_CASE( "Discussion #37: Choosing random value from an enum (C++26 Reflection
         seen.insert( Random.get<TestDifficulty>( ) );
     }
     REQUIRE( seen.size( ) == 4 );
+
+    // 5. random_local support for enum reflection
+    ilqvya::random_local rl;
+    TestDifficulty local_d = rl.get<TestDifficulty>( );
+    REQUIRE( ( local_d == TestDifficulty::Easy || local_d == TestDifficulty::Medium ||
+               local_d == TestDifficulty::Hard || local_d == TestDifficulty::Expert ) );
 }
 #endif
 
@@ -1616,6 +1622,16 @@ TEST_CASE( "random_local remaining methods and empty iterator get" ) {
     std::mt19937 different_engine{ 99999u };
     REQUIRE( !rl.is_equal( different_engine ) );
     REQUIRE( !Random.is_equal( different_engine ) );
+
+    ilqvya::random_local rl_clone{ rl.get_engine( ) };
+    REQUIRE( rl.is_equal( rl_clone ) );
+    REQUIRE( rl == rl_clone );
+    REQUIRE( !( rl != rl_clone ) );
+
+    ilqvya::random_local rl_diff{ 88888u };
+    REQUIRE( !rl.is_equal( rl_diff ) );
+    REQUIRE( rl != rl_diff );
+    REQUIRE( !( rl == rl_diff ) );
 
     std::vector<int> empty_vec;
     REQUIRE( Random.get( empty_vec.begin( ), empty_vec.end( ) ) == empty_vec.end( ) );

@@ -1137,6 +1137,17 @@ namespace ilqvya {
         ILQVYA_NODISCARD bool is_equal( const Engine& other ) const noexcept {
             return impl::is_equal( m_engine, other );
         }
+        ILQVYA_NODISCARD bool is_equal( const basic_random_local& other ) const noexcept {
+            return is_equal( other.m_engine );
+        }
+
+        friend bool operator==( const basic_random_local& lhs, const basic_random_local& rhs ) noexcept {
+            return lhs.is_equal( rhs );
+        }
+
+        friend bool operator!=( const basic_random_local& lhs, const basic_random_local& rhs ) noexcept {
+            return !( lhs == rhs );
+        }
         template<typename CharT, typename Traits>
         void serialize( std::basic_ostream<CharT, Traits>& ost ) const {
             impl::serialize( m_engine, ost );
