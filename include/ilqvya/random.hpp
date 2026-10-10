@@ -398,7 +398,7 @@ namespace ilqvya {
                 for ( std::size_t i = 0; i < size; ++i )
                     container.insert( std::end( container ), get( engine, from, to ) );
                 return container;
-            }
+            } // LCOV_EXCL_LINE
 
             template<template<typename...> class Container, typename Key, typename A, typename B,
                      typename C = typename std::common_type<A, B>::type>
@@ -411,7 +411,7 @@ namespace ilqvya {
                 for ( std::size_t i = 0; i < size; ++i )
                     container.insert( std::end( container ), get<common>( engine, start, end ) );
                 return container;
-            }
+            } // LCOV_EXCL_LINE
 
             template<template<typename...> class Container, typename A>
             ILQVYA_NODISCARD static
@@ -421,7 +421,7 @@ namespace ilqvya {
                 for ( std::size_t i = 0; i < size; ++i )
                     container.insert( std::end( container ), get( engine, start, end ) );
                 return container;
-            }
+            } // LCOV_EXCL_LINE
 
             template<template<typename...> class Container, typename Key, typename A, typename B,
                      typename C = typename std::common_type<A, B>::type>
@@ -433,7 +433,7 @@ namespace ilqvya {
                 for ( std::size_t i = 0; i < size; ++i )
                     container.insert( std::end( container ), get<common>( engine, start, end ) );
                 return container;
-            }
+            } // LCOV_EXCL_LINE
 
             template<template<typename AA, std::size_t NN, typename...> class Container, std::size_t N, typename A>
             ILQVYA_NODISCARD static
