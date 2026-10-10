@@ -199,6 +199,11 @@ TEST_CASE( "Type deduction for random byte numbers" ) {
     auto bounded_byte = Random.get( std::byte{ 10 }, std::byte{ 20 } );
     REQUIRE( static_cast<unsigned char>( bounded_byte ) >= 10 );
     REQUIRE( static_cast<unsigned char>( bounded_byte ) <= 20 );
+
+    // Inverted range for std::byte
+    auto inv_byte = Random.get( std::byte{ 20 }, std::byte{ 10 } );
+    REQUIRE( static_cast<unsigned char>( inv_byte ) >= 10 );
+    REQUIRE( static_cast<unsigned char>( inv_byte ) <= 20 );
 #endif
 }
 

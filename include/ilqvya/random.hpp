@@ -427,7 +427,11 @@ namespace ilqvya {
             get( Engine& engine, T from = details::byte_limits<T>::min( ),
                  T to = details::byte_limits<T>::max( ) ) {
                 using short_t = typename std::conditional<std::is_signed<T>::value, short, unsigned short>::type;
-                return static_cast<T>( get<short_t>( engine, static_cast<short_t>( from ), static_cast<short_t>( to ) ) );
+                if ( from == to )
+                    return from;
+                if ( from < to )
+                    return static_cast<T>( get<short_t>( engine, static_cast<short_t>( from ), static_cast<short_t>( to ) ) );
+                return static_cast<T>( get<short_t>( engine, static_cast<short_t>( to ), static_cast<short_t>( from ) ) );
             }
 
             template<typename Key, typename A, typename B, typename C = typename std::common_type<A, B>::type>
@@ -444,13 +448,14 @@ namespace ilqvya {
             ILQVYA_NODISCARD static typename std::enable_if<details::is_supported_character<T>::value, T>::type
             get( Engine& engine, T from = ( std::numeric_limits<T>::min )( ),
                  T to = ( std::numeric_limits<T>::max )( ) ) {
+                using int_t = typename std::conditional<std::is_signed<T>::value, std::int64_t, std::uint64_t>::type;
                 if ( from == to )
                     return from;
                 if ( from < to )
-                    return static_cast<T>( IntegerDist<std::int64_t>{ static_cast<std::int64_t>( from ),
-                                                                      static_cast<std::int64_t>( to ) }( engine ) );
-                return static_cast<T>( IntegerDist<std::int64_t>{ static_cast<std::int64_t>( to ),
-                                                                  static_cast<std::int64_t>( from ) }( engine ) );
+                    return static_cast<T>( IntegerDist<int_t>{ static_cast<int_t>( from ),
+                                                               static_cast<int_t>( to ) }( engine ) );
+                return static_cast<T>( IntegerDist<int_t>{ static_cast<int_t>( to ),
+                                                           static_cast<int_t>( from ) }( engine ) );
             }
 
             template<typename T>
