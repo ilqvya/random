@@ -1459,6 +1459,39 @@ TEST_CASE( "random_local API coverage" ) {
     auto rl_val = rl( 1, 10 );
     REQUIRE( rl_val >= 1 );
     REQUIRE( rl_val <= 10 );
+
+    // Constructor with explicit seed
+    ilqvya::random_local rl_seed{ 42u };
+    ilqvya::random_local rl_seed2{ 42u };
+    REQUIRE( rl_seed.get( 1, 1000 ) == rl_seed2.get( 1, 1000 ) );
+
+    // Constructor with existing engine
+    std::mt19937 eng{ 12345u };
+    ilqvya::random_local rl_eng{ eng };
+    REQUIRE( rl_eng.engine( ) == eng );
+
+    // Constructor with custom seeder
+    struct custom_seeder {
+        std::seed_seq seq{ 1, 2, 3, 4 };
+        std::seed_seq& operator( )( ) { return seq; }
+    };
+    using local_custom_seeder_t = ilqvya::basic_random_local<std::mt19937, custom_seeder>;
+    custom_seeder cs1, cs2;
+    local_custom_seeder_t rl_seeder1{ cs1 };
+    local_custom_seeder_t rl_seeder2{ cs2 };
+    REQUIRE( rl_seeder1.get( 1, 1000 ) == rl_seeder2.get( 1, 1000 ) );
+
+    // Constructor with engine and seeder
+    std::mt19937 eng_for_both{ 999u };
+    custom_seeder cs3, cs4;
+    local_custom_seeder_t rl_both{ eng_for_both, cs3 };
+    local_custom_seeder_t rl_seeder3{ cs4 };
+    REQUIRE( rl_both.get( 1, 1000 ) == rl_seeder3.get( 1, 1000 ) );
+
+    // Constructor with seed sequence
+    std::seed_seq sseq{ 10, 20, 30 };
+    ilqvya::random_local rl_sseq{ sseq };
+    REQUIRE( rl_sseq.get( 1, 10 ) >= 1 );
 }
 
 TEST_CASE( "weighted_result pair constructors and variadic get" ) {

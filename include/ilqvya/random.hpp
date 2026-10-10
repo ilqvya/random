@@ -1073,6 +1073,24 @@ namespace ilqvya {
 
         basic_random_local( ) = default;
 
+        explicit basic_random_local( const typename Engine::result_type seed_val ) : m_engine( seed_val ) {}
+
+        template<typename Sseq,
+                 typename = typename std::enable_if<!std::is_same<typename std::decay<Sseq>::type, basic_random_local>::value &&
+                                                    !std::is_same<typename std::decay<Sseq>::type, Engine>::value &&
+                                                    !std::is_same<typename std::decay<Sseq>::type, Seeder>::value &&
+                                                    !std::is_convertible<Sseq, typename Engine::result_type>::value>::type>
+        explicit basic_random_local( Sseq& sseq ) : m_engine( sseq ) {}
+
+        explicit basic_random_local( Engine engine ) : m_engine( std::move( engine ) ) {}
+
+        explicit basic_random_local( Seeder& seeder ) : m_engine( make_seeded_engine( seeder ) ) {}
+
+        basic_random_local( Engine engine, Seeder& seeder ) : m_engine( std::move( engine ) ) {
+            auto&& seq = seeder( );
+            m_engine.seed( seq );
+        }
+
         ILQVYA_NODISCARD static constexpr typename Engine::result_type( min )( ) noexcept { return impl::min( ); }
         ILQVYA_NODISCARD static constexpr typename Engine::result_type( max )( ) noexcept { return impl::max( ); }
         void discard( const unsigned long long z ) noexcept { impl::discard( m_engine, z ); }
@@ -1272,6 +1290,7 @@ namespace ilqvya {
 
     private:
         static Engine make_seeded_engine( ) { return Engine{ Seeder{ }( ) }; }
+        static Engine make_seeded_engine( Seeder& seeder ) { return Engine{ seeder( ) }; }
         Engine m_engine{ make_seeded_engine( ) };
     };
 
