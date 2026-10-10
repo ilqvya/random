@@ -500,6 +500,11 @@ namespace ilqvya {
                 return get( engine, std::begin( container ), std::end( container ) );
             }
 
+            template<typename Container>
+            static auto get( Engine&, const Container&& ) -> typename std::enable_if<
+                details::is_iterator<decltype( std::begin( std::declval<const Container&>( ) ) )>::value,
+                void>::type = delete;
+
             template<template<typename...> class Container, typename A>
             ILQVYA_NODISCARD static Container<A>
             get( Engine& engine, A from, A to, std::size_t size ) {
@@ -1060,6 +1065,11 @@ namespace ilqvya {
             return impl::get( engine_instance( ), container );
         }
 
+        template<typename Container>
+        static auto get( const Container&& ) -> typename std::enable_if<
+            details::is_iterator<decltype( std::begin( std::declval<const Container&>( ) ) )>::value,
+            void>::type = delete;
+
         template<template<typename...> class Container, typename A>
         ILQVYA_NODISCARD static Container<A> get( A from, A to, std::size_t size ) {
             return impl::template get<Container, A>( engine_instance( ), from, to, size );
@@ -1474,6 +1484,11 @@ namespace ilqvya {
                                     decltype( std::begin( container ) )>::type {
             return impl::get( m_engine, container );
         }
+
+        template<typename Container>
+        auto get( const Container&& ) -> typename std::enable_if<
+            details::is_iterator<decltype( std::begin( std::declval<const Container&>( ) ) )>::value,
+            void>::type = delete;
 
         template<template<typename...> class Container, typename A>
         ILQVYA_NODISCARD Container<A> get( A from, A to, std::size_t size ) {

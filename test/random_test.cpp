@@ -1742,6 +1742,11 @@ TEST_CASE( "Weighted get with lvalue container remains valid" ) {
     static_assert( std::is_same<decltype( it_rl ), std::vector<std::pair<int, int>>::iterator>::value,
                    "random_local.get<weight> on non-const container must return mutable iterator" );
     REQUIRE( it_rl != pairs.end( ) );
+
+    // Verify compile-time rejection of rvalue containers
+    std::vector<int> lvalue_vec = { 1, 2, 3 };
+    auto it_lval = Random.get( lvalue_vec );
+    REQUIRE( it_lval != lvalue_vec.end( ) );
 }
 
 TEST_CASE( "Empty initializer_list throws invalid_argument" ) {
