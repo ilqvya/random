@@ -1519,6 +1519,12 @@ TEST_CASE( "Random characters inverted range" ) {
     char8_t c8 = Random.get<char8_t>( u8'z', u8'a' );
     REQUIRE( c8 >= u8'a' && c8 <= u8'z' );
 #endif
+
+    // Zero gap characters
+    REQUIRE( Random.get<char>( 'm', 'm' ) == 'm' );
+    REQUIRE( Random.get<wchar_t>( L'm', L'm' ) == L'm' );
+    REQUIRE( Random.get<char16_t>( u'm', u'm' ) == u'm' );
+    REQUIRE( Random.get<char32_t>( U'm', U'm' ) == U'm' );
 }
 
 TEST_CASE( "Random real numbers inverted range" ) {

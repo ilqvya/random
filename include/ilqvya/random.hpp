@@ -366,6 +366,8 @@ namespace ilqvya {
             ILQVYA_NODISCARD static typename std::enable_if<details::is_uniform_int<T>::value, T>::type
             get( Engine& engine, T from = ( std::numeric_limits<T>::min )( ),
                  T to = ( std::numeric_limits<T>::max )( ) ) {
+                if ( from == to )
+                    return from;
                 if ( from < to )
                     return IntegerDist<T>{ from, to }( engine );
                 return IntegerDist<T>{ to, from }( engine );
@@ -374,6 +376,8 @@ namespace ilqvya {
             template<typename T>
             ILQVYA_NODISCARD static typename std::enable_if<details::is_uniform_real<T>::value, T>::type
             get( Engine& engine, T from = T( 0 ), T to = T( 1 ) ) {
+                if ( from == to )
+                    return from;
                 if ( from < to )
                     return RealDist<T>{ from, to }( engine );
                 return RealDist<T>{ to, from }( engine );
@@ -401,6 +405,8 @@ namespace ilqvya {
             ILQVYA_NODISCARD static typename std::enable_if<details::is_supported_character<T>::value, T>::type
             get( Engine& engine, T from = ( std::numeric_limits<T>::min )( ),
                  T to = ( std::numeric_limits<T>::max )( ) ) {
+                if ( from == to )
+                    return from;
                 if ( from < to )
                     return static_cast<T>( IntegerDist<std::int64_t>{ static_cast<std::int64_t>( from ),
                                                                       static_cast<std::int64_t>( to ) }( engine ) );
