@@ -44,6 +44,7 @@ SOFTWARE.
 #include <istream>
 #include <array>
 #include <cstdint>
+#include <cmath>
 
 #if defined(__has_cpp_attribute)
 #  if __has_cpp_attribute(nodiscard) && __cplusplus >= 201703L
@@ -267,9 +268,21 @@ namespace effolkronium {
             template<typename T>
             EFFOLKRONIUM_NODISCARD static typename std::enable_if<details::is_uniform_real<T>::value, T>::type
             get( Engine& engine, T from = T( 0 ), T to = T( 1 ) ) {
-                if( from < to )
-                    return RealDist<T>{ from, to }( engine );
-                return RealDist<T>{ to, from }( engine );
+                if( from > to )
+                    std::swap( from, to );
+                if( from == to )
+                    return from;
+                if( std::isinf( to - from ) ) {
+                    const T half_from = from / T( 2 );
+                    const T half_to = to / T( 2 );
+                    const double prob_neg = static_cast<double>( ( -half_from ) / ( ( -half_from ) + half_to ) );
+                    if( BoolDist{ prob_neg }( engine ) ) {
+                        return RealDist<T>{ from, T( 0 ) }( engine );
+                    } else {
+                        return RealDist<T>{ T( 0 ), to }( engine );
+                    }
+                }
+                return RealDist<T>{ from, to }( engine );
             }
 
             template<typename T>

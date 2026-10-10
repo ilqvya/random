@@ -1181,3 +1181,126 @@ TEST_CASE("Uniform instance and static calling syntax across all generator types
     REQUIRE(loc_val_functor <= 10);
 }
 
+TEST_CASE("Correctness: Default real range [0.0, 1.0) and full range overflow safety") {
+    // 1. Default float range without arguments
+    for (int i = 0; i < 50; ++i) {
+        float f = Random.get<float>();
+        REQUIRE(f >= 0.0f);
+        REQUIRE(f < 1.0f);
+    }
+
+    // 2. Default double range without arguments
+    for (int i = 0; i < 50; ++i) {
+        double d = Random.get<double>();
+        REQUIRE(d >= 0.0);
+        REQUIRE(d < 1.0);
+    }
+
+    // 3. Full range float lowest() to max() - must be finite, never inf or nan
+    bool has_neg_float = false;
+    bool has_pos_float = false;
+    for (int i = 0; i < 100; ++i) {
+        float f = Random.get( (std::numeric_limits<float>::lowest)(), (std::numeric_limits<float>::max)() );
+        REQUIRE(std::isfinite(f));
+        if (f < 0.0f) has_neg_float = true;
+        if (f > 0.0f) has_pos_float = true;
+    }
+    REQUIRE(has_neg_float);
+    REQUIRE(has_pos_float);
+
+    // 4. Full range double lowest() to max() - must be finite, never inf or nan
+    bool has_neg_double = false;
+    bool has_pos_double = false;
+    for (int i = 0; i < 100; ++i) {
+        double d = Random.get( (std::numeric_limits<double>::lowest)(), (std::numeric_limits<double>::max)() );
+        REQUIRE(std::isfinite(d));
+        if (d < 0.0) has_neg_double = true;
+        if (d > 0.0) has_pos_double = true;
+    }
+    REQUIRE(has_neg_double);
+    REQUIRE(has_pos_double);
+}
+
+TEST_CASE("Correctness: Signed integer weights in maps") {
+    // Signed int
+    std::map<std::string, int> int_map = { {"A", 10}, {"B", 0}, {"C", 20} };
+    for (int i = 0; i < 50; ++i) {
+        auto it = Random.get<Random_t::weight>(int_map);
+        REQUIRE(it != int_map.end());
+        REQUIRE(it->second > 0); // "B" with 0 weight must never be selected
+        REQUIRE((it->first == "A" || it->first == "C"));
+    }
+
+    // Signed long
+    std::unordered_map<std::string, long> long_map = { {"X", 100l}, {"Y", 0l} };
+    for (int i = 0; i < 20; ++i) {
+        auto it = Random.get<Random_t::weight>(long_map);
+        REQUIRE(it != long_map.end());
+        REQUIRE(it->first == "X");
+    }
+
+    // All-zero signed weights returns end()
+    std::map<std::string, int> all_zero = { {"Zero1", 0}, {"Zero2", 0} };
+    REQUIRE(Random.get<Random_t::weight>(all_zero) == all_zero.end());
+}
+
+TEST_CASE("Correctness: Weighted real selection with subnormal weights and no end() fallthrough") {
+    // Map with tiny / subnormal float weights
+    float subnormal = std::numeric_limits<float>::denorm_min();
+    std::map<std::string, float> tiny_map = {
+        {"Tiny1", subnormal},
+        {"Tiny2", subnormal * 2.0f},
+        {"Zero", 0.0f}
+    };
+
+    for (int i = 0; i < 50; ++i) {
+        auto it = Random.get<Random_t::weight>(tiny_map);
+        REQUIRE(it != tiny_map.end());
+        REQUIRE(it->first != "Zero");
+    }
+
+    // Map where accumulated floating point rounding could previously cause loop fallthrough
+    std::map<std::string, double> sum_rounding_map = {
+        {"One", 0.1},
+        {"Two", 0.2},
+        {"Three", 0.3}
+    };
+    for (int i = 0; i < 100; ++i) {
+        auto it = Random.get<Random_t::weight>(sum_rounding_map);
+        REQUIRE(it != sum_rounding_map.end());
+    }
+}
+
+TEST_CASE("Correctness: Container<A, N> value initialization") {
+    // Array of elements
+    auto char_arr = Random.get<std::array, 5>('A', 'Z');
+    REQUIRE(5 == char_arr.size());
+    for (char c : char_arr) {
+        REQUIRE(c >= 'A');
+        REQUIRE(c <= 'Z');
+    }
+}
+
+TEST_CASE("Correctness: Expression SFINAE for has_reserve and has_insert with overloaded member functions") {
+    struct OverloadedMembers {
+        void reserve() {}
+        void reserve(std::size_t) {}
+        void reserve(std::size_t, int) {}
+
+        void insert() {}
+        void insert(int) {}
+    };
+
+    static_assert(effolkronium::details::has_reserve<std::vector<int>>::value, "vector has reserve");
+    static_assert(!effolkronium::details::has_reserve<std::array<int, 4>>::value, "array does not have reserve");
+    static_assert(!effolkronium::details::has_reserve<std::set<int>>::value, "set does not have reserve");
+
+    static_assert(effolkronium::details::has_insert<std::vector<int>>::value, "vector has insert");
+    static_assert(effolkronium::details::has_insert<std::set<int>>::value, "set has insert");
+    static_assert(!effolkronium::details::has_insert<std::array<int, 4>>::value, "array does not have insert");
+
+    // Overloaded reserve matches expression SFINAE reserve(size_t) without ambiguous address taking
+    static_assert(effolkronium::details::has_reserve<OverloadedMembers>::value, "overloaded reserve matches");
+}
+
+
