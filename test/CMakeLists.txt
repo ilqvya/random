@@ -24,15 +24,6 @@ function(add_basic_test TARGET COMPILE_DEFS TEST_SOURCES)
     target_compile_definitions(${TARGET} PRIVATE ${COMPILE_DEFS})
     target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     
-    if(MSVC)
-        target_compile_definitions(${TARGET} PRIVATE
-            _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
-            _SILENCE_ALL_CXX20_DEPRECATION_WARNINGS
-            _SILENCE_ALL_CXX23_DEPRECATION_WARNINGS
-            _SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS
-            _HAS_DEPRECATED_UNCAUGHT_EXCEPTION=1
-        )
-    endif()
     
     if(NOT CMAKE_CXX_STANDARD)
         set_target_properties(${TARGET} PROPERTIES

@@ -1,11 +1,11 @@
-#define CATCH_CONFIG_MAIN // This tells Catch to provide a main() - only do this in one cpp file
-#include "catch.hpp"
+#include "test_framework.hpp"
 #include <limits>
 #include <sstream>
 #include <array>
 #include <thread>
 #include <vector>
 #include <map>
+#include <set>
 #include <unordered_map>
 
 #ifdef _WIN32 // Unit test for case when builds fail 'cause of min\max macro included from Windows.h before random.hpp
