@@ -609,41 +609,41 @@ namespace ilqvya {
 
     } // namespace details
 
-#define ILQVYA_WEIGHTED_VARIADIC_MEMBERS(STATIC_KEYWORD) \
+#define ILQVYA_WEIGHTED_VARIADIC_MEMBERS(...) \
     template<typename Target, typename Weight = double> \
-    ILQVYA_NODISCARD STATIC_KEYWORD Target get( details::weighted_result<Target, Weight> p1, details::weighted_result<Target, Weight> p2 ) { \
+    ILQVYA_NODISCARD __VA_ARGS__ Target get( details::weighted_result<Target, Weight> p1, details::weighted_result<Target, Weight> p2 ) { \
         return get<Target, Weight>({ p1, p2 }); \
     } \
     template<typename Target, typename Weight = double> \
-    ILQVYA_NODISCARD STATIC_KEYWORD Target get( details::weighted_result<Target, Weight> p1, details::weighted_result<Target, Weight> p2, details::weighted_result<Target, Weight> p3 ) { \
+    ILQVYA_NODISCARD __VA_ARGS__ Target get( details::weighted_result<Target, Weight> p1, details::weighted_result<Target, Weight> p2, details::weighted_result<Target, Weight> p3 ) { \
         return get<Target, Weight>({ p1, p2, p3 }); \
     } \
     template<typename Target, typename Weight = double> \
-    ILQVYA_NODISCARD STATIC_KEYWORD Target get( details::weighted_result<Target, Weight> p1, details::weighted_result<Target, Weight> p2, details::weighted_result<Target, Weight> p3, details::weighted_result<Target, Weight> p4 ) { \
+    ILQVYA_NODISCARD __VA_ARGS__ Target get( details::weighted_result<Target, Weight> p1, details::weighted_result<Target, Weight> p2, details::weighted_result<Target, Weight> p3, details::weighted_result<Target, Weight> p4 ) { \
         return get<Target, Weight>({ p1, p2, p3, p4 }); \
     } \
     template<typename Target, typename Weight = double> \
-    ILQVYA_NODISCARD STATIC_KEYWORD Target get( details::weighted_result<Target, Weight> p1, details::weighted_result<Target, Weight> p2, details::weighted_result<Target, Weight> p3, details::weighted_result<Target, Weight> p4, details::weighted_result<Target, Weight> p5 ) { \
+    ILQVYA_NODISCARD __VA_ARGS__ Target get( details::weighted_result<Target, Weight> p1, details::weighted_result<Target, Weight> p2, details::weighted_result<Target, Weight> p3, details::weighted_result<Target, Weight> p4, details::weighted_result<Target, Weight> p5 ) { \
         return get<Target, Weight>({ p1, p2, p3, p4, p5 }); \
     } \
     template<typename Target, typename Weight = double> \
-    ILQVYA_NODISCARD STATIC_KEYWORD Target get( details::weighted_result<Target, Weight> p1, details::weighted_result<Target, Weight> p2, details::weighted_result<Target, Weight> p3, details::weighted_result<Target, Weight> p4, details::weighted_result<Target, Weight> p5, details::weighted_result<Target, Weight> p6 ) { \
+    ILQVYA_NODISCARD __VA_ARGS__ Target get( details::weighted_result<Target, Weight> p1, details::weighted_result<Target, Weight> p2, details::weighted_result<Target, Weight> p3, details::weighted_result<Target, Weight> p4, details::weighted_result<Target, Weight> p5, details::weighted_result<Target, Weight> p6 ) { \
         return get<Target, Weight>({ p1, p2, p3, p4, p5, p6 }); \
     } \
     template<typename Target, typename Weight = double> \
-    ILQVYA_NODISCARD STATIC_KEYWORD Target get( details::weighted_result<Target, Weight> p1, details::weighted_result<Target, Weight> p2, details::weighted_result<Target, Weight> p3, details::weighted_result<Target, Weight> p4, details::weighted_result<Target, Weight> p5, details::weighted_result<Target, Weight> p6, details::weighted_result<Target, Weight> p7 ) { \
+    ILQVYA_NODISCARD __VA_ARGS__ Target get( details::weighted_result<Target, Weight> p1, details::weighted_result<Target, Weight> p2, details::weighted_result<Target, Weight> p3, details::weighted_result<Target, Weight> p4, details::weighted_result<Target, Weight> p5, details::weighted_result<Target, Weight> p6, details::weighted_result<Target, Weight> p7 ) { \
         return get<Target, Weight>({ p1, p2, p3, p4, p5, p6, p7 }); \
     } \
     template<typename Target, typename Weight = double> \
-    ILQVYA_NODISCARD STATIC_KEYWORD Target get( details::weighted_result<Target, Weight> p1, details::weighted_result<Target, Weight> p2, details::weighted_result<Target, Weight> p3, details::weighted_result<Target, Weight> p4, details::weighted_result<Target, Weight> p5, details::weighted_result<Target, Weight> p6, details::weighted_result<Target, Weight> p7, details::weighted_result<Target, Weight> p8 ) { \
+    ILQVYA_NODISCARD __VA_ARGS__ Target get( details::weighted_result<Target, Weight> p1, details::weighted_result<Target, Weight> p2, details::weighted_result<Target, Weight> p3, details::weighted_result<Target, Weight> p4, details::weighted_result<Target, Weight> p5, details::weighted_result<Target, Weight> p6, details::weighted_result<Target, Weight> p7, details::weighted_result<Target, Weight> p8 ) { \
         return get<Target, Weight>({ p1, p2, p3, p4, p5, p6, p7, p8 }); \
     } \
     template<typename Target, typename Weight = double> \
-    ILQVYA_NODISCARD STATIC_KEYWORD Target get( details::weighted_result<Target, Weight> p1, details::weighted_result<Target, Weight> p2, details::weighted_result<Target, Weight> p3, details::weighted_result<Target, Weight> p4, details::weighted_result<Target, Weight> p5, details::weighted_result<Target, Weight> p6, details::weighted_result<Target, Weight> p7, details::weighted_result<Target, Weight> p8, details::weighted_result<Target, Weight> p9 ) { \
+    ILQVYA_NODISCARD __VA_ARGS__ Target get( details::weighted_result<Target, Weight> p1, details::weighted_result<Target, Weight> p2, details::weighted_result<Target, Weight> p3, details::weighted_result<Target, Weight> p4, details::weighted_result<Target, Weight> p5, details::weighted_result<Target, Weight> p6, details::weighted_result<Target, Weight> p7, details::weighted_result<Target, Weight> p8, details::weighted_result<Target, Weight> p9 ) { \
         return get<Target, Weight>({ p1, p2, p3, p4, p5, p6, p7, p8, p9 }); \
     } \
     template<typename Target, typename Weight = double> \
-    ILQVYA_NODISCARD STATIC_KEYWORD Target get( details::weighted_result<Target, Weight> p1, details::weighted_result<Target, Weight> p2, details::weighted_result<Target, Weight> p3, details::weighted_result<Target, Weight> p4, details::weighted_result<Target, Weight> p5, details::weighted_result<Target, Weight> p6, details::weighted_result<Target, Weight> p7, details::weighted_result<Target, Weight> p8, details::weighted_result<Target, Weight> p9, details::weighted_result<Target, Weight> p10 ) { \
+    ILQVYA_NODISCARD __VA_ARGS__ Target get( details::weighted_result<Target, Weight> p1, details::weighted_result<Target, Weight> p2, details::weighted_result<Target, Weight> p3, details::weighted_result<Target, Weight> p4, details::weighted_result<Target, Weight> p5, details::weighted_result<Target, Weight> p6, details::weighted_result<Target, Weight> p7, details::weighted_result<Target, Weight> p8, details::weighted_result<Target, Weight> p9, details::weighted_result<Target, Weight> p10 ) { \
         return get<Target, Weight>({ p1, p2, p3, p4, p5, p6, p7, p8, p9, p10 }); \
     }
 
