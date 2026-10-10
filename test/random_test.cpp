@@ -424,6 +424,20 @@ TEST_CASE( "discard" ) {
     REQUIRE( firstVal == secondVal );
 }
 
+TEST_CASE( "stream operators << and >>" ) {
+    std::stringstream strStream;
+
+    strStream << Random;
+    Random.discard( 500 );
+    auto firstVal = Random.get( );
+
+    strStream >> Random;
+    Random.discard( 500 );
+    auto secondVal = Random.get( );
+
+    REQUIRE( firstVal == secondVal );
+}
+
 TEST_CASE( "Not equal" ) {
     std::stringstream strStream;
 
@@ -1566,6 +1580,13 @@ TEST_CASE( "random_local remaining methods and empty iterator get" ) {
     std::stringstream ss;
     rl.serialize( ss );
     rl.deserialize( ss );
+
+    std::stringstream ss2;
+    ss2 << rl;
+    auto before_val = rl.get( );
+    ss2 >> rl;
+    auto after_val = rl.get( );
+    REQUIRE( before_val == after_val );
 
     std::mt19937 engine_copy = rl.get_engine( );
     REQUIRE( rl.is_equal( engine_copy ) );

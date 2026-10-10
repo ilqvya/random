@@ -809,6 +809,20 @@ namespace ilqvya {
             impl::deserialize( engine_instance( ), ist );
         }
 
+        template<typename CharT, typename Traits>
+        friend std::basic_ostream<CharT, Traits>& operator<<( std::basic_ostream<CharT, Traits>& ost,
+                                                              const basic_random_base& rnd ) {
+            rnd.serialize( ost );
+            return ost;
+        }
+
+        template<typename CharT, typename Traits>
+        friend std::basic_istream<CharT, Traits>& operator>>( std::basic_istream<CharT, Traits>& ist,
+                                                              basic_random_base& rnd ) {
+            rnd.deserialize( ist );
+            return ist;
+        }
+
         template<typename T>
         ILQVYA_NODISCARD static typename std::enable_if<details::is_uniform_int<T>::value, T>::type
         get( T from = ( std::numeric_limits<T>::min )( ), T to = ( std::numeric_limits<T>::max )( ) ) {
@@ -1121,6 +1135,20 @@ namespace ilqvya {
         template<typename CharT, typename Traits>
         void deserialize( std::basic_istream<CharT, Traits>& ist ) {
             impl::deserialize( m_engine, ist );
+        }
+
+        template<typename CharT, typename Traits>
+        friend std::basic_ostream<CharT, Traits>& operator<<( std::basic_ostream<CharT, Traits>& ost,
+                                                              const basic_random_local& rnd ) {
+            rnd.serialize( ost );
+            return ost;
+        }
+
+        template<typename CharT, typename Traits>
+        friend std::basic_istream<CharT, Traits>& operator>>( std::basic_istream<CharT, Traits>& ist,
+                                                              basic_random_local& rnd ) {
+            rnd.deserialize( ist );
+            return ist;
         }
 
         template<typename T>
