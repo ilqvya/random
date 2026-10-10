@@ -1,6 +1,10 @@
 #ifndef ILQVYA_TEST_FRAMEWORK_HPP
 #define ILQVYA_TEST_FRAMEWORK_HPP
 
+#if defined(_WIN32) && !defined(NOMINMAX)
+#    define NOMINMAX
+#endif
+
 #include <chrono>
 #include <cstddef>
 #include <cstdint>

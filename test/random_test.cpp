@@ -15,6 +15,11 @@
 #include "ilqvya/random.hpp"
 #include "effolkronium/random.hpp"
 
+#ifdef _WIN32
+#    undef min
+#    undef max
+#endif
+
 #ifdef RANDOM_LOCAL
 auto Random = ilqvya::random_local{ };
 using Random_t = ilqvya::random_local;
