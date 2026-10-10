@@ -52,6 +52,7 @@ SOFTWARE.
 #include <cstdint>
 #include <cstddef>
 #include <stdexcept>
+#include <string>
 
 #if defined( _MSVC_LANG )
 #    define ILQVYA_CPLUSPLUS _MSVC_LANG
@@ -726,6 +727,47 @@ namespace ilqvya {
             static void shuffle( Engine& engine, T ( &array )[N] ) {
                 shuffle( engine, std::begin( array ), std::end( array ) );
             }
+
+            template<typename CharT>
+            ILQVYA_NODISCARD static typename std::enable_if<details::is_supported_character<CharT>::value,
+                                                            std::basic_string<CharT>>::type
+            get_string( Engine& engine, std::size_t length, CharT from = ( std::numeric_limits<CharT>::min )( ),
+                        CharT to = ( std::numeric_limits<CharT>::max )( ) ) {
+                std::basic_string<CharT> result;
+                result.reserve( length );
+                for ( std::size_t i = 0; i < length; ++i )
+                    result.push_back( get<CharT>( engine, from, to ) );
+                return result;
+            }
+
+            template<typename Container>
+            ILQVYA_NODISCARD static auto get_string( Engine& engine, std::size_t length, const Container& charset ) ->
+                typename std::enable_if<
+                    details::is_iterator<decltype( std::begin( charset ) )>::value,
+                    std::basic_string<typename std::iterator_traits<decltype( std::begin( charset ) )>::value_type>>::type {
+                using CharT = typename std::iterator_traits<decltype( std::begin( charset ) )>::value_type;
+                if ( std::begin( charset ) == std::end( charset ) )
+                    throw std::invalid_argument( "Random::get_string: charset must not be empty" );
+                std::basic_string<CharT> result;
+                result.reserve( length );
+                for ( std::size_t i = 0; i < length; ++i )
+                    result.push_back( *get( engine, charset ) );
+                return result;
+            }
+
+            template<typename CharT, std::size_t N>
+            ILQVYA_NODISCARD static typename std::enable_if<details::is_supported_character<CharT>::value,
+                                                            std::basic_string<CharT>>::type
+            get_string( Engine& engine, std::size_t length, const CharT ( &literal )[N] ) {
+                static_assert( N > 1, "Random::get_string: string literal charset must not be empty" );
+                std::basic_string<CharT> result;
+                result.reserve( length );
+                for ( std::size_t i = 0; i < length; ++i ) {
+                    const std::size_t idx = get<std::size_t>( engine, 0, N - 2 );
+                    result.push_back( literal[idx] );
+                }
+                return result;
+            }
         };
 
     } // namespace details
@@ -1045,6 +1087,29 @@ namespace ilqvya {
         template<typename T, std::size_t N>
         static void shuffle( T ( &array )[N] ) {
             impl::shuffle( engine_instance( ), array );
+        }
+
+        template<typename CharT>
+        ILQVYA_NODISCARD static typename std::enable_if<details::is_supported_character<CharT>::value,
+                                                        std::basic_string<CharT>>::type
+        get_string( std::size_t length, CharT from = ( std::numeric_limits<CharT>::min )( ),
+                    CharT to = ( std::numeric_limits<CharT>::max )( ) ) {
+            return impl::template get_string<CharT>( engine_instance( ), length, from, to );
+        }
+
+        template<typename Container>
+        ILQVYA_NODISCARD static auto get_string( std::size_t length, const Container& charset ) ->
+            typename std::enable_if<
+                details::is_iterator<decltype( std::begin( charset ) )>::value,
+                std::basic_string<typename std::iterator_traits<decltype( std::begin( charset ) )>::value_type>>::type {
+            return impl::get_string( engine_instance( ), length, charset );
+        }
+
+        template<typename CharT, std::size_t N>
+        ILQVYA_NODISCARD static typename std::enable_if<details::is_supported_character<CharT>::value,
+                                                        std::basic_string<CharT>>::type
+        get_string( std::size_t length, const CharT ( &literal )[N] ) {
+            return impl::get_string( engine_instance( ), length, literal );
         }
 
         template<typename... Args>
@@ -1409,6 +1474,29 @@ namespace ilqvya {
         template<typename T, std::size_t N>
         void shuffle( T ( &array )[N] ) {
             impl::shuffle( m_engine, array );
+        }
+
+        template<typename CharT>
+        ILQVYA_NODISCARD typename std::enable_if<details::is_supported_character<CharT>::value,
+                                                std::basic_string<CharT>>::type
+        get_string( std::size_t length, CharT from = ( std::numeric_limits<CharT>::min )( ),
+                    CharT to = ( std::numeric_limits<CharT>::max )( ) ) {
+            return impl::template get_string<CharT>( m_engine, length, from, to );
+        }
+
+        template<typename Container>
+        ILQVYA_NODISCARD auto get_string( std::size_t length, const Container& charset ) ->
+            typename std::enable_if<
+                details::is_iterator<decltype( std::begin( charset ) )>::value,
+                std::basic_string<typename std::iterator_traits<decltype( std::begin( charset ) )>::value_type>>::type {
+            return impl::get_string( m_engine, length, charset );
+        }
+
+        template<typename CharT, std::size_t N>
+        ILQVYA_NODISCARD typename std::enable_if<details::is_supported_character<CharT>::value,
+                                                std::basic_string<CharT>>::type
+        get_string( std::size_t length, const CharT ( &literal )[N] ) {
+            return impl::get_string( m_engine, length, literal );
         }
 
         template<typename... Args>

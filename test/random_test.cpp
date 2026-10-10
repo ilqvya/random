@@ -1911,3 +1911,80 @@ TEST_CASE( "default_engine selection: philox4x64 in C++26 vs mt19937 fallback" )
     (void)val2;
 }
 
+TEST_CASE( "get_string helper methods" ) {
+    // 1. Range of characters
+    auto s_alpha = Random.get_string( 16, 'a', 'z' );
+    REQUIRE( s_alpha.size( ) == 16 );
+    for ( char c : s_alpha ) {
+        REQUIRE( ( c >= 'a' && c <= 'z' ) );
+    }
+
+    auto s_digits = Random.get_string( 8, '0', '9' );
+    REQUIRE( s_digits.size( ) == 8 );
+    for ( char c : s_digits ) {
+        REQUIRE( ( c >= '0' && c <= '9' ) );
+    }
+
+    // Zero-length string
+    auto s_empty = Random.get_string( 0, 'a', 'z' );
+    REQUIRE( s_empty.empty( ) );
+
+    // Inverted character range
+    auto s_inv = Random.get_string( 10, 'z', 'a' );
+    REQUIRE( s_inv.size( ) == 10 );
+    for ( char c : s_inv ) {
+        REQUIRE( ( c >= 'a' && c <= 'z' ) );
+    }
+
+    // 2. Custom string literal charset
+    auto s_hex = Random.get_string( 32, "0123456789abcdef" );
+    REQUIRE( s_hex.size( ) == 32 );
+    for ( char c : s_hex ) {
+        REQUIRE( ( ( c >= '0' && c <= '9' ) || ( c >= 'a' && c <= 'f' ) ) );
+    }
+
+    // 3. Container charset (std::string)
+    std::string charset_str = "ABCXYZ";
+    auto s_from_str = Random.get_string( 12, charset_str );
+    REQUIRE( s_from_str.size( ) == 12 );
+    for ( char c : s_from_str ) {
+        REQUIRE( charset_str.find( c ) != std::string::npos );
+    }
+
+    // 4. Container charset (std::vector<char>)
+    std::vector<char> charset_vec = { 'x', 'y', 'z' };
+    auto s_from_vec = Random.get_string( 10, charset_vec );
+    REQUIRE( s_from_vec.size( ) == 10 );
+    for ( char c : s_from_vec ) {
+        REQUIRE( ( c == 'x' || c == 'y' || c == 'z' ) );
+    }
+
+    // Empty container charset throws invalid_argument
+    std::string empty_charset;
+    bool caught_empty_charset = false;
+    try {
+        (void)Random.get_string( 5, empty_charset );
+    } catch ( const std::invalid_argument& ) {
+        caught_empty_charset = true;
+    }
+    REQUIRE( caught_empty_charset );
+
+    // 5. random_local test
+    ilqvya::random_local rl;
+    auto rl_str = rl.get_string( 20, 'A', 'Z' );
+    REQUIRE( rl_str.size( ) == 20 );
+    for ( char c : rl_str ) {
+        REQUIRE( ( c >= 'A' && c <= 'Z' ) );
+    }
+
+    auto rl_hex = rl.get_string( 16, "0123456789ABCDEF" );
+    REQUIRE( rl_hex.size( ) == 16 );
+
+    // 6. Wide characters (wchar_t)
+    auto ws = Random.get_string( 10, L'a', L'z' );
+    REQUIRE( ws.size( ) == 10 );
+    for ( wchar_t c : ws ) {
+        REQUIRE( ( c >= L'a' && c <= L'z' ) );
+    }
+}
+

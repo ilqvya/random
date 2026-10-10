@@ -16,6 +16,7 @@
   - [Container of random values](#container-of-random-values)
   - [Weighted random values](#weighted-random-values)
   - [Shuffle](#shuffle)
+  - [Random string](#random-string)
   - [Custom distribution](#custom-distribution)
   - [Custom Seeder](#custom-seeder)
   - [Thread local random](#thread-local-random)
@@ -274,6 +275,18 @@ Random::shuffle( array.begin( ), array.end( ) );
 * Container
 ```cpp
 Random::shuffle( array );
+```
+### Random string
+Generates a random `std::string` of specified length:
+* From a character range `[from, to]`:
+```cpp
+auto token  = Random::get_string( 16, 'a', 'z' ); // 16 random lowercase letters
+auto digits = Random::get_string( 6, '0', '9' );  // 6 random digits
+```
+* From a custom charset (string literal, `std::string`, or container of characters):
+```cpp
+auto hex = Random::get_string( 32, "0123456789abcdef" ); // 32 random hex characters
+auto key = Random::get_string( 16, std::string{ "ABCDEFGHJKLMNPQRSTUVWXYZ23456789" } );
 ```
 ### Custom distribution
 Returns the result from operator() of a distribution using the internal engine:
