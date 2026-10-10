@@ -162,7 +162,7 @@ auto val = Random::get<bool>(0.7); // true with 70% probability
 auto val = Random::get<bool>(); // true with 50% probability by default
 ```
 ```cpp
-auto val = Random::get<bool>(-1); // Error: assert occurred! Out of [0.0, 1.0] range
+auto val = Random::get<bool>(-1); // Throws std::invalid_argument (out of [0.0, 1.0] range)
 ```
 ### Random value from std::initializer_list
 Returns a random value from values in a std::initializer_list.

@@ -303,9 +303,21 @@ TEST_CASE( "Random bool values" ) {
     }
 
     SECTION( "out of range argument" ) {
-        // Random.get<bool>( 1.1 );
-        // Random.get<bool>( -1.1 );
-        // assert occurred!
+        bool caught_too_high = false;
+        try {
+            (void)Random.get<bool>( 1.1 );
+        } catch ( const std::invalid_argument& ) {
+            caught_too_high = true;
+        }
+        REQUIRE( caught_too_high );
+
+        bool caught_too_low = false;
+        try {
+            (void)Random.get<bool>( -0.1 );
+        } catch ( const std::invalid_argument& ) {
+            caught_too_low = true;
+        }
+        REQUIRE( caught_too_low );
     }
 }
 

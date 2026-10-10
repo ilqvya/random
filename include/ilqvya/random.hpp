@@ -416,7 +416,8 @@ namespace ilqvya {
             template<typename T>
             ILQVYA_NODISCARD static typename std::enable_if<std::is_same<T, bool>::value, bool>::type
             get( Engine& engine, const double probability = 0.5 ) {
-                assert( 0 <= probability && 1 >= probability );
+                if ( probability < 0.0 || probability > 1.0 )
+                    throw std::invalid_argument( "Random::get<bool>: probability must be between 0.0 and 1.0" );
                 return BoolDist{ probability }( engine );
             }
 
