@@ -175,14 +175,279 @@ namespace effolkronium {
         } };
     };
 
+    namespace details {
+
+        /**
+        * \brief Stateless core implementation containing algorithms taking Engine& engine
+        */
+        template<
+            typename Engine,
+            typename Seeder = seeder_default,
+            template<typename> class IntegerDist = std::uniform_int_distribution,
+            template<typename> class RealDist = std::uniform_real_distribution,
+            typename BoolDist = std::bernoulli_distribution
+        >
+        struct random_impl {
+            using engine_type = Engine;
+            using seeder_type = Seeder;
+            template<typename T> using integer_dist_t = IntegerDist<T>;
+            template<typename T> using real_dist_t = RealDist<T>;
+            using bool_dist_t = BoolDist;
+            using common = details::common;
+            using weight = details::weight;
+
+            static constexpr typename Engine::result_type (min)( ) {
+                return (Engine::min)( );
+            }
+
+            static constexpr typename Engine::result_type (max)( ) {
+                return (Engine::max)( );
+            }
+
+            static void discard( Engine& engine, const unsigned long long z ) {
+                engine.discard( z );
+            }
+
+            static void reseed( Engine& engine ) {
+                Seeder seeder;
+                seed( engine, seeder( ) );
+            }
+
+            static void seed( Engine& engine, const typename Engine::result_type value = Engine::default_seed ) {
+                engine.seed( value );
+            }
+
+            template<typename Sseq>
+            static void seed( Engine& engine, Sseq& seq ) {
+                engine.seed( seq );
+            }
+
+            static typename Engine::result_type get( Engine& engine ) {
+                return engine( );
+            }
+
+            static bool is_equal( const Engine& engine, const Engine& other ) {
+                return engine == other;
+            }
+
+            template<typename CharT, typename Traits>
+            static void serialize( const Engine& engine, std::basic_ostream<CharT, Traits>& ost ) {
+                ost << engine;
+            }
+
+            template<typename CharT, typename Traits>
+            static void deserialize( Engine& engine, std::basic_istream<CharT, Traits>& ist ) {
+                ist >> engine;
+            }
+
+            template<typename T>
+            static typename std::enable_if<details::is_uniform_int<T>::value, T>::type
+            get( Engine& engine, T from = (std::numeric_limits<T>::min)( ), T to = (std::numeric_limits<T>::max)( ) ) {
+                if( from < to )
+                    return IntegerDist<T>{ from, to }( engine );
+                return IntegerDist<T>{ to, from }( engine );
+            }
+
+            template<typename T>
+            static typename std::enable_if<details::is_uniform_real<T>::value, T>::type
+            get( Engine& engine, T from = (std::numeric_limits<T>::min)( ), T to = (std::numeric_limits<T>::max)( ) ) {
+                if( from < to )
+                    return RealDist<T>{ from, to }( engine );
+                return RealDist<T>{ to, from }( engine );
+            }
+
+            template<typename T>
+            static typename std::enable_if<details::is_byte<T>::value, T>::type
+            get( Engine& engine, T from = (std::numeric_limits<T>::min)( ), T to = (std::numeric_limits<T>::max)( ) ) {
+                using short_t = typename std::conditional<std::is_signed<T>::value, short, unsigned short>::type;
+                return static_cast<T>( get<short_t>( engine, from, to ) );
+            }
+
+            template<typename Key, typename A, typename B, typename C = typename std::common_type<A, B>::type>
+            static typename std::enable_if<
+                   std::is_same<Key, common>::value
+                && details::is_supported_number<A>::value
+                && details::is_supported_number<B>::value
+                && std::is_signed<A>::value != std::is_unsigned<B>::value
+                , C>::type
+            get( Engine& engine, A from = (std::numeric_limits<A>::min)( ), B to = (std::numeric_limits<B>::max)( ) ) {
+                return get( engine, static_cast<C>( from ), static_cast<C>( to ) );
+            }
+
+            template<typename T>
+            static typename std::enable_if<details::is_supported_character<T>::value, T>::type
+            get( Engine& engine, T from = (std::numeric_limits<T>::min)(), T to = (std::numeric_limits<T>::max)() ) {
+                if (from < to)
+                    return static_cast<T>(IntegerDist<std::int64_t>{ static_cast<std::int64_t>(from), static_cast<std::int64_t>(to) }(engine));
+                return static_cast<T>(IntegerDist<std::int64_t>{ static_cast<std::int64_t>(to), static_cast<std::int64_t>(from) }(engine));
+            }
+
+            template<typename T>
+            static typename std::enable_if<std::is_same<T, bool>::value, bool>::type
+            get( Engine& engine, const double probability = 0.5 ) {
+                assert( 0 <= probability && 1 >= probability );
+                return BoolDist{ probability }( engine );
+            }
+
+            template<typename T>
+            static T get( Engine& engine, std::initializer_list<T> init_list ) {
+                assert( 0u != init_list.size( ) );
+                return *get( engine, init_list.begin( ), init_list.end( ) );
+            }
+
+            template<typename InputIt>
+            static typename std::enable_if<details::is_iterator<InputIt>::value, InputIt>::type
+            get( Engine& engine, InputIt first, InputIt last ) {
+                const auto size = std::distance( first, last );
+                if( 0 == size ) return last;
+                using diff_t = typename std::iterator_traits<InputIt>::difference_type;
+                return std::next( first, get<diff_t>( engine, 0, size - 1 ) );
+            }
+
+            template<typename Container>
+            static auto get( Engine& engine, Container& container ) ->
+                typename std::enable_if<details::is_iterator<decltype(std::begin(container))>::value, decltype(std::begin(container))>::type {
+                return get( engine, std::begin( container ), std::end( container ) );
+            }
+
+            template<template<typename...> class Container, typename A>
+            static typename std::enable_if<details::has_reserve<Container<A>>::value, Container<A>>::type
+            get( Engine& engine, A from, A to, std::size_t size) {
+                Container<A> container;
+                container.reserve(size);
+                for (std::size_t i = 0; i < size; ++i)
+                    container.insert(std::end(container), get(engine, from, to));
+                return container;
+            }
+
+            template<template<typename...> class Container, typename Key, typename A, typename B, typename C = typename std::common_type<A, B>::type>
+            static typename std::enable_if<std::is_same<Key, common>::value && details::has_reserve<Container<A>>::value, Container<C>>::type
+            get( Engine& engine, A start, B end, std::size_t size) {
+                Container<C> container;
+                container.reserve(size);
+                for (std::size_t i = 0; i < size; ++i)
+                    container.insert(std::end(container), get<common>(engine, start, end));
+                return container;
+            }
+
+            template<template<typename...> class Container, typename A>
+            static typename std::enable_if<!details::has_reserve<Container<A>>::value, Container<A>>::type
+            get( Engine& engine, A start, A end, std::size_t size) {
+                Container<A> container;
+                for (std::size_t i = 0; i < size; ++i)
+                    container.insert(std::end(container), get(engine, start, end));
+                return container;
+            }
+
+            template<template<typename...> class Container, typename Key, typename A, typename B, typename C = typename std::common_type<A, B>::type>
+            static typename std::enable_if<std::is_same<Key, common>::value && !details::has_reserve<Container<C>>::value, Container<C>>::type
+            get( Engine& engine, A start, B end, std::size_t size) {
+                Container<C> container;
+                for (std::size_t i = 0; i < size; ++i)
+                    container.insert(std::end(container), get<common>(engine, start, end));
+                return container;
+            }
+
+            template<template<typename AA, std::size_t NN, typename...> class Container, std::size_t N, typename A>
+            static typename std::enable_if<!details::has_insert<Container<A, N>>::value, Container<A, N>>::type
+            get( Engine& engine, A start, A end) {
+                Container<A, N> container = {{ 0 }};
+                for (std::size_t i = 0; i < N; ++i)
+                    container[i] = get(engine, start, end);
+                return container;
+            }
+
+            template<template<typename AA, std::size_t NN, typename...> class Container, std::size_t N, typename Key, typename A, typename B, typename C = typename std::common_type<A, B>::type>
+            static typename std::enable_if<std::is_same<Key, common>::value && !details::has_insert<Container<C, N>>::value, Container<C, N>>::type
+            get( Engine& engine, A start, B end) {
+                Container<C, N> container = {{ 0 }};
+                for (std::size_t i = 0; i < N; ++i)
+                    container[i] = get<common>(engine, start, end);
+                return container;
+            }
+
+            template<typename T, std::size_t N>
+            static T* get( Engine& engine, T( &array )[ N ] ) {
+                return std::addressof( array[ get<std::size_t>( engine, 0, N - 1 ) ] );
+            }
+
+            template<typename Dist, typename... Args>
+            static typename Dist::result_type get( Engine& engine, Args&&... args ) {
+                return Dist{ std::forward<Args>( args )... }( engine );
+            }
+
+            template<typename Dist>
+            static typename Dist::result_type get( Engine& engine, Dist& dist ) {
+                return dist( engine );
+            }
+
+            template<typename Key, class MapContainer>
+            static auto get(Engine& engine, const MapContainer& map_container) ->
+                typename std::enable_if<
+                    details::is_map<MapContainer>::value &&
+                    details::is_iterator<decltype(std::begin(map_container))>::value &&
+                    !std::is_signed<typename MapContainer::mapped_type>::value &&
+                    std::is_same<Key, details::weight>::value,
+                decltype(std::begin(map_container))>::type {
+                using MappedType = typename MapContainer::mapped_type;
+                using IteratorType = decltype(std::begin(map_container));
+                
+                MappedType total_weight = 0;
+                for (IteratorType it = std::begin(map_container); it != std::end(map_container); ++it)
+                    total_weight += it->second;
+                if(total_weight == MappedType(0)) return std::end(map_container);
+
+                MappedType random_weight = get(engine, MappedType(0), total_weight - 1);
+                MappedType sum = 0;
+                for(IteratorType it = std::begin(map_container); it != std::end(map_container); ++it) {
+                    sum += it->second;
+                    if(sum > random_weight) return it;
+                }
+                return std::end(map_container);
+            }
+
+            template<typename Key, class MapContainer>
+            static auto get(Engine& engine, const MapContainer& map_container) ->
+                typename std::enable_if<
+                    details::is_map<MapContainer>::value &&
+                    details::is_iterator<decltype(std::begin(map_container))>::value &&
+                    details::is_uniform_real<typename MapContainer::mapped_type>::value &&
+                    std::is_same<Key, details::weight>::value,
+                decltype(std::begin(map_container))>::type {
+                using MappedType = typename MapContainer::mapped_type;
+                using IteratorType = decltype(std::begin(map_container));
+                
+                MappedType total_weight = 0;
+                for (IteratorType it = std::begin(map_container); it != std::end(map_container); ++it) {
+                    assert(it->second >= MappedType(0));
+                    total_weight += it->second;
+                }
+                if(total_weight == MappedType(0)) return std::end(map_container);
+
+                MappedType random_weight = get(engine, MappedType(0), std::nextafter(total_weight, (std::numeric_limits<MappedType>::min)( )));
+                MappedType sum = 0;
+                for(IteratorType it = std::begin(map_container); it != std::end(map_container); ++it) {
+                    sum += it->second;
+                    if(sum > random_weight) return it;
+                }
+                return std::end(map_container);
+            }
+
+            template<typename RandomIt>
+            static void shuffle( Engine& engine, RandomIt first, RandomIt last ) {
+                std::shuffle( first, last, engine );
+            }
+
+            template<typename Container>
+            static void shuffle( Engine& engine, Container& container ) {
+                shuffle( engine, std::begin( container ), std::end( container ) );
+            }
+        };
+
+    } // namespace details
+
     /**
-    * \brief Base template class for random 
-    *        with static API and static internal member storage
-    * \note it is NOT thread safe but more efficient then 
-    *                           basic_random_thread_local
-    * \param Engine A random engine with interface like in the std::mt19937
-    * \param Seeder A seeder type which return seed for internal engine 
-    *                                             through operator()
+    * \brief Base template class for random with static API and static internal member storage
     */
     template<
         typename Derived,
@@ -193,585 +458,170 @@ namespace effolkronium {
         typename BoolDist = std::bernoulli_distribution
     >
     class basic_random_base {
+        using impl = details::random_impl<Engine, Seeder, IntegerDist, RealDist, BoolDist>;
     public:
-        /// Type of used random number engine
         using engine_type = Engine;
-
-        /// Type of used random number seeder
         using seeder_type = Seeder;
-
-        /// Type of used integer distribution
-        template<typename T>
-        using integer_dist_t = IntegerDist<T>;
-
-        /// Type of used real distribution
-        template<typename T>
-        using real_dist_t = RealDist<T>;
-
-        /// Type of used bool distribution
+        template<typename T> using integer_dist_t = IntegerDist<T>;
+        template<typename T> using real_dist_t = RealDist<T>;
         using bool_dist_t = BoolDist;
-
-        /// Key type for getting common type numbers or objects
         using common = details::common;
-
-        /// Key type for weighted random number generation
         using weight = details::weight;
 
-        /**
-        * \return The minimum value
-        * potentially generated by the random-number engine
-        */
-        static constexpr typename Engine::result_type (min)( ) {
-            return (Engine::min)( );
-        }
+        constexpr basic_random_base( ) = default;
 
-        /**
-        * \return The maximum value
-        * potentially generated by the random-number engine
-        */
-        static constexpr typename Engine::result_type (max)( ) {
-            return (Engine::max)( );
-        }
+        static constexpr typename Engine::result_type (min)( ) { return impl::min( ); }
+        static constexpr typename Engine::result_type (max)( ) { return impl::max( ); }
+        static void discard( const unsigned long long z ) { impl::discard( engine_instance( ), z ); }
+        static void reseed( ) { impl::reseed( engine_instance( ) ); }
+        static void seed( const typename Engine::result_type value = Engine::default_seed ) { impl::seed( engine_instance( ), value ); }
+        template<typename Sseq> static void seed( Sseq& seq ) { impl::seed( engine_instance( ), seq ); }
+        static typename Engine::result_type get( ) { return impl::get( engine_instance( ) ); }
+        static bool is_equal( const Engine& other ) { return impl::is_equal( engine_instance( ), other ); }
+        template<typename CharT, typename Traits> static void serialize( std::basic_ostream<CharT, Traits>& ost ) { impl::serialize( engine_instance( ), ost ); }
+        template<typename CharT, typename Traits> static void deserialize( std::basic_istream<CharT, Traits>& ist ) { impl::deserialize( engine_instance( ), ist ); }
 
-        /// Advances the internal state by z times
-        static void discard( const unsigned long long z ) {
-            engine_instance( ).discard( z );
-        }
-
-        /// Reseed by Seeder
-        static void reseed( ) {
-            Seeder seeder;
-            seed( seeder( ) );
-        }
-
-        /**
-        * \brief Reinitializes the internal state
-        * of the random-number engine using new seed value
-        * \param value The seed value to use 
-        *        in the initialization of the internal state
-        */
-        static void seed( const typename Engine::result_type value =
-                          Engine::default_seed ) {
-            engine_instance( ).seed( value );
-        }
-
-        /**
-        * \brief Reinitializes the internal state
-        * of the random-number engine using new seed value
-        * \param seq The seed sequence 
-        *        to use in the initialization of the internal state
-        */
-        template<typename Sseq>
-        static void seed( Sseq& seq ) {
-            engine_instance( ).seed( seq );
-        }
-
-        /// return random number from engine in [min(), max()] range
-        static typename Engine::result_type get( ) {
-            return engine_instance( )( );
-        }
-
-        /**
-        * \brief Compares internal pseudo-random number engine
-        *        with 'other' pseudo-random number engine.
-        *        Two engines are equal, if their internal states
-        *        are equivalent, that is, if they would generate
-        *        equivalent values for any number of calls of operator()
-        * \param other The engine, with which the internal engine will be compared
-        * \return true, if other and internal engine are equal
-        */
-        static bool is_equal( const Engine& other ) {
-            return engine_instance( ) == other;
-        }
-
-        /**
-        * \brief Serializes the internal state of the
-        *        internal pseudo-random number engine as a sequence
-        *        of decimal numbers separated by one or more spaces,
-        *        and inserts it to the stream ost. The fill character
-        *        and the formatting flags of the stream are
-        *        ignored and unaffected.
-        * \param ost The output stream to insert the data to
-        */
-        template<typename CharT, typename Traits>
-        static void serialize( std::basic_ostream<CharT, Traits>& ost ) {
-            ost << engine_instance( );
-        }
-
-        /**
-        * \brief Restores the internal state of the
-        *        internal pseudo-random number engine from
-        *        the serialized representation, which
-        *        was created by an earlier call to 'serialize'
-        *        using a stream with the same imbued locale and
-        *        the same CharT and Traits.
-        *        If the input cannot be deserialized,
-        *        internal engine is left unchanged and failbit is raised on ist
-        * \param ost The input stream to extract the data from
-        */
-        template<typename CharT, typename Traits>
-        static void deserialize( std::basic_istream<CharT, Traits>& ist ) {
-            ist >> engine_instance( );
-        }
-
-        /**
-        * \brief Generate a random integer number in a [from; to] range
-        *        by std::uniform_int_distribution
-        * \param from The first limit number of a random range
-        * \param to The second limit number of a random range
-        * \return A random integer number in a [from; to] range
-        * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
-        * \note Prevent implicit type conversion
-        */
         template<typename T>
-        static typename std::enable_if<details::is_uniform_int<T>::value
-            , T>::type get( T from = (std::numeric_limits<T>::min)( ),
-                            T to = (std::numeric_limits<T>::max)( ) ) {
-            if( from < to ) // Allow range from higher to lower
-                return IntegerDist<T>{ from, to }( engine_instance( ) );
-            return IntegerDist<T>{ to, from }( engine_instance( ) );
+        static typename std::enable_if<details::is_uniform_int<T>::value, T>::type
+        get( T from = (std::numeric_limits<T>::min)( ), T to = (std::numeric_limits<T>::max)( ) ) {
+            return impl::template get<T>( engine_instance( ), from, to );
         }
 
-        /**
-        * \brief Generate a random real number in a [from; to] range
-        *        by std::uniform_real_distribution
-        * \param from The first limit number of a random range
-        * \param to The second limit number of a random range
-        * \return A random real number in a [from; to] range
-        * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
-        * \note Prevent implicit type conversion
-        */
         template<typename T>
-        static typename std::enable_if<details::is_uniform_real<T>::value
-            , T>::type get( T from = (std::numeric_limits<T>::min)( ),
-                            T to = (std::numeric_limits<T>::max)( ) ) {
-            if( from < to ) // Allow range from higher to lower
-                return RealDist<T>{ from, to }( engine_instance( ) );
-            return RealDist<T>{ to, from }( engine_instance( ) );
+        static typename std::enable_if<details::is_uniform_real<T>::value, T>::type
+        get( T from = (std::numeric_limits<T>::min)( ), T to = (std::numeric_limits<T>::max)( ) ) {
+            return impl::template get<T>( engine_instance( ), from, to );
         }
 
-        /**
-        * \brief Generate a random byte number in a [from; to] range
-        * \param from The first limit number of a random range
-        * \param to The second limit number of a random range
-        * \return A random byte number in a [from; to] range
-        * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
-        * \note Prevent implicit type conversion
-        */
         template<typename T>
-        static typename std::enable_if<details::is_byte<T>::value
-            , T>::type get( T from = (std::numeric_limits<T>::min)( ),
-                            T to = (std::numeric_limits<T>::max)( ) ) {
-            // Choose between short and unsigned short for byte conversion
-            using short_t = typename std::conditional<std::is_signed<T>::value,
-                short, unsigned short>::type;
-
-            return static_cast<T>( get<short_t>( from, to ) );
+        static typename std::enable_if<details::is_byte<T>::value, T>::type
+        get( T from = (std::numeric_limits<T>::min)( ), T to = (std::numeric_limits<T>::max)( ) ) {
+            return impl::template get<T>( engine_instance( ), from, to );
         }
 
-        /**
-        * \brief Generate a random common_type number in a [from; to] range
-        * \param Key The Key type for this version of 'get' method
-        *        Type should be '(THIS_TYPE)::common' struct
-        * \param from The first limit number of a random range
-        * \param to The second limit number of a random range
-        * \return A random common_type number in a [from; to] range
-        * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
-        * \note Allow implicit type conversion
-        * \note Prevent implicit type conversion from signed to unsigned types
-        *       Why? std::common_type<Unsigned, Signed> chooses unsigned value,
-        *                 then Signed value will be converted to Unsigned value
-        *                       which gives us a wrong range for random values.
-        *                           https://stackoverflow.com/a/5416498/5734836
-        */
-        template<
-            typename Key,
-            typename A,
-            typename B, 
-            typename C = typename std::common_type<A, B>::type
-        >
-        static typename std::enable_if<
-               std::is_same<Key, common>::value
-            && details::is_supported_number<A>::value
-            && details::is_supported_number<B>::value
-            // Prevent implicit type conversion from signed to unsigned types
-            && std::is_signed<A>::value != std::is_unsigned<B>::value
-            , C>::type get( A from = (std::numeric_limits<A>::min)( ),
-                            B to = (std::numeric_limits<B>::max)( ) ) {
-            return get( static_cast<C>( from ), static_cast<C>( to ) );
+        template<typename Key, typename A, typename B, typename C = typename std::common_type<A, B>::type>
+        static typename std::enable_if<std::is_same<Key, common>::value && details::is_supported_number<A>::value && details::is_supported_number<B>::value && std::is_signed<A>::value != std::is_unsigned<B>::value, C>::type
+        get( A from = (std::numeric_limits<A>::min)( ), B to = (std::numeric_limits<B>::max)( ) ) {
+            return impl::template get<Key, A, B, C>( engine_instance( ), from, to );
         }
 
-        /**
-        * \brief Generate a random character in a [from; to] range
-        *        by std::uniform_int_distribution
-        * \param from The first limit number of a random range
-        * \param to The second limit number of a random range
-        * \return A random character in a [from; to] range
-        * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
-        * \note Prevent implicit type conversion
-        */
         template<typename T>
-        static typename std::enable_if<details::is_supported_character<T>::value
-            , T>::type get(T from = (std::numeric_limits<T>::min)(),
-                T to = (std::numeric_limits<T>::max)()) {
-            if (from < to) // Allow range from higher to lower
-                return static_cast<T>(IntegerDist<std::int64_t>{ static_cast<std::int64_t>(from), static_cast<std::int64_t>(to) }(engine_instance()));
-            return static_cast<T>(IntegerDist<std::int64_t>{ static_cast<std::int64_t>(to), static_cast<std::int64_t>(from) }(engine_instance()));
+        static typename std::enable_if<details::is_supported_character<T>::value, T>::type
+        get(T from = (std::numeric_limits<T>::min)(), T to = (std::numeric_limits<T>::max)()) {
+            return impl::template get<T>( engine_instance( ), from, to );
         }
 
-        /**
-        * \brief Generate a bool value with specific probability
-        *                         by std::bernoulli_distribution
-        * \param probability The probability of generating true in [0; 1] range
-        *        0 means always false, 1 means always true
-        * \return 'true' with 'probability' probability ('false' otherwise)
-        */
         template<typename T>
-        static typename std::enable_if<std::is_same<T, bool>::value
-            , bool>::type get( const double probability = 0.5 ) {
-            assert( 0 <= probability && 1 >= probability ); // out of [0; 1] range
-            return BoolDist{ probability }( engine_instance( ) );
+        static typename std::enable_if<std::is_same<T, bool>::value, bool>::type
+        get( const double probability = 0.5 ) {
+            return impl::template get<T>( engine_instance( ), probability );
         }
 
-        /**
-        * \brief Return random value from initializer_list
-        * \param init_list initializer_list with values
-        * \return Random value from initializer_list
-        * \note Should be 1 or more elements in initializer_list
-        * \note Warning! Elements in initializer_list can't be moved:
-        *               https://stackoverflow.com/a/8193157/5734836
-        */
         template<typename T>
         static T get( std::initializer_list<T> init_list ) {
-            assert( 0u != init_list.size( ) );
-            return *get( init_list.begin( ), init_list.end( ) );
+            return impl::template get<T>( engine_instance( ), init_list );
         }
 
-        /**
-        * \brief Return random iterator from iterator range
-        * \param first, last - the range of elements
-        * \return Random iterator from [first, last) range
-        * \note If first == last, return last
-        */
         template<typename InputIt>
-        static typename std::enable_if<details::is_iterator<InputIt>::value
-            , InputIt>::type get( InputIt first, InputIt last ) {
-            const auto size = std::distance( first, last );
-            if( 0 == size ) return last;
-            using diff_t = typename std::iterator_traits<InputIt>::difference_type;
-            return std::next( first, get<diff_t>( 0, size - 1 ) );
+        static typename std::enable_if<details::is_iterator<InputIt>::value, InputIt>::type
+        get( InputIt first, InputIt last ) {
+            return impl::get( engine_instance( ), first, last );
         }
 
-        /**
-        * \brief Return random iterator from Container
-        * \param container The container with elements
-        * \return Random iterator from container
-        * \note If container is empty return std::end( container ) iterator
-        */
         template<typename Container>
-        static auto get( Container& container ) -> 
-            typename std::enable_if<details::is_iterator<
-                decltype(std::begin(container))>::value
-                , decltype(std::begin(container))
-            >::type {
-            return get( std::begin( container ), std::end( container ) );
+        static auto get( Container& container ) ->
+            typename std::enable_if<details::is_iterator<decltype(std::begin(container))>::value, decltype(std::begin(container))>::type {
+            return impl::get( engine_instance( ), container );
         }
 
-        /**
-        * \brief Return container filled with random values
-        * \param from The first limit number of a random range
-        * \param to The second limit number of a random range
-        * \param size The number of elements in resulting container
-        * \return Container filled with random values
-        * \note Container "reserve" method will be called before generation
-        */
         template<template<typename...> class Container, typename A>
-        static typename std::enable_if<
-                details::has_reserve<Container<A>>::value
-            , Container<A>>::type get(A from, A to, std::size_t size) {
-            Container<A> container;
-
-            container.reserve(size);
-            for (std::size_t i = 0; i < size; ++i)
-                container.insert(std::end(container), get(from, to));
-
-            return container;
+        static typename std::enable_if<details::has_reserve<Container<A>>::value, Container<A>>::type
+        get(A from, A to, std::size_t size) {
+            return impl::template get<Container, A>( engine_instance( ), from, to, size );
         }
 
-        /**
-        * \brief Return container filled with random common_type values
-        * \param Key The Key type for this version of 'get' method
-        *     Type should be '(THIS_TYPE)::common' struct
-        * \param from The first limit number of a random range
-        * \param to The second limit number of a random range
-        * \param size The number of elements in resulting container
-        * \return Container filled with random values
-        * \note Container "reserve" method will be called before generation
-        */
-        template<
-            template<typename...> class Container,
-            typename Key,
-            typename A,
-            typename B,
-            typename C = typename std::common_type<A, B>::type>
-        static typename std::enable_if<
-                   std::is_same<Key, common>::value
-                && details::has_reserve<Container<A>>::value
-            , Container<C>>::type get(A start, B end, std::size_t size) {
-            Container<C> container;
-
-            container.reserve(size);
-            for (std::size_t i = 0; i < size; ++i)
-                container.insert(std::end(container), get<common>(start, end));
-
-            return container;
+        template<template<typename...> class Container, typename Key, typename A, typename B, typename C = typename std::common_type<A, B>::type>
+        static typename std::enable_if<std::is_same<Key, common>::value && details::has_reserve<Container<A>>::value, Container<C>>::type
+        get(A start, B end, std::size_t size) {
+            return impl::template get<Container, Key, A, B, C>( engine_instance( ), start, end, size );
         }
 
-        /**
-        * \brief Return container filled with random values
-        * \param from The first limit number of a random range
-        * \param to The second limit number of a random range
-        * \param size The number of elements in resulting container
-        * \return Container filled with random values
-        */
         template<template<typename...> class Container, typename A>
-        static typename std::enable_if<
-              !details::has_reserve<Container<A>>::value
-            , Container<A>>::type get(A start, A end, std::size_t size) {
-            Container<A> container;
-
-            for (std::size_t i = 0; i < size; ++i)
-                container.insert(std::end(container), get(start, end));
-
-            return container;
+        static typename std::enable_if<!details::has_reserve<Container<A>>::value, Container<A>>::type
+        get(A start, A end, std::size_t size) {
+            return impl::template get<Container, A>( engine_instance( ), start, end, size );
         }
 
-        /**
-        * \brief Return container filled with random common_type values
-        * \param Key The Key type for this version of 'get' method
-        *     Type should be '(THIS_TYPE)::common' struct
-        * \param from The first limit number of a random range
-        * \param to The second limit number of a random range
-        * \param size The number of elements in resulting container
-        * \return Container filled with random values
-        */
-        template<
-            template<typename...> class Container,
-            typename Key,
-            typename A,
-            typename B,
-            typename C = typename std::common_type<A, B>::type>
-        static typename std::enable_if<
-                 std::is_same<Key, common>::value
-              && !details::has_reserve<Container<C>>::value
-            , Container<C>>::type get(A start, B end, std::size_t size) {
-            Container<C> container;
-
-            for (std::size_t i = 0; i < size; ++i)
-                container.insert(std::end(container), get<common>(start, end));
-
-            return container;
+        template<template<typename...> class Container, typename Key, typename A, typename B, typename C = typename std::common_type<A, B>::type>
+        static typename std::enable_if<std::is_same<Key, common>::value && !details::has_reserve<Container<C>>::value, Container<C>>::type
+        get(A start, B end, std::size_t size) {
+            return impl::template get<Container, Key, A, B, C>( engine_instance( ), start, end, size );
         }
 
-        /**
-        * \brief Return array-like container filled with random values
-        * \param from The first limit number of a random range
-        * \param to The second limit number of a random range
-        * \param N The number of elements in resulting container
-        * \return Container filled with random values
-        */
         template<template<typename AA, std::size_t NN, typename...> class Container, std::size_t N, typename A>
-        static typename std::enable_if<
-               !details::has_insert<Container<A, N>>::value
-            , Container<A, N>>::type get(A start, A end) {
-            Container<A, N> container = {{ 0 }};
-
-            for (std::size_t i = 0; i < N; ++i)
-                container[i] = get(start, end);
-
-            return container;
+        static typename std::enable_if<!details::has_insert<Container<A, N>>::value, Container<A, N>>::type
+        get(A start, A end) {
+            return impl::template get<Container, N, A>( engine_instance( ), start, end );
         }
 
-        /**
-        * \brief Return array-like container filled with random common_type values
-        * \param Key The Key type for this version of 'get' method
-        *     Type should be '(THIS_TYPE)::common' struct
-        * \param from The first limit number of a random range
-        * \param to The second limit number of a random range
-        * \param size The number of elements in resulting container
-        * \return Container filled with random values
-        */
-        template<
-            template<typename AA, std::size_t NN, typename...> class Container,
-            std::size_t N,
-            typename Key,
-            typename A,
-            typename B,
-            typename C = typename std::common_type<A, B>::type>
-        static typename std::enable_if<
-                  std::is_same<Key, common>::value
-               && !details::has_insert<Container<C, N>>::value
-            , Container<C, N>>::type get(A start, B end) {
-            Container<C, N> container = {{ 0 }};
-
-            for (std::size_t i = 0; i < N; ++i)
-                container[i] = get<common>(start, end);
-
-            return container;
+        template<template<typename AA, std::size_t NN, typename...> class Container, std::size_t N, typename Key, typename A, typename B, typename C = typename std::common_type<A, B>::type>
+        static typename std::enable_if<std::is_same<Key, common>::value && !details::has_insert<Container<C, N>>::value, Container<C, N>>::type
+        get(A start, B end) {
+            return impl::template get<Container, N, Key, A, B, C>( engine_instance( ), start, end );
         }
 
-        /**
-        * \brief Return random pointer from built-in array
-        * \param array The built-in array with elements
-        * \return Pointer to random element in array
-        */
         template<typename T, std::size_t N>
         static T* get( T( &array )[ N ] ) {
-            return std::addressof( array[ get<std::size_t>( 0, N - 1 ) ] );
+            return impl::get( engine_instance( ), array );
         }
 
-        /**
-        * \brief Return value from custom Dist distribution
-        *        seeded by internal random engine
-        * \param Dist The type of custom distribution with next concept:
-        *        http://en.cppreference.com/w/cpp/concept/RandomNumberDistribution
-        * \param args The arguments which will be forwarded to Dist constructor
-        * \return Value from custom distribution
-        */
         template<typename Dist, typename... Args>
         static typename Dist::result_type get( Args&&... args ) {
-            return Dist{ std::forward<Args>( args )... }( engine_instance( ) );
+            return impl::template get<Dist>( engine_instance( ), std::forward<Args>( args )... );
         }
 
-        /**
-        * \brief Return value from custom 'dist' distribution
-        *        seeded by internal random engine
-        * \param dist The custom distribution with next concept:
-        *        http://en.cppreference.com/w/cpp/concept/RandomNumberDistribution
-        * \param args The arguments which will be forwarded to Dist constructor
-        * \return Value from custom 'dist' distribution
-        */
         template<typename Dist>
         static typename Dist::result_type get( Dist& dist ) {
-            return dist( engine_instance( ) );
+            return impl::get( engine_instance( ), dist );
         }
 
-        /**
-        * \brief Return a random iterator from given map container by
-        *        utilizing the values of the map container as weights
-        *        for weighted random number generation
-        * \param Key The Key type for this version of 'get' method
-        *        Type should be '(THIS_TYPE)::common' struct
-        * \param map_container A container that has mapped_type,
-        *        value_type and key_type defined
-        * \note return the end iterator if the iterator is empty or total weight is equals to sum
-        */
-        template<
-            typename Key,
-            class MapContainer
-        >
+        template<typename Key, class MapContainer>
         static auto get(const MapContainer& map_container) -> typename std::enable_if<
             details::is_map<MapContainer>::value &&
             details::is_iterator<decltype(std::begin(map_container))>::value &&
             !std::is_signed<typename MapContainer::mapped_type>::value &&
             std::is_same<Key, details::weight>::value,
         decltype(std::begin(map_container))>::type {
-            using MappedType = typename MapContainer::mapped_type;
-            using IteratorType = decltype(std::begin(map_container));
-            
-            MappedType total_weight = 0;
-            for (IteratorType it = std::begin(map_container); it != std::end(map_container); ++it) {
-                total_weight += it->second;
-            }
-            if(total_weight == MappedType(0)) return std::end(map_container);
-
-            MappedType random_weight = get(MappedType(0), total_weight - 1);
-            MappedType sum = 0;
-
-            for(IteratorType it = std::begin(map_container); it != std::end(map_container); ++it)
-            {
-                sum += it->second;
-                if(sum > random_weight) return it;
-            }
-            return std::end(map_container);
+            return impl::template get<Key>( engine_instance( ), map_container );
         }
 
-        /**
-        * \brief Return a random iterator from given map container by
-        *        utilizing the values of the map container as weights
-        *        for weighted random number generation
-        * \param Key The Key type for this version of 'get' method
-        *        Type should be '(THIS_TYPE)::common' struct
-        * \param map_container A container that has mapped_type,
-        *        value_type and key_type defined
-        * \note return the end iterator if the iterator is empty
-        */
-        template<
-            typename Key,
-            class MapContainer
-        >
+        template<typename Key, class MapContainer>
         static auto get(const MapContainer& map_container) -> typename std::enable_if<
             details::is_map<MapContainer>::value &&
             details::is_iterator<decltype(std::begin(map_container))>::value &&
             details::is_uniform_real<typename MapContainer::mapped_type>::value &&
             std::is_same<Key, details::weight>::value,
         decltype(std::begin(map_container))>::type {
-            using MappedType = typename MapContainer::mapped_type;
-            using IteratorType = decltype(std::begin(map_container));
-            
-            MappedType total_weight = 0;
-            for (IteratorType it = std::begin(map_container); it != std::end(map_container); ++it) {
-                assert(it->second >= MappedType(0));
-                total_weight += it->second;
-            }
-            if(total_weight == MappedType(0)) return std::end(map_container);
-
-            MappedType random_weight = get(MappedType(0), std::nextafter(total_weight, (std::numeric_limits<MappedType>::min)( )));
-            MappedType sum = 0;
-
-            for(IteratorType it = std::begin(map_container); it != std::end(map_container); ++it)
-            {
-                sum += it->second;
-                if(sum > random_weight) return it;
-            }
-            return std::end(map_container);
+            return impl::template get<Key>( engine_instance( ), map_container );
         }
 
-        /**
-        * \brief Reorders the elements in the given range [first, last)
-        *        such that each possible permutation of those elements
-        *        has equal probability of appearance.
-        * \param first, last - the range of elements to shuffle randomly       
-        */
         template<typename RandomIt>
-        static void shuffle( RandomIt first, RandomIt last ) {
-            std::shuffle( first, last, engine_instance( ) );
+        static void shuffle( RandomIt first, RandomIt last ) { impl::shuffle( engine_instance( ), first, last ); }
+
+        template<typename Container>
+        static void shuffle( Container& container ) { impl::shuffle( engine_instance( ), container ); }
+
+        template<typename... Args>
+        auto operator()( Args&&... args ) const -> decltype( get( std::forward<Args>( args )... ) ) {
+            return get( std::forward<Args>( args )... );
         }
 
-        /**
-        * \brief Reorders the elements in the given container
-        *        such that each possible permutation of those elements
-        *        has equal probability of appearance.
-        * \param container - the container with elements to shuffle randomly
-        */
-        template<typename Container>
-        static void shuffle( Container& container ) {
-            shuffle( std::begin( container ), std::end( container ) );
-        }
     private:
-        static Engine& engine_instance( ) {
-            return Derived::engine();
-        }
+        static Engine& engine_instance( ) { return Derived::engine(); }
     };
 
     /**
-    * \brief Base template class for random 
-    *        with static API and static internal member storage
-    * \note it is NOT thread safe but more efficient then 
-    *                           basic_random_thread_local
-    * \param Engine A random engine with interface like in the std::mt19937
-    * \param Seeder A seeder type which return seed for internal engine 
-    *                                             through operator()
+    * \brief Random with static API and static internal storage
     */
     template<
         typename Engine,
@@ -784,39 +634,18 @@ namespace effolkronium {
                                         IntegerDist, RealDist, BoolDist>,
                                         Engine, Seeder, IntegerDist, RealDist, BoolDist> {
     public:
-        /// Type of used random number seeder
         using seeder_type = Seeder;
-
-        /// Type of used integer distribution
-        template<typename T>
-        using integer_dist_t = IntegerDist<T>;
-
-        /// Type of used real distribution
-        template<typename T>
-        using real_dist_t = RealDist<T>;
-
-        /// Type of used bool distribution
+        template<typename T> using integer_dist_t = IntegerDist<T>;
+        template<typename T> using real_dist_t = RealDist<T>;
         using bool_dist_t = BoolDist;
-
-        /// Key type for getting common type numbers or objects
         using common = details::common;
-
-        /// Key type for weighted random number generation
         using weight = details::weight;
 
-        basic_random_static() = delete;
+        basic_random_static( ) = default;
 
-        /// return internal engine by copy
-        static Engine get_engine( ) {
-            return engine_instance( );
-        }
-
-        /// return internal engine by ref
-        static Engine& engine() {
-            return engine_instance();
-        }
+        static Engine get_engine( ) { return engine_instance( ); }
+        static Engine& engine() { return engine_instance(); }
     private:
-        /// get reference to the static engine instance
         static Engine& engine_instance( ) {
             static Engine engine{ Seeder{ }( ) };
             return engine;
@@ -824,13 +653,7 @@ namespace effolkronium {
     };
 
     /**
-    * \brief Base template class for random 
-    *        with thread_local API and thread_local internal member storage
-    * \note it IS thread safe but less efficient then 
-    *                           basic_random_static
-    * \param Engine A random engine with interface like in the std::mt19937
-    * \param Seeder A seeder type which return seed for internal engine 
-    *                                             through operator()
+    * \brief Random with thread_local API and thread_local internal storage
     */
     template<
         typename Engine,
@@ -843,39 +666,18 @@ namespace effolkronium {
                                              IntegerDist, RealDist, BoolDist>,
                                              Engine, Seeder, IntegerDist, RealDist, BoolDist> {
     public:
-        /// Type of used random number seeder
         using seeder_type = Seeder;
-
-        /// Type of used integer distribution
-        template<typename T>
-        using integer_dist_t = IntegerDist<T>;
-
-        /// Type of used real distribution
-        template<typename T>
-        using real_dist_t = RealDist<T>;
-
-        /// Type of used bool distribution
+        template<typename T> using integer_dist_t = IntegerDist<T>;
+        template<typename T> using real_dist_t = RealDist<T>;
         using bool_dist_t = BoolDist;
-
-        /// Key type for getting common type numbers or objects
         using common = details::common;
-
-        /// Key type for weighted random number generation
         using weight = details::weight;
 
-        basic_random_thread_local( ) = delete;
+        basic_random_thread_local( ) = default;
 
-        /// return internal engine by copy
-        static Engine get_engine( ) {
-            return engine_instance( );
-        }
-
-        /// return internal engine by ref
-        static Engine& engine() {
-            return engine_instance();
-        }
+        static Engine get_engine( ) { return engine_instance( ); }
+        static Engine& engine() { return engine_instance(); }
     private:
-        /// get reference to the thread local engine instance
         static Engine& engine_instance( ) {
             thread_local Engine engine{ Seeder{ }( ) };
             return engine;
@@ -883,13 +685,7 @@ namespace effolkronium {
     };
 
     /**
-    * \brief Base template class for random 
-    *        with local API and local internal member storage
-    * \note it IS thread safe but less efficient then 
-    *                           basic_random_static
-    * \param Engine A random engine with interface like in the std::mt19937
-    * \param Seeder A seeder type which return seed for internal engine 
-    *                                             through operator()
+    * \brief Random with local API and local member storage
     */
     template<
         typename Engine,
@@ -898,594 +694,184 @@ namespace effolkronium {
         template<typename> class RealDist = std::uniform_real_distribution,
         typename BoolDist = std::bernoulli_distribution
     >
-    class basic_random_local : public basic_random_base<basic_random_local<Engine, Seeder,
-                                      IntegerDist, RealDist, BoolDist>,
-                                      Engine, Seeder, IntegerDist, RealDist, BoolDist> {
+    class basic_random_local {
+        using impl = details::random_impl<Engine, Seeder, IntegerDist, RealDist, BoolDist>;
     public:
-        /// Type of used random number seeder
+        using engine_type = Engine;
         using seeder_type = Seeder;
-
-        /// Type of used integer distribution
-        template<typename T>
-        using integer_dist_t = IntegerDist<T>;
-
-        /// Type of used real distribution
-        template<typename T>
-        using real_dist_t = RealDist<T>;
-
-        /// Type of used bool distribution
+        template<typename T> using integer_dist_t = IntegerDist<T>;
+        template<typename T> using real_dist_t = RealDist<T>;
         using bool_dist_t = BoolDist;
-
-        /// Key type for getting common type numbers or objects
         using common = details::common;
-
-        /// Key type for weighted random number generation
         using weight = details::weight;
 
-        /// Advances the internal state by z times
-        void discard( const unsigned long long z ) {
-            m_engine.discard( z );
-        }
+        basic_random_local( ) = default;
 
-        /// Reseed by Seeder
-        void reseed( ) {
-            Seeder seeder;
-            seed( seeder( ) );
-        }
+        static constexpr typename Engine::result_type (min)( ) { return impl::min( ); }
+        static constexpr typename Engine::result_type (max)( ) { return impl::max( ); }
+        void discard( const unsigned long long z ) { impl::discard( m_engine, z ); }
+        void reseed( ) { impl::reseed( m_engine ); }
+        void seed( const typename Engine::result_type value = Engine::default_seed ) { impl::seed( m_engine, value ); }
+        template<typename Sseq> void seed( Sseq& seq ) { impl::seed( m_engine, seq ); }
+        typename Engine::result_type get( ) { return impl::get( m_engine ); }
+        bool is_equal( const Engine& other ) const { return impl::is_equal( m_engine, other ); }
+        template<typename CharT, typename Traits> void serialize( std::basic_ostream<CharT, Traits>& ost ) const { impl::serialize( m_engine, ost ); }
+        template<typename CharT, typename Traits> void deserialize( std::basic_istream<CharT, Traits>& ist ) { impl::deserialize( m_engine, ist ); }
 
-        /**
-        * \brief Reinitializes the internal state
-        * of the random-number engine using new seed value
-        * \param value The seed value to use 
-        *        in the initialization of the internal state
-        */
-        void seed( const typename Engine::result_type value =
-                          Engine::default_seed ) {
-            m_engine.seed( value );
-        }
-
-        /**
-        * \brief Reinitializes the internal state
-        * of the random-number engine using new seed value
-        * \param seq The seed sequence 
-        *        to use in the initialization of the internal state
-        */
-        template<typename Sseq>
-        void seed( Sseq& seq ) {
-            m_engine.seed( seq );
-        }
-
-        /// return random number from engine in [min(), max()] range
-        typename Engine::result_type get( ) {
-            return m_engine( );
-        }
-
-        /**
-        * \brief Compares internal pseudo-random number engine
-        *        with 'other' pseudo-random number engine.
-        *        Two engines are equal, if their internal states
-        *        are equivalent, that is, if they would generate
-        *        equivalent values for any number of calls of operator()
-        * \param other The engine, with which the internal engine will be compared
-        * \return true, if other and internal engine are equal
-        */
-        bool is_equal( const Engine& other ) {
-            return m_engine == other;
-        }
-
-        /**
-        * \brief Serializes the internal state of the
-        *        internal pseudo-random number engine as a sequence
-        *        of decimal numbers separated by one or more spaces,
-        *        and inserts it to the stream ost. The fill character
-        *        and the formatting flags of the stream are
-        *        ignored and unaffected.
-        * \param ost The output stream to insert the data to
-        */
-        template<typename CharT, typename Traits>
-        void serialize( std::basic_ostream<CharT, Traits>& ost ) {
-            ost << m_engine;
-        }
-
-        /**
-        * \brief Restores the internal state of the
-        *        internal pseudo-random number engine from
-        *        the serialized representation, which
-        *        was created by an earlier call to 'serialize'
-        *        using a stream with the same imbued locale and
-        *        the same CharT and Traits.
-        *        If the input cannot be deserialized,
-        *        internal engine is left unchanged and failbit is raised on ist
-        * \param ost The input stream to extract the data from
-        */
-        template<typename CharT, typename Traits>
-        void deserialize( std::basic_istream<CharT, Traits>& ist ) {
-            ist >> m_engine;
-        }
-
-        /**
-        * \brief Generate a random integer number in a [from; to] range
-        *        by std::uniform_int_distribution
-        * \param from The first limit number of a random range
-        * \param to The second limit number of a random range
-        * \return A random integer number in a [from; to] range
-        * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
-        * \note Prevent implicit type conversion
-        */
         template<typename T>
-        typename std::enable_if<details::is_uniform_int<T>::value
-            , T>::type get( T from = (std::numeric_limits<T>::min)( ),
-                            T to = (std::numeric_limits<T>::max)( ) ) {
-            if( from < to ) // Allow range from higher to lower
-                return IntegerDist<T>{ from, to }( m_engine );
-            return IntegerDist<T>{ to, from }( m_engine );
+        typename std::enable_if<details::is_uniform_int<T>::value, T>::type
+        get( T from = (std::numeric_limits<T>::min)( ), T to = (std::numeric_limits<T>::max)( ) ) {
+            return impl::template get<T>( m_engine, from, to );
         }
 
-        /**
-        * \brief Generate a random real number in a [from; to] range
-        *        by std::uniform_real_distribution
-        * \param from The first limit number of a random range
-        * \param to The second limit number of a random range
-        * \return A random real number in a [from; to] range
-        * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
-        * \note Prevent implicit type conversion
-        */
         template<typename T>
-        typename std::enable_if<details::is_uniform_real<T>::value
-            , T>::type get( T from = (std::numeric_limits<T>::min)( ),
-                            T to = (std::numeric_limits<T>::max)( ) ) {
-            if( from < to ) // Allow range from higher to lower
-                return RealDist<T>{ from, to }( m_engine );
-            return RealDist<T>{ to, from }( m_engine );
+        typename std::enable_if<details::is_uniform_real<T>::value, T>::type
+        get( T from = (std::numeric_limits<T>::min)( ), T to = (std::numeric_limits<T>::max)( ) ) {
+            return impl::template get<T>( m_engine, from, to );
         }
 
-        /**
-        * \brief Generate a random byte number in a [from; to] range
-        * \param from The first limit number of a random range
-        * \param to The second limit number of a random range
-        * \return A random byte number in a [from; to] range
-        * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
-        * \note Prevent implicit type conversion
-        */
         template<typename T>
-        typename std::enable_if<details::is_byte<T>::value
-            , T>::type get( T from = (std::numeric_limits<T>::min)( ),
-                            T to = (std::numeric_limits<T>::max)( ) ) {
-            // Choose between short and unsigned short for byte conversion
-            using short_t = typename std::conditional<std::is_signed<T>::value,
-                short, unsigned short>::type;
-
-            return static_cast<T>( get<short_t>( from, to ) );
+        typename std::enable_if<details::is_byte<T>::value, T>::type
+        get( T from = (std::numeric_limits<T>::min)( ), T to = (std::numeric_limits<T>::max)( ) ) {
+            return impl::template get<T>( m_engine, from, to );
         }
 
-        /**
-        * \brief Generate a random common_type number in a [from; to] range
-        * \param Key The Key type for this version of 'get' method
-        *        Type should be '(THIS_TYPE)::common' struct
-        * \param from The first limit number of a random range
-        * \param to The second limit number of a random range
-        * \return A random common_type number in a [from; to] range
-        * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
-        * \note Allow implicit type conversion
-        * \note Prevent implicit type conversion from signed to unsigned types
-        *       Why? std::common_type<Unsigned, Signed> chooses unsigned value,
-        *                 then Signed value will be converted to Unsigned value
-        *                       which gives us a wrong range for random values.
-        *                           https://stackoverflow.com/a/5416498/5734836
-        */
-        template<
-            typename Key,
-            typename A,
-            typename B, 
-            typename C = typename std::common_type<A, B>::type
-        >
-        typename std::enable_if<
-               std::is_same<Key, common>::value
-            && details::is_supported_number<A>::value
-            && details::is_supported_number<B>::value
-            // Prevent implicit type conversion from signed to unsigned types
-            && std::is_signed<A>::value != std::is_unsigned<B>::value
-            , C>::type get( A from = (std::numeric_limits<A>::min)( ),
-                            B to = (std::numeric_limits<B>::max)( ) ) {
-            return get( static_cast<C>( from ), static_cast<C>( to ) );
+        template<typename Key, typename A, typename B, typename C = typename std::common_type<A, B>::type>
+        typename std::enable_if<std::is_same<Key, common>::value && details::is_supported_number<A>::value && details::is_supported_number<B>::value && std::is_signed<A>::value != std::is_unsigned<B>::value, C>::type
+        get( A from = (std::numeric_limits<A>::min)( ), B to = (std::numeric_limits<B>::max)( ) ) {
+            return impl::template get<Key, A, B, C>( m_engine, from, to );
         }
 
-        /**
-        * \brief Generate a random character in a [from; to] range
-        *        by std::uniform_int_distribution
-        * \param from The first limit number of a random range
-        * \param to The second limit number of a random range
-        * \return A random character in a [from; to] range
-        * \note Allow both: 'from' <= 'to' and 'from' >= 'to'
-        * \note Prevent implicit type conversion
-        */
         template<typename T>
-        typename std::enable_if<details::is_supported_character<T>::value
-            , T>::type get(T from = (std::numeric_limits<T>::min)(),
-                T to = (std::numeric_limits<T>::max)()) {
-            if (from < to) // Allow range from higher to lower
-                return static_cast<T>(IntegerDist<std::int64_t>{ static_cast<std::int64_t>(from), static_cast<std::int64_t>(to) }(m_engine));
-            return static_cast<T>(IntegerDist<std::int64_t>{ static_cast<std::int64_t>(to), static_cast<std::int64_t>(from) }(m_engine));
+        typename std::enable_if<details::is_supported_character<T>::value, T>::type
+        get(T from = (std::numeric_limits<T>::min)(), T to = (std::numeric_limits<T>::max)()) {
+            return impl::template get<T>( m_engine, from, to );
         }
 
-        /**
-        * \brief Generate a bool value with specific probability
-        *                         by std::bernoulli_distribution
-        * \param probability The probability of generating true in [0; 1] range
-        *        0 means always false, 1 means always true
-        * \return 'true' with 'probability' probability ('false' otherwise)
-        */
         template<typename T>
-        typename std::enable_if<std::is_same<T, bool>::value
-            , bool>::type get( const double probability = 0.5 ) {
-            assert( 0 <= probability && 1 >= probability ); // out of [0; 1] range
-            return BoolDist{ probability }( m_engine );
+        typename std::enable_if<std::is_same<T, bool>::value, bool>::type
+        get( const double probability = 0.5 ) {
+            return impl::template get<T>( m_engine, probability );
         }
 
-        /**
-        * \brief Return random value from initializer_list
-        * \param init_list initializer_list with values
-        * \return Random value from initializer_list
-        * \note Should be 1 or more elements in initializer_list
-        * \note Warning! Elements in initializer_list can't be moved:
-        *               https://stackoverflow.com/a/8193157/5734836
-        */
         template<typename T>
         T get( std::initializer_list<T> init_list ) {
-            assert( 0u != init_list.size( ) );
-            return *get( init_list.begin( ), init_list.end( ) );
+            return impl::template get<T>( m_engine, init_list );
         }
 
-        /**
-        * \brief Return random iterator from iterator range
-        * \param first, last - the range of elements
-        * \return Random iterator from [first, last) range
-        * \note If first == last, return last
-        */
         template<typename InputIt>
-        typename std::enable_if<details::is_iterator<InputIt>::value
-            , InputIt>::type get( InputIt first, InputIt last ) {
-            const auto size = std::distance( first, last );
-            if( 0 == size ) return last;
-            using diff_t = typename std::iterator_traits<InputIt>::difference_type;
-            return std::next( first, get<diff_t>( 0, size - 1 ) );
+        typename std::enable_if<details::is_iterator<InputIt>::value, InputIt>::type
+        get( InputIt first, InputIt last ) {
+            return impl::get( m_engine, first, last );
         }
 
-        /**
-        * \brief Return random iterator from Container
-        * \param container The container with elements
-        * \return Random iterator from container
-        * \note If container is empty return std::end( container ) iterator
-        */
         template<typename Container>
-        auto get( Container& container ) -> 
-            typename std::enable_if<details::is_iterator<
-                decltype(std::begin(container))>::value
-                , decltype(std::begin(container))
-            >::type {
-            return get( std::begin( container ), std::end( container ) );
+        auto get( Container& container ) ->
+            typename std::enable_if<details::is_iterator<decltype(std::begin(container))>::value, decltype(std::begin(container))>::type {
+            return impl::get( m_engine, container );
         }
 
-        /**
-        * \brief Return container filled with random values
-        * \param from The first limit number of a random range
-        * \param to The second limit number of a random range
-        * \param size The number of elements in resulting container
-        * \return Container filled with random values
-        * \note Container "reserve" method will be called before generation
-        */
         template<template<typename...> class Container, typename A>
-        typename std::enable_if<
-                details::has_reserve<Container<A>>::value
-            , Container<A>>::type get(A from, A to, std::size_t size) {
-            Container<A> container;
-
-            container.reserve(size);
-            for (std::size_t i = 0; i < size; ++i)
-                container.insert(std::end(container), get(from, to));
-
-            return container;
+        typename std::enable_if<details::has_reserve<Container<A>>::value, Container<A>>::type
+        get(A from, A to, std::size_t size) {
+            return impl::template get<Container, A>( m_engine, from, to, size );
         }
 
-        /**
-        * \brief Return container filled with random common_type values
-        * \param Key The Key type for this version of 'get' method
-        *     Type should be '(THIS_TYPE)::common' struct
-        * \param from The first limit number of a random range
-        * \param to The second limit number of a random range
-        * \param size The number of elements in resulting container
-        * \return Container filled with random values
-        * \note Container "reserve" method will be called before generation
-        */
-        template<
-            template<typename...> class Container,
-            typename Key,
-            typename A,
-            typename B,
-            typename C = typename std::common_type<A, B>::type>
-        typename std::enable_if<
-                   std::is_same<Key, common>::value
-                && details::has_reserve<Container<A>>::value
-            , Container<C>>::type get(A start, B end, std::size_t size) {
-            Container<C> container;
-
-            container.reserve(size);
-            for (std::size_t i = 0; i < size; ++i)
-                container.insert(std::end(container), get<common>(start, end));
-
-            return container;
+        template<template<typename...> class Container, typename Key, typename A, typename B, typename C = typename std::common_type<A, B>::type>
+        typename std::enable_if<std::is_same<Key, common>::value && details::has_reserve<Container<A>>::value, Container<C>>::type
+        get(A start, B end, std::size_t size) {
+            return impl::template get<Container, Key, A, B, C>( m_engine, start, end, size );
         }
 
-        /**
-        * \brief Return container filled with random values
-        * \param from The first limit number of a random range
-        * \param to The second limit number of a random range
-        * \param size The number of elements in resulting container
-        * \return Container filled with random values
-        */
         template<template<typename...> class Container, typename A>
-        typename std::enable_if<
-              !details::has_reserve<Container<A>>::value
-            , Container<A>>::type get(A start, A end, std::size_t size) {
-            Container<A> container;
-
-            for (std::size_t i = 0; i < size; ++i)
-                container.insert(std::end(container), get(start, end));
-
-            return container;
+        typename std::enable_if<!details::has_reserve<Container<A>>::value, Container<A>>::type
+        get(A start, A end, std::size_t size) {
+            return impl::template get<Container, A>( m_engine, start, end, size );
         }
 
-        /**
-        * \brief Return container filled with random common_type values
-        * \param Key The Key type for this version of 'get' method
-        *     Type should be '(THIS_TYPE)::common' struct
-        * \param from The first limit number of a random range
-        * \param to The second limit number of a random range
-        * \param size The number of elements in resulting container
-        * \return Container filled with random values
-        */
-        template<
-            template<typename...> class Container,
-            typename Key,
-            typename A,
-            typename B,
-            typename C = typename std::common_type<A, B>::type>
-        typename std::enable_if<
-                 std::is_same<Key, common>::value
-              && !details::has_reserve<Container<C>>::value
-            , Container<C>>::type get(A start, B end, std::size_t size) {
-            Container<C> container;
-
-            for (std::size_t i = 0; i < size; ++i)
-                container.insert(std::end(container), get<common>(start, end));
-
-            return container;
+        template<template<typename...> class Container, typename Key, typename A, typename B, typename C = typename std::common_type<A, B>::type>
+        typename std::enable_if<std::is_same<Key, common>::value && !details::has_reserve<Container<C>>::value, Container<C>>::type
+        get(A start, B end, std::size_t size) {
+            return impl::template get<Container, Key, A, B, C>( m_engine, start, end, size );
         }
 
-        /**
-        * \brief Return array-like container filled with random values
-        * \param from The first limit number of a random range
-        * \param to The second limit number of a random range
-        * \param N The number of elements in resulting container
-        * \return Container filled with random values
-        */
         template<template<typename AA, std::size_t NN, typename...> class Container, std::size_t N, typename A>
-        typename std::enable_if<
-               !details::has_insert<Container<A, N>>::value
-            , Container<A, N>>::type get(A start, A end) {
-            Container<A, N> container = {{ 0 }};
-
-            for (std::size_t i = 0; i < N; ++i)
-                container[i] = get(start, end);
-
-            return container;
+        typename std::enable_if<!details::has_insert<Container<A, N>>::value, Container<A, N>>::type
+        get(A start, A end) {
+            return impl::template get<Container, N, A>( m_engine, start, end );
         }
 
-        /**
-        * \brief Return array-like container filled with random common_type values
-        * \param Key The Key type for this version of 'get' method
-        *     Type should be '(THIS_TYPE)::common' struct
-        * \param from The first limit number of a random range
-        * \param to The second limit number of a random range
-        * \param size The number of elements in resulting container
-        * \return Container filled with random values
-        */
-        template<
-            template<typename AA, std::size_t NN, typename...> class Container,
-            std::size_t N,
-            typename Key,
-            typename A,
-            typename B,
-            typename C = typename std::common_type<A, B>::type>
-        typename std::enable_if<
-                  std::is_same<Key, common>::value
-               && !details::has_insert<Container<C, N>>::value
-            , Container<C, N>>::type get(A start, B end) {
-            Container<C, N> container = {{ 0 }};
-
-            for (std::size_t i = 0; i < N; ++i)
-                container[i] = get<common>(start, end);
-
-            return container;
+        template<template<typename AA, std::size_t NN, typename...> class Container, std::size_t N, typename Key, typename A, typename B, typename C = typename std::common_type<A, B>::type>
+        typename std::enable_if<std::is_same<Key, common>::value && !details::has_insert<Container<C, N>>::value, Container<C, N>>::type
+        get(A start, B end) {
+            return impl::template get<Container, N, Key, A, B, C>( m_engine, start, end );
         }
 
-        /**
-        * \brief Return random pointer from built-in array
-        * \param array The built-in array with elements
-        * \return Pointer to random element in array
-        */
         template<typename T, std::size_t N>
         T* get( T( &array )[ N ] ) {
-            return std::addressof( array[ get<std::size_t>( 0, N - 1 ) ] );
+            return impl::get( m_engine, array );
         }
 
-        /**
-        * \brief Return value from custom Dist distribution
-        *        seeded by internal random engine
-        * \param Dist The type of custom distribution with next concept:
-        *        http://en.cppreference.com/w/cpp/concept/RandomNumberDistribution
-        * \param args The arguments which will be forwarded to Dist constructor
-        * \return Value from custom distribution
-        */
         template<typename Dist, typename... Args>
         typename Dist::result_type get( Args&&... args ) {
-            return Dist{ std::forward<Args>( args )... }( m_engine );
+            return impl::template get<Dist>( m_engine, std::forward<Args>( args )... );
         }
 
-        /**
-        * \brief Return value from custom 'dist' distribution
-        *        seeded by internal random engine
-        * \param dist The custom distribution with next concept:
-        *        http://en.cppreference.com/w/cpp/concept/RandomNumberDistribution
-        * \param args The arguments which will be forwarded to Dist constructor
-        * \return Value from custom 'dist' distribution
-        */
         template<typename Dist>
         typename Dist::result_type get( Dist& dist ) {
-            return dist( m_engine );
+            return impl::get( m_engine, dist );
         }
 
-        /**
-        * \brief Return a random iterator from given map container by
-        *        utilizing the values of the map container as weights
-        *        for weighted random number generation
-        * \param Key The Key type for this version of 'get' method
-        *        Type should be '(THIS_TYPE)::common' struct
-        * \param map_container A container that has mapped_type,
-        *        value_type and key_type defined
-        * \note return the end iterator if the iterator is empty or total weight is equals to sum
-        */
-        template<
-            typename Key,
-            class MapContainer
-        >
+        template<typename Key, class MapContainer>
         auto get(const MapContainer& map_container) -> typename std::enable_if<
             details::is_map<MapContainer>::value &&
             details::is_iterator<decltype(std::begin(map_container))>::value &&
             !std::is_signed<typename MapContainer::mapped_type>::value &&
             std::is_same<Key, details::weight>::value,
         decltype(std::begin(map_container))>::type {
-            using MappedType = typename MapContainer::mapped_type;
-            using IteratorType = decltype(std::begin(map_container));
-            
-            MappedType total_weight = 0;
-            for (IteratorType it = std::begin(map_container); it != std::end(map_container); ++it) {
-                total_weight += it->second;
-            }
-            if(total_weight == MappedType(0)) return std::end(map_container);
-
-            MappedType random_weight = get(MappedType(0), total_weight - 1);
-            MappedType sum = 0;
-
-            for(IteratorType it = std::begin(map_container); it != std::end(map_container); ++it)
-            {
-                sum += it->second;
-                if(sum > random_weight) return it;
-            }
-            return std::end(map_container);
+            return impl::template get<Key>( m_engine, map_container );
         }
 
-        /**
-        * \brief Return a random iterator from given map container by
-        *        utilizing the values of the map container as weights
-        *        for weighted random number generation
-        * \param Key The Key type for this version of 'get' method
-        *        Type should be '(THIS_TYPE)::common' struct
-        * \param map_container A container that has mapped_type,
-        *        value_type and key_type defined
-        * \note return the end iterator if the iterator is empty
-        */
-        template<
-            typename Key,
-            class MapContainer
-        >
+        template<typename Key, class MapContainer>
         auto get(const MapContainer& map_container) -> typename std::enable_if<
             details::is_map<MapContainer>::value &&
             details::is_iterator<decltype(std::begin(map_container))>::value &&
             details::is_uniform_real<typename MapContainer::mapped_type>::value &&
             std::is_same<Key, details::weight>::value,
         decltype(std::begin(map_container))>::type {
-            using MappedType = typename MapContainer::mapped_type;
-            using IteratorType = decltype(std::begin(map_container));
-            
-            MappedType total_weight = 0;
-            for (IteratorType it = std::begin(map_container); it != std::end(map_container); ++it) {
-                assert(it->second >= MappedType(0));
-                total_weight += it->second;
-            }
-            if(total_weight == MappedType(0)) return std::end(map_container);
-
-            MappedType random_weight = get(MappedType(0), std::nextafter(total_weight, (std::numeric_limits<MappedType>::min)( )));
-            MappedType sum = 0;
-
-            for(IteratorType it = std::begin(map_container); it != std::end(map_container); ++it)
-            {
-                sum += it->second;
-                if(sum > random_weight) return it;
-            }
-            return std::end(map_container);
+            return impl::template get<Key>( m_engine, map_container );
         }
 
-        /**
-        * \brief Reorders the elements in the given range [first, last)
-        *        such that each possible permutation of those elements
-        *        has equal probability of appearance.
-        * \param first, last - the range of elements to shuffle randomly       
-        */
         template<typename RandomIt>
-        void shuffle( RandomIt first, RandomIt last ) {
-            std::shuffle( first, last, m_engine );
-        }
+        void shuffle( RandomIt first, RandomIt last ) { impl::shuffle( m_engine, first, last ); }
 
-        /**
-        * \brief Reorders the elements in the given container
-        *        such that each possible permutation of those elements
-        *        has equal probability of appearance.
-        * \param container - the container with elements to shuffle randomly
-        */
         template<typename Container>
-        void shuffle( Container& container ) {
-            shuffle( std::begin( container ), std::end( container ) );
+        void shuffle( Container& container ) { impl::shuffle( m_engine, container ); }
+
+        template<typename... Args>
+        auto operator()( Args&&... args ) -> decltype( this->get( std::forward<Args>( args )... ) ) {
+            return this->get( std::forward<Args>( args )... );
         }
 
-        /// return internal engine by copy
-        Engine get_engine( ) const {
-            return m_engine;
-        }
-
-        /// return internal engine by ref
-        Engine& engine() {
-            return m_engine;
-        }
+        Engine get_engine( ) const { return m_engine; }
+        Engine& engine() { return m_engine; }
     private:
-        /// return engine seeded by Seeder
-        static Engine make_seeded_engine( ) {
-            // Make seeder instance for seed return by reference like std::seed_seq
-            return Engine{ Seeder{ }( ) };
-        }
-    private:
-        /// The random number engine
+        static Engine make_seeded_engine( ) { return Engine{ Seeder{ }( ) }; }
         Engine m_engine{ make_seeded_engine( ) };
     };
 
     /** 
     * \brief The basic static random alias based on a std::mt19937
-    * \note It uses static methods API and data with static storage
-    * \note Not thread safe but more performance
     */
     using random_static = basic_random_static<std::mt19937>;
 
     /**
-    * \brief The basic static random alias based on a std::mt19937
-    * \note It uses static methods API and data with thread_local storage
-    * \note Thread safe but less performance
+    * \brief The basic thread_local random alias based on a std::mt19937
     */
     using random_thread_local = basic_random_thread_local<std::mt19937>;
 
     /**
-    * \brief The basic static random alias based on a std::mt19937
-    * \note It uses non static methods API and data with auto storage
-    * \note Not thread safe. Should construct on the stack at local scope
+    * \brief The basic local random alias based on a std::mt19937
     */
     using random_local = basic_random_local<std::mt19937>;
 

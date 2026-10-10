@@ -1,4 +1,4 @@
-﻿#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
+#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 #include "catch.hpp"
 #include <limits>
 #include <sstream>
@@ -12,7 +12,22 @@
 #include "Windows.h"
 #endif
 
-#include "current_random.hpp"
+#include "effolkronium/random.hpp"
+
+#ifdef RANDOM_LOCAL
+auto Random = effolkronium::random_local{ };
+using Random_t = effolkronium::random_local;
+#endif
+
+#ifdef RANDOM_STATIC
+auto Random = effolkronium::random_static{ };
+using Random_t = effolkronium::random_static;
+#endif
+
+#ifdef RANDOM_THREAD_LOCAL
+auto Random = effolkronium::random_thread_local{ };
+using Random_t = effolkronium::random_thread_local;
+#endif
 
 TEST_CASE( "Range overflow for random integer numbers" ) {
     bool isRangeOverflow = false;
@@ -22,7 +37,7 @@ TEST_CASE( "Range overflow for random integer numbers" ) {
          i < std::numeric_limits<std::uint8_t>::max( )
          && !isRangeOverflow;
          ++i ) {
-        const auto randomNumber = Random DOT get( -1, 1 );
+        const auto randomNumber = Random.get( -1, 1 );
         isRangeOverflow = randomNumber < -1 || randomNumber > 1;
     }
     REQUIRE( !isRangeOverflow );
@@ -31,7 +46,7 @@ TEST_CASE( "Range overflow for random integer numbers" ) {
     for( std::uint8_t i{ 0u };
          i < std::numeric_limits<std::uint8_t>::max( );
          ++i ) {
-        const auto randomNumber = Random DOT get( 1, -1 );
+        const auto randomNumber = Random.get( 1, -1 );
         isRangeOverflow = randomNumber < -1 || randomNumber > 1;
     }
     REQUIRE( !isRangeOverflow );
@@ -40,7 +55,7 @@ TEST_CASE( "Range overflow for random integer numbers" ) {
     for( std::uint8_t i{ 0u };
          i < std::numeric_limits<std::uint8_t>::max( );
          ++i ) {
-        const auto randomNumber = Random DOT get( 0, 0 );
+        const auto randomNumber = Random.get( 0, 0 );
         isRangeOverflow = randomNumber != 0;
     }
     REQUIRE( !isRangeOverflow );
@@ -49,32 +64,32 @@ TEST_CASE( "Range overflow for random integer numbers" ) {
 TEST_CASE( "Type deduction for random integer numbers" ) {
     // short
     static_assert( std::is_same<short,
-                   decltype( Random DOT get(
+                   decltype( Random.get(
                        short{ 0 },
                        short{ 0 } ) ) > ::value, "" );
     // unsigned short
     static_assert( std::is_same<unsigned short,
-                   decltype( Random DOT get(
+                   decltype( Random.get(
                        static_cast<unsigned short>( 0u ),
                        static_cast<unsigned short>( 0u ) ) ) > ::value, "" );
     // int
     static_assert( std::is_same<int,
-                   decltype( Random DOT get( 0, 0 ) )>::value, "" );
+                   decltype( Random.get( 0, 0 ) )>::value, "" );
     // unsigned int
     static_assert( std::is_same<unsigned int,
-                   decltype( Random DOT get( 0u, 0u ) )>::value, "" );
+                   decltype( Random.get( 0u, 0u ) )>::value, "" );
     // long
     static_assert( std::is_same<long,
-                   decltype( Random DOT get( 0l, 0l ) )>::value, "" );
+                   decltype( Random.get( 0l, 0l ) )>::value, "" );
     // unsigned long
     static_assert( std::is_same<unsigned long,
-                   decltype( Random DOT get( 0lu, 0lu ) )>::value, "" );
+                   decltype( Random.get( 0lu, 0lu ) )>::value, "" );
     // long long
     static_assert( std::is_same<long long,
-                   decltype( Random DOT get( 0ll, 0ll ) )>::value, "" );
+                   decltype( Random.get( 0ll, 0ll ) )>::value, "" );
     // unsigned long long
     static_assert( std::is_same<unsigned long long,
-                   decltype( Random DOT get( 0ull, 0ull ) )>::value, "" );
+                   decltype( Random.get( 0ull, 0ull ) )>::value, "" );
 }
 
 TEST_CASE( "Random integer numbers is truly random" ) {
@@ -82,11 +97,11 @@ TEST_CASE( "Random integer numbers is truly random" ) {
 
     do {
 
-        const auto firstRandomNumber = Random DOT get(
+        const auto firstRandomNumber = Random.get(
             std::numeric_limits<long long>::min( ),
             std::numeric_limits<long long>::max( ) );
 
-        const auto secondRandomNumber = Random DOT get(
+        const auto secondRandomNumber = Random.get(
             std::numeric_limits<long long>::min( ),
             std::numeric_limits<long long>::max( ) );
 
@@ -104,7 +119,7 @@ TEST_CASE( "Range overflow for random real numbers" ) {
          i < std::numeric_limits<std::uint8_t>::max( )
          && !isRangeOverflow;
          ++i ) {
-        const auto randomNumber = Random DOT get( -1., 1. );
+        const auto randomNumber = Random.get( -1., 1. );
         isRangeOverflow = randomNumber < -1. || randomNumber > 1.;
     }
     REQUIRE( !isRangeOverflow );
@@ -113,7 +128,7 @@ TEST_CASE( "Range overflow for random real numbers" ) {
     for( std::uint8_t i{ 0u };
          i < std::numeric_limits<std::uint8_t>::max( );
          ++i ) {
-        const auto randomNumber = Random DOT get( 1., -1. );
+        const auto randomNumber = Random.get( 1., -1. );
         isRangeOverflow = randomNumber < -1. || randomNumber > 1.;
     }
     REQUIRE( !isRangeOverflow );
@@ -122,7 +137,7 @@ TEST_CASE( "Range overflow for random real numbers" ) {
     for( std::uint8_t i{ 0u };
          i < std::numeric_limits<std::uint8_t>::max( );
          ++i ) {
-        const auto randomNumber = Random DOT get( 0., 0. );
+        const auto randomNumber = Random.get( 0., 0. );
         isRangeOverflow = randomNumber != 0.;
     }
     REQUIRE( !isRangeOverflow );
@@ -131,15 +146,15 @@ TEST_CASE( "Range overflow for random real numbers" ) {
 TEST_CASE( "Type deduction for random real numbers" ) {
     // float
     static_assert( std::is_same<float,
-                   decltype( Random DOT get(
+                   decltype( Random.get(
                        0.f, 0.f ) ) > ::value, "" );
     // double
     static_assert( std::is_same<double,
-                   decltype( Random DOT get(
+                   decltype( Random.get(
                        0., 0. ) ) > ::value, "" );
     // long double
     static_assert( std::is_same<long double,
-                   decltype( Random DOT get( 0.l, 0.l ) )>::value, "" );
+                   decltype( Random.get( 0.l, 0.l ) )>::value, "" );
 }
 
 TEST_CASE( "Random real numbers is truly random" ) {
@@ -147,11 +162,11 @@ TEST_CASE( "Random real numbers is truly random" ) {
     auto count = std::numeric_limits<std::uintmax_t>::min( );
 
     do {
-        const auto firstRandomNumber = Random DOT get(
+        const auto firstRandomNumber = Random.get(
             std::numeric_limits<float>::min( ),
             std::numeric_limits<float>::max( ) );
 
-        const auto secondRandomNumber = Random DOT get(
+        const auto secondRandomNumber = Random.get(
             std::numeric_limits<float>::min( ),
             std::numeric_limits<float>::max( ) );
 
@@ -169,7 +184,7 @@ TEST_CASE( "Range overflow for random byte numbers" ) {
          i < std::numeric_limits<std::uint8_t>::max( )
          && !isRangeOverflow;
          ++i ) {
-        const auto randomNumber = Random DOT get( static_cast<signed char>( -1 ),
+        const auto randomNumber = Random.get( static_cast<signed char>( -1 ),
                                                   static_cast<signed char>( 1 ) );
         isRangeOverflow = randomNumber < -1 || randomNumber > 1;
     }
@@ -179,7 +194,7 @@ TEST_CASE( "Range overflow for random byte numbers" ) {
     for( std::uint8_t i{ 0u };
          i < std::numeric_limits<std::uint8_t>::max( );
          ++i ) {
-        const auto randomNumber = Random DOT get( static_cast<signed char>( 1 ),
+        const auto randomNumber = Random.get( static_cast<signed char>( 1 ),
                                                   static_cast<signed char>( -1 ) );
         isRangeOverflow = randomNumber < -1. || randomNumber > 1.;
     }
@@ -189,7 +204,7 @@ TEST_CASE( "Range overflow for random byte numbers" ) {
     for( std::uint8_t i{ 0u };
          i < std::numeric_limits<std::uint8_t>::max( );
          ++i ) {
-        const auto randomNumber = Random DOT get( static_cast<signed char>( 0 ),
+        const auto randomNumber = Random.get( static_cast<signed char>( 0 ),
                                                   static_cast<signed char>( 0 ) );
         isRangeOverflow = randomNumber != 0.;
     }
@@ -199,22 +214,22 @@ TEST_CASE( "Range overflow for random byte numbers" ) {
 TEST_CASE( "Type deduction for random byte numbers" ) {
     // signed char
     static_assert( std::is_same<signed char,
-                   decltype( Random DOT get(
+                   decltype( Random.get(
                        static_cast<signed char>( 0 ),
                        static_cast<signed char>( 0 ) ) ) > ::value, "" );
     // unsigned char
     static_assert( std::is_same<unsigned char,
-                   decltype( Random DOT get(
+                   decltype( Random.get(
                        static_cast<unsigned char>( 0 ),
                        static_cast<unsigned char>( 0 ) ) ) > ::value, "" );
     // std::int8_t
     static_assert( std::is_same<std::int8_t,
-                   decltype( Random DOT get(
+                   decltype( Random.get(
                        std::int8_t{ 0 },
                        std::int8_t{ 0 } ) ) > ::value, "" );
     // std::uint8_t
     static_assert( std::is_same<std::uint8_t,
-                   decltype( Random DOT get(
+                   decltype( Random.get(
                        std::uint8_t{ 0 },
                        std::uint8_t{ 0 } ) ) > ::value, "" );
 }
@@ -223,11 +238,11 @@ TEST_CASE( "Random byte numbers is truly random" ) {
     bool isDifferentNumber{ false };
 
     do {
-        const auto firstRandomNumber = Random DOT get(
+        const auto firstRandomNumber = Random.get(
             std::numeric_limits<signed char>::min( ),
             std::numeric_limits<signed char>::max( ) );
 
-        const auto secondRandomNumber = Random DOT get(
+        const auto secondRandomNumber = Random.get(
             std::numeric_limits<signed char>::min( ),
             std::numeric_limits<signed char>::max( ) );
 
@@ -245,7 +260,7 @@ TEST_CASE( "Range overflow for random common_type numbers" ) {
          i < std::numeric_limits<std::uint8_t>::max( )
          && !isRangeOverflow;
          ++i ) {
-        const auto randomNumber = Random DOT get<Random_t::common>(
+        const auto randomNumber = Random.get<Random_t::common>(
                                                  static_cast<signed char>( -1 ),
                                                  short{ 1 } );
 
@@ -257,7 +272,7 @@ TEST_CASE( "Range overflow for random common_type numbers" ) {
     for( std::uint8_t i{ 0u };
          i < std::numeric_limits<std::uint8_t>::max( );
          ++i ) {
-        const auto randomNumber = Random DOT get<Random_t::common>(
+        const auto randomNumber = Random.get<Random_t::common>(
                                            1ull, 0u );
 
         isRangeOverflow = 1 < randomNumber;
@@ -268,7 +283,7 @@ TEST_CASE( "Range overflow for random common_type numbers" ) {
     for( std::uint8_t i{ 0u };
          i < std::numeric_limits<std::uint8_t>::max( );
          ++i ) {
-        const auto randomNumber = Random DOT get<Random_t::common>(
+        const auto randomNumber = Random.get<Random_t::common>(
                                                 static_cast<signed char>( 0 ),
                                                 0ll );
         isRangeOverflow = randomNumber != 0;
@@ -279,21 +294,21 @@ TEST_CASE( "Range overflow for random common_type numbers" ) {
 TEST_CASE( "Type deduction for random common_type numbers" ) {
     // signed char
     static_assert( std::is_same<signed char,
-                   decltype( Random DOT get<Random_t::common>(
+                   decltype( Random.get<Random_t::common>(
                        static_cast<signed char>( 0 ),
                        static_cast<signed char>( 0 ) ) ) > ::value, "" );
     // unsigned long
     static_assert( std::is_same<unsigned long,
-                   decltype( Random DOT get<Random_t::common>(
+                   decltype( Random.get<Random_t::common>(
                        static_cast<unsigned char>( 0u ), 0ul ) ) > ::value, "" );
     // double
     static_assert( std::is_same<double,
-                   decltype( Random DOT get<Random_t::common>(
+                   decltype( Random.get<Random_t::common>(
                        0.,
                        std::int8_t{ 0 } ) ) > ::value, "" );
     // long double
     static_assert( std::is_same<long double,
-                   decltype( Random DOT get<Random_t::common>(
+                   decltype( Random.get<Random_t::common>(
                        0.f, 0.l ) ) > ::value, "" );
 }
 
@@ -302,11 +317,11 @@ TEST_CASE( "Random common type numbers is truly random" ) {
 
     do {
 
-        const auto firstRandomNumber = Random DOT get<Random_t::common>(
+        const auto firstRandomNumber = Random.get<Random_t::common>(
             std::numeric_limits<float>::min( ),
             std::numeric_limits<signed char>::max( ) );
 
-        const auto secondRandomNumber = Random DOT get<Random_t::common>(
+        const auto secondRandomNumber = Random.get<Random_t::common>(
             std::numeric_limits<signed char>::min( ),
             std::numeric_limits<float>::max( ) );
 
@@ -318,21 +333,21 @@ TEST_CASE( "Random common type numbers is truly random" ) {
 
 TEST_CASE( "Random bool values" ) {
     SECTION( "probability = 1" ) {
-        REQUIRE( Random DOT get<bool>( 1 ) );
+        REQUIRE( Random.get<bool>( 1 ) );
     }
 
     SECTION( "probability = 0" ) {
-        REQUIRE( !Random DOT get<bool>( 0 ) );
+        REQUIRE( !Random.get<bool>( 0 ) );
     }
 
     SECTION( "generate true and false" ) {
-        while( Random DOT get<bool>( ) == Random DOT get<bool>( ) );
+        while( Random.get<bool>( ) == Random.get<bool>( ) );
         REQUIRE( true == true );
     }
 
     SECTION( "out of range argument" ) {
-        // Random DOT get<bool>( 1.1 );
-        // Random DOT get<bool>( -1.1 );
+        // Random.get<bool>( 1.1 );
+        // Random.get<bool>( -1.1 );
         // assert occurred!
     }
 }
@@ -340,14 +355,14 @@ TEST_CASE( "Random bool values" ) {
 TEST_CASE( "Random value from initilizer list" ) {
     bool is1{ false }, is2{ false }, is3{ false };
     while( !is1 && !is2 && !is3 ) {
-        switch( Random DOT get( { 1, 2, 3 } ) ) {
+        switch( Random.get( { 1, 2, 3 } ) ) {
             case 1: is1 = true; break;
             case 2: is2 = true; break;
             case 3: is3 = true; break;
         }
     }
     REQUIRE( true == true );
-    //Random DOT get<int>( {  } ); assertion occurred
+    //Random.get<int>( {  } ); assertion occurred
 }
 
 TEST_CASE( "Move constructor usage in get from initilizer list" ) { 
@@ -367,21 +382,21 @@ TEST_CASE( "Move constructor usage in get from initilizer list" ) {
     };
 
     NoexceptMoveNoexceptCopy instance{ };
-    Random DOT get( { std::move( instance ) } );
+    Random.get( { std::move( instance ) } );
     REQUIRE( 1 == copied_num );
     REQUIRE( 1 == moved_num );
 }
 
 TEST_CASE( "Random value from initilizer list by reference" ) {
     int i{ 1 };
-    auto val = Random DOT get( { std::ref( i ) } );
+    auto val = Random.get( { std::ref( i ) } );
     val.get( ) = 5;
     REQUIRE( 5 == i );
 }
 
 TEST_CASE( "Random value from initilizer list by pointer" ) {
     int i{ 1 };
-    auto val = Random DOT get( { &i } );
+    auto val = Random.get( { &i } );
     *val = 5;
     REQUIRE( 5 == i );
 }
@@ -392,7 +407,7 @@ TEST_CASE( "Shuffle" ) {
             std::array<int, 3> arr = { { 1, 2, 3 } };
             const auto arr_copy = arr;
             do {
-                Random DOT shuffle( arr );
+                Random.shuffle( arr );
             } while( arr_copy == arr );
 
             REQUIRE( true == true );
@@ -404,7 +419,7 @@ TEST_CASE( "Shuffle" ) {
             std::array<int, 3> arr = { { 1, 2, 3 } };
             const auto arr_copy = arr;
             do {
-                Random DOT shuffle( std::begin( arr ), std::end( arr ) );
+                Random.shuffle( std::begin( arr ), std::end( arr ) );
             } while( arr_copy == arr );
 
             REQUIRE( true == true );
@@ -413,20 +428,20 @@ TEST_CASE( "Shuffle" ) {
 }
 
 TEST_CASE( "Get without arguments" ) {
-    auto val = Random DOT get( );
-    REQUIRE( val <= Random DOT max( ) );
+    auto val = Random.get( );
+    REQUIRE( val <= Random.max( ) );
 }
 
 TEST_CASE( "discard" ) {
     std::stringstream strStream;
 
-    Random DOT serialize( strStream );
-    Random DOT discard( 500 );
-    auto firstVal = Random DOT get( );
+    Random.serialize( strStream );
+    Random.discard( 500 );
+    auto firstVal = Random.get( );
 
-    Random DOT deserialize( strStream );
-    Random DOT discard( 500 );
-    auto secondVal = Random DOT get( );
+    Random.deserialize( strStream );
+    Random.discard( 500 );
+    auto secondVal = Random.get( );
 
     REQUIRE( firstVal == secondVal );
 }
@@ -434,13 +449,13 @@ TEST_CASE( "discard" ) {
 TEST_CASE( "Not equal" ) {
     std::stringstream strStream;
 
-    Random DOT serialize( strStream );
-    Random DOT discard( 1 );
+    Random.serialize( strStream );
+    Random.discard( 1 );
 
     Random_t::engine_type engine;
     strStream >> engine;
 
-    bool isEqual = Random DOT is_equal( engine );
+    bool isEqual = Random.is_equal( engine );
 
     REQUIRE( false == isEqual );
 }
@@ -448,33 +463,33 @@ TEST_CASE( "Not equal" ) {
 TEST_CASE( "Equal" ) {
     std::stringstream strStream;
 
-    Random DOT serialize( strStream );
+    Random.serialize( strStream );
 
     Random_t::engine_type engine;
     strStream >> engine;
 
-    bool isEqual = Random DOT is_equal( engine );
+    bool isEqual = Random.is_equal( engine );
 
     REQUIRE( true == isEqual );
 }
 
 TEST_CASE( "seed" ) {
-    Random DOT seed( 500 );
-    auto firstVal = Random DOT get( );
+    Random.seed( 500 );
+    auto firstVal = Random.get( );
 
-    Random DOT seed( 500 );
-    auto secondVal = Random DOT get( );
+    Random.seed( 500 );
+    auto secondVal = Random.get( );
 
     REQUIRE( firstVal == secondVal );
 }
 
 TEST_CASE( "seed_seq" ) {
     std::seed_seq sseq{ {1,2,3,4} };
-    Random DOT seed( sseq );
-    auto firstVal = Random DOT get( );
+    Random.seed( sseq );
+    auto firstVal = Random.get( );
 
-    Random DOT seed( sseq );
-    auto secondVal = Random DOT get( );
+    Random.seed( sseq );
+    auto secondVal = Random.get( );
 
     REQUIRE( firstVal == secondVal );
 }
@@ -482,22 +497,22 @@ TEST_CASE( "seed_seq" ) {
 TEST_CASE( "serialize & deserialize" ) {
     std::stringstream strStream;
     
-    Random DOT serialize( strStream );
-    auto firstVal = Random DOT get( );
+    Random.serialize( strStream );
+    auto firstVal = Random.get( );
     
-    Random DOT deserialize( strStream );
-    auto secondVal = Random DOT get( );
+    Random.deserialize( strStream );
+    auto secondVal = Random.get( );
     
     REQUIRE( firstVal == secondVal );
 }
 
 TEST_CASE( "custom distribution" ) {
-    Random DOT get<std::gamma_distribution<>>( 1. );
+    Random.get<std::gamma_distribution<>>( 1. );
 }
 
 TEST_CASE( "custom distribution by argument" ) {
     std::gamma_distribution<> gamma{ };
-    Random DOT get( gamma );
+    Random.get( gamma );
 }
 
 TEST_CASE( "custom seeder" ) {
@@ -510,22 +525,16 @@ TEST_CASE( "custom seeder" ) {
     std::mt19937 mt{ currentSeed };
 
     #ifdef RANDOM_STATIC
-
-    using tRandom = effolkronium::basic_random_static<std::mt19937, Seeder>;
-
+    effolkronium::basic_random_static<std::mt19937, Seeder> tRandom;
     #endif
     #ifdef RANDOM_THREAD_LOCAL
-
-    using tRandom = effolkronium::basic_random_thread_local<std::mt19937, Seeder>;
-
+    effolkronium::basic_random_thread_local<std::mt19937, Seeder> tRandom;
     #endif
     #ifdef RANDOM_LOCAL
-
     effolkronium::basic_random_local<std::mt19937, Seeder> tRandom;
-
     #endif
 
-    REQUIRE( mt( ) == tRandom DOT get( ) );
+    REQUIRE( mt( ) == tRandom.get( ) );
 }
 
 TEST_CASE( "seed by default seeder" ) { 
@@ -536,32 +545,26 @@ TEST_CASE( "seed by default seeder" ) {
     };
 
     #ifdef RANDOM_STATIC
-
-    using tRandom = effolkronium::basic_random_static<std::mt19937_64, Seeder_42>;
-
+    effolkronium::basic_random_static<std::mt19937_64, Seeder_42> tRandom;
     #endif
     #ifdef RANDOM_THREAD_LOCAL
-
-    using tRandom = effolkronium::basic_random_thread_local<std::mt19937_64, Seeder_42>;
-
+    effolkronium::basic_random_thread_local<std::mt19937_64, Seeder_42> tRandom;
     #endif
     #ifdef RANDOM_LOCAL
-
     effolkronium::basic_random_local<std::mt19937_64, Seeder_42> tRandom;
-
     #endif
 
     std::mt19937_64 engine{ 42u };
     
-    REQUIRE( tRandom DOT is_equal( engine ) );
+    REQUIRE( tRandom.is_equal( engine ) );
 
-    tRandom DOT seed( 12345 );
+    tRandom.seed( 12345 );
     
-    //REQUIRE( !tRandom DOT isEqual( engine ) );
+    //REQUIRE( !tRandom.isEqual( engine ) );
 
-    tRandom DOT reseed( );
+    tRandom.reseed( );
 
-    REQUIRE( tRandom DOT is_equal( engine ) );
+    REQUIRE( tRandom.is_equal( engine ) );
 }
 
 TEST_CASE( "custom seeder with seedSeq" ) {
@@ -577,22 +580,16 @@ TEST_CASE( "custom seeder with seedSeq" ) {
     std::mt19937 mt{ seed_seq_ };
 
     #ifdef RANDOM_STATIC
-
-    using tRandom = effolkronium::basic_random_static<std::mt19937, Seeder>;
-
+    effolkronium::basic_random_static<std::mt19937, Seeder> tRandom;
     #endif
     #ifdef RANDOM_THREAD_LOCAL
-
-    using tRandom = effolkronium::basic_random_thread_local<std::mt19937, Seeder>;
-
+    effolkronium::basic_random_thread_local<std::mt19937, Seeder> tRandom;
     #endif
     #ifdef RANDOM_LOCAL
-
     effolkronium::basic_random_local<std::mt19937, Seeder> tRandom;
-
     #endif
 
-    REQUIRE( mt( ) == tRandom DOT get( ) );
+    REQUIRE( mt( ) == tRandom.get( ) );
 }
 
 TEST_CASE( "default Seeder generate random seed" ) {
@@ -614,8 +611,8 @@ TEST_CASE( "default Seeder generate random seed" ) {
 }
 
 TEST_CASE( "get engine" ) {
-    auto engine = Random DOT get_engine( );
-    REQUIRE( Random DOT is_equal( engine ) );
+    auto engine = Random.get_engine( );
+    REQUIRE( Random.is_equal( engine ) );
 }
 
 TEST_CASE( "return random iterator from iterator range" ) {
@@ -625,7 +622,7 @@ TEST_CASE( "return random iterator from iterator range" ) {
         bool is1{ false }, is2{ false }, is3{ false },
             is4{ false }, is5{ false }, isEnd{ false };
         do {
-            auto it = Random DOT get( array.begin( ), array.end( ) );
+            auto it = Random.get( array.begin( ), array.end( ) );
             if( it == array.end( ) ) {
                 isEnd = true;
                 break;
@@ -647,7 +644,7 @@ TEST_CASE( "return random iterator from iterator range" ) {
 
     SECTION( "0 elems" ) { 
         std::vector<int> vector;
-        REQUIRE( Random DOT get( vector.begin( ), vector.end( ) )
+        REQUIRE( Random.get( vector.begin( ), vector.end( ) )
                  == vector.end( ) );
     }
 }
@@ -659,7 +656,7 @@ TEST_CASE( "return random iterator from container" ) {
         bool is1{ false }, is2{ false }, is3{ false },
             is4{ false }, is5{ false }, isEnd{ false };
         do {
-            auto it = Random DOT get( array );
+            auto it = Random.get( array );
             if( it == array.end( ) ) {
                 isEnd = true;
                 break;
@@ -682,7 +679,7 @@ TEST_CASE( "return random iterator from container" ) {
     SECTION( "0 elems" ) {
         std::vector<int> vector;
 
-        bool isEnd = Random DOT get( vector ) == vector.end( );
+        bool isEnd = Random.get( vector ) == vector.end( );
         bool isZero = std::begin( vector ) == vector.end( );
         REQUIRE( isZero );
         REQUIRE( isEnd );
@@ -696,7 +693,7 @@ TEST_CASE( "return random pointer from built-in array" ) {
         bool is1{ false }, is2{ false }, is3{ false },
             is4{ false }, is5{ false }, isEnd{ false };
         do {
-            auto ptr = Random DOT get( carray );
+            auto ptr = Random.get( carray );
             if( ptr == std::end( carray ) ) {
                 isEnd = true;
                 break;
@@ -741,20 +738,20 @@ public:
 };
 
 TEST_CASE("return randomly generated containers with reserve method") {
-    Random DOT get<Container>(1, 200, 3);
+    Random.get<Container>(1, 200, 3);
 
     REQUIRE(1 == reserve_count);
     REQUIRE(3 == insert_count);
 }
 
 TEST_CASE("return randomly generated containers") {
-    auto vec = Random DOT get<std::vector>(1, 200, 3);
-    auto set = Random DOT get<std::set>(1.0, 200.0, 4);
-    auto arr = Random DOT get<std::array, 5>('1', '9');
+    auto vec = Random.get<std::vector>(1, 200, 3);
+    auto set = Random.get<std::set>(1.0, 200.0, 4);
+    auto arr = Random.get<std::array, 5>('1', '9');
 
-    auto vec_common = Random DOT get<std::vector, Random_t::common>(1u, 2ul, 6);
-    auto set_common = Random DOT get<std::set, Random_t::common>(1.f, 2.l, 7);
-    auto arr_common = Random DOT get<std::array, 8, Random_t::common>(1, 2l);
+    auto vec_common = Random.get<std::vector, Random_t::common>(1u, 2ul, 6);
+    auto set_common = Random.get<std::set, Random_t::common>(1.f, 2.l, 7);
+    auto arr_common = Random.get<std::array, 8, Random_t::common>(1, 2l);
     
     static_assert(std::is_same<int, decltype(vec)::value_type>::value, "");
     static_assert(std::is_same<double, decltype(set)::value_type>::value, "");
@@ -778,9 +775,9 @@ TEST_CASE("return randomly generated containers") {
         auto try_count = std::numeric_limits<int>::max();
         while (try_count-- > 0)
         {
-            auto vec2 = Random DOT get<std::vector>(1, 100, 3);
-            auto set2 = Random DOT get<std::set>(1.0, 200.0, 4);
-            auto arr2 = Random DOT get<std::array, 5>('1', '9');
+            auto vec2 = Random.get<std::vector>(1, 100, 3);
+            auto set2 = Random.get<std::set>(1.0, 200.0, 4);
+            auto arr2 = Random.get<std::array, 5>('1', '9');
 
             unique = vec != vec2 && set != set2 && arr != arr2;
 
@@ -797,9 +794,9 @@ TEST_CASE("return randomly generated containers") {
         auto try_count = std::numeric_limits<int>::max();
         while (try_count-- > 0)
         {
-            auto vec2_common = Random DOT get<std::vector, Random_t::common>(1u, 200ul, 6);
-            auto set2_common = Random DOT get<std::set, Random_t::common>(1.f, 200.l, 7);
-            auto arr2_common = Random DOT get<std::array, 8, Random_t::common>(1, 200l);
+            auto vec2_common = Random.get<std::vector, Random_t::common>(1u, 200ul, 6);
+            auto set2_common = Random.get<std::set, Random_t::common>(1.f, 200.l, 7);
+            auto arr2_common = Random.get<std::array, 8, Random_t::common>(1, 200l);
 
             unique2 = vec_common != vec2_common && set_common != set2_common && arr_common != arr2_common;
 
@@ -812,22 +809,22 @@ TEST_CASE("return randomly generated containers") {
 }
 
 TEST_CASE( "Random range with default arguments" ) {
-    Random DOT get<uint8_t>( );
-    Random DOT get<uint16_t>( );
-    Random DOT get<float>( );
-    Random DOT get( 1 );
-    Random DOT get( 1.f );
-    Random DOT get( uint8_t{ 0u } );
+    Random.get<uint8_t>( );
+    Random.get<uint16_t>( );
+    Random.get<float>( );
+    Random.get( 1 );
+    Random.get( 1.f );
+    Random.get( uint8_t{ 0u } );
 }
 
 #ifdef RANDOM_THREAD_LOCAL
 
 TEST_CASE( "is truly thread local" ) {
-    auto engine = Random DOT get_engine( );
-    REQUIRE( Random DOT is_equal( engine ) );
+    auto engine = Random.get_engine( );
+    REQUIRE( Random.is_equal( engine ) );
 
     static std::uint8_t seedCount{ 0u };
-    static Random::engine_type::result_type 
+    static Random_t::engine_type::result_type 
         firstThreadNumber, secondThreadNumber;
 
     struct Seeder {
@@ -856,19 +853,19 @@ TEST_CASE( "is truly thread local" ) {
 
 TEST_CASE("Type deduction for random character") {
 	static_assert(std::is_same<char,
-		decltype(Random DOT get(
+		decltype(Random.get(
 			'a', 'b')) > ::value, "");
 
 	static_assert(std::is_same<wchar_t,
-		decltype(Random DOT get(
+		decltype(Random.get(
 			L'a', L'b')) > ::value, "");
 
 	static_assert(std::is_same<char16_t,
-		decltype(Random DOT get(
+		decltype(Random.get(
 			char16_t{ 1 }, char16_t{ 2 })) > ::value, "");
 
 	static_assert(std::is_same<char32_t,
-		decltype(Random DOT get(
+		decltype(Random.get(
 			char32_t{ 1 }, char32_t{ 2 })) > ::value, "");
 }
 
@@ -877,11 +874,11 @@ TEST_CASE("Random characters is truly random") {
 
 	do {
 
-		const auto firstRandomNumber = Random DOT get<char>(
+		const auto firstRandomNumber = Random.get<char>(
 			std::numeric_limits<char>::min(),
 			std::numeric_limits<char>::max());
 
-		const auto secondRandomNumber = Random DOT get<char>(
+		const auto secondRandomNumber = Random.get<char>(
 			std::numeric_limits<char>::min(),
 			std::numeric_limits<char>::max());
 
@@ -895,7 +892,7 @@ TEST_CASE("Random iterator assignment") {
     std::vector<int> testData{ 1,2,3,4 };
     int newVal = 5;
 
-    *(Random DOT get(testData.begin(), testData.end())) = newVal;
+    *(Random.get(testData.begin(), testData.end())) = newVal;
 
     bool testDataHasNewVal = std::find(testData.cbegin(), testData.cend(), newVal) != testData.end();
     CHECK(testDataHasNewVal);
@@ -905,21 +902,21 @@ TEST_CASE("Random container assignment") {
     std::vector<int> testData{ 1,2,3,4 };
     int newVal = 5;
     
-    *(Random DOT get(testData)) = newVal;
+    *(Random.get(testData)) = newVal;
 
     bool testDataHasNewVal = std::find(testData.cbegin(), testData.cend(), newVal) != testData.end();
     CHECK(testDataHasNewVal);
 }
 
 TEST_CASE("Get random engine by value") {
-    auto engine = Random DOT get_engine();
+    auto engine = Random.get_engine();
 
     bool isEngineTheSame = true;
     for (std::uint8_t i{ 0u };
         i < std::numeric_limits<std::uint8_t>::max();
         ++i) {
         auto engineRandom = engine();
-        auto randomRandom = Random DOT get();
+        auto randomRandom = Random.get();
 
         if (engineRandom != randomRandom)
         {
@@ -932,14 +929,14 @@ TEST_CASE("Get random engine by value") {
 }
 
 TEST_CASE("Get random engine by reference:)") {
-    auto& engine = Random DOT engine();
+    auto& engine = Random.engine();
 
     bool isEngineNotTheSame = false;
     for (std::uint8_t i{ 0u };
         i < std::numeric_limits<std::uint8_t>::max();
         ++i) {
         auto engineRandom = engine();
-        auto randomRandom = Random DOT get();
+        auto randomRandom = Random.get();
 
         if (engineRandom != randomRandom)
         {
@@ -967,29 +964,23 @@ TEST_CASE("Construct Seeder only once") {
 	};
 
 #ifdef RANDOM_STATIC
-
-	using tRandom = effolkronium::basic_random_static<std::mt19937, Seeder>;
-
+	effolkronium::basic_random_static<std::mt19937, Seeder> tRandom;
 #endif
 #ifdef RANDOM_THREAD_LOCAL
-
-	using tRandom = effolkronium::basic_random_thread_local<std::mt19937, Seeder>;
-
+	effolkronium::basic_random_thread_local<std::mt19937, Seeder> tRandom;
 #endif
 #ifdef RANDOM_LOCAL
-
 	effolkronium::basic_random_local<std::mt19937, Seeder> tRandom;
-
 #endif
 
 	std::vector<int> randomValues;
 	for(int i = 0; i < 256; ++i)
-		tRandom DOT get();
+		tRandom.get();
 
 	REQUIRE(constructCount == 1);
 	REQUIRE(invokeCount == 1);
 
-	tRandom DOT reseed();
+	tRandom.reseed();
 
 	REQUIRE(constructCount == 2);
 	REQUIRE(invokeCount == 2);
@@ -1024,15 +1015,15 @@ TEST_CASE("Empty map and maps with zero total weight tests"){
     std::map<std::string, float> empty_float_map;
     std::map<std::string, double> empty_double_map;
 
-    REQUIRE(Random DOT get<Random_t::weight>(empty_ulong_umap) == empty_ulong_umap.end());
-    REQUIRE(Random DOT get<Random_t::weight>(empty_uint_umap) == empty_uint_umap.end());
-    REQUIRE(Random DOT get<Random_t::weight>(empty_float_umap) == empty_float_umap.end());
-    REQUIRE(Random DOT get<Random_t::weight>(empty_double_umap) == empty_double_umap.end());
+    REQUIRE(Random.get<Random_t::weight>(empty_ulong_umap) == empty_ulong_umap.end());
+    REQUIRE(Random.get<Random_t::weight>(empty_uint_umap) == empty_uint_umap.end());
+    REQUIRE(Random.get<Random_t::weight>(empty_float_umap) == empty_float_umap.end());
+    REQUIRE(Random.get<Random_t::weight>(empty_double_umap) == empty_double_umap.end());
 
-    REQUIRE(Random DOT get<Random_t::weight>(empty_ulong_map) == empty_ulong_map.end());
-    REQUIRE(Random DOT get<Random_t::weight>(empty_uint_map) == empty_uint_map.end());
-    REQUIRE(Random DOT get<Random_t::weight>(empty_float_map) == empty_float_map.end());
-    REQUIRE(Random DOT get<Random_t::weight>(empty_double_map) == empty_double_map.end());
+    REQUIRE(Random.get<Random_t::weight>(empty_ulong_map) == empty_ulong_map.end());
+    REQUIRE(Random.get<Random_t::weight>(empty_uint_map) == empty_uint_map.end());
+    REQUIRE(Random.get<Random_t::weight>(empty_float_map) == empty_float_map.end());
+    REQUIRE(Random.get<Random_t::weight>(empty_double_map) == empty_double_map.end());
 
     // Zero weighted maps
     std::unordered_map<std::string, unsigned long> zero_long_umap = {{"Orange", 0ul}, {"Apple", 0ul}, {"Banana", 0ul}};
@@ -1045,15 +1036,15 @@ TEST_CASE("Empty map and maps with zero total weight tests"){
     std::map<std::string, float> zero_float_map = {{"Orange", 0.0f}, {"Apple", 0.0f}, {"Banana", 0.0f}};
     std::map<std::string, double> zero_double_map = {{"Orange", 0.0}, {"Apple", 0.0}, {"Banana", 0.0}};
 
-    REQUIRE(Random DOT get<Random_t::weight>(zero_long_umap) == zero_long_umap.end());
-    REQUIRE(Random DOT get<Random_t::weight>(zero_uint_umap) == zero_uint_umap.end());
-    REQUIRE(Random DOT get<Random_t::weight>(zero_float_umap) == zero_float_umap.end());
-    REQUIRE(Random DOT get<Random_t::weight>(zero_double_umap) == zero_double_umap.end());
+    REQUIRE(Random.get<Random_t::weight>(zero_long_umap) == zero_long_umap.end());
+    REQUIRE(Random.get<Random_t::weight>(zero_uint_umap) == zero_uint_umap.end());
+    REQUIRE(Random.get<Random_t::weight>(zero_float_umap) == zero_float_umap.end());
+    REQUIRE(Random.get<Random_t::weight>(zero_double_umap) == zero_double_umap.end());
 
-    REQUIRE(Random DOT get<Random_t::weight>(zero_ulong_map) == zero_ulong_map.end());
-    REQUIRE(Random DOT get<Random_t::weight>(zero_uint_map) == zero_uint_map.end());
-    REQUIRE(Random DOT get<Random_t::weight>(zero_float_map) == zero_float_map.end());
-    REQUIRE(Random DOT get<Random_t::weight>(zero_double_map) == zero_double_map.end());
+    REQUIRE(Random.get<Random_t::weight>(zero_ulong_map) == zero_ulong_map.end());
+    REQUIRE(Random.get<Random_t::weight>(zero_uint_map) == zero_uint_map.end());
+    REQUIRE(Random.get<Random_t::weight>(zero_float_map) == zero_float_map.end());
+    REQUIRE(Random.get<Random_t::weight>(zero_double_map) == zero_double_map.end());
 }
 
 TEST_CASE("Maps with non-zero total weight tests"){
@@ -1067,13 +1058,75 @@ TEST_CASE("Maps with non-zero total weight tests"){
     std::map<std::string, float> nonzero_float_map = {{"Orange", 1.0f}, {"Apple", 2.0f}, {"Banana", 3.0f}};
     std::map<std::string, double> nonzero_double_map = {{"Orange", 1.0}, {"Apple", 2.0}, {"Banana", 3.0}};
 
-    REQUIRE(Random DOT get<Random_t::weight>(nonzero_ulong_umap) != nonzero_ulong_umap.end());
-    REQUIRE(Random DOT get<Random_t::weight>(nonzero_uint_umap) != nonzero_uint_umap.end());
-    REQUIRE(Random DOT get<Random_t::weight>(nonzero_float_umap) != nonzero_float_umap.end());
-    REQUIRE(Random DOT get<Random_t::weight>(nonzero_double_umap) != nonzero_double_umap.end());
+    REQUIRE(Random.get<Random_t::weight>(nonzero_ulong_umap) != nonzero_ulong_umap.end());
+    REQUIRE(Random.get<Random_t::weight>(nonzero_uint_umap) != nonzero_uint_umap.end());
+    REQUIRE(Random.get<Random_t::weight>(nonzero_float_umap) != nonzero_float_umap.end());
+    REQUIRE(Random.get<Random_t::weight>(nonzero_double_umap) != nonzero_double_umap.end());
     
-    REQUIRE(Random DOT get<Random_t::weight>(nonzero_ulong_map) != nonzero_ulong_map.end());
-    REQUIRE(Random DOT get<Random_t::weight>(nonzero_uint_map) != nonzero_uint_map.end());
-    REQUIRE(Random DOT get<Random_t::weight>(nonzero_float_map) != nonzero_float_map.end());
-    REQUIRE(Random DOT get<Random_t::weight>(nonzero_double_map) != nonzero_double_map.end());
+    REQUIRE(Random.get<Random_t::weight>(nonzero_ulong_map) != nonzero_ulong_map.end());
+    REQUIRE(Random.get<Random_t::weight>(nonzero_uint_map) != nonzero_uint_map.end());
+    REQUIRE(Random.get<Random_t::weight>(nonzero_float_map) != nonzero_float_map.end());
+    REQUIRE(Random.get<Random_t::weight>(nonzero_double_map) != nonzero_double_map.end());
 }
+
+TEST_CASE("Functor operator() invocation") {
+    // 0-argument invocation (default engine get)
+    auto val0 = Random();
+    REQUIRE(val0 <= Random.max());
+
+    // 2-argument integer range invocation
+    auto valInt = Random(-5, 5);
+    REQUIRE(valInt >= -5);
+    REQUIRE(valInt <= 5);
+
+    // 2-argument real range invocation
+    auto valReal = Random(1.0f, 10.0f);
+    REQUIRE(valReal >= 1.0f);
+    REQUIRE(valReal <= 10.0f);
+
+    // Array / pointer invocation
+    int arr[] = { 10, 20, 30 };
+    auto* ptr = Random(arr);
+    REQUIRE((ptr == &arr[0] || ptr == &arr[1] || ptr == &arr[2]));
+}
+
+TEST_CASE("Uniform instance and static calling syntax across all generator types") {
+    // Static engine supports both static and instance calls
+    auto s_val_static = effolkronium::random_static::get(1, 10);
+    REQUIRE(s_val_static >= 1);
+    REQUIRE(s_val_static <= 10);
+
+    effolkronium::random_static s_inst;
+    auto s_val_member = s_inst.get(1, 10);
+    REQUIRE(s_val_member >= 1);
+    REQUIRE(s_val_member <= 10);
+
+    auto s_val_functor = s_inst(1, 10);
+    REQUIRE(s_val_functor >= 1);
+    REQUIRE(s_val_functor <= 10);
+
+    // Thread-local engine supports both static and instance calls
+    auto tl_val_static = effolkronium::random_thread_local::get(1, 10);
+    REQUIRE(tl_val_static >= 1);
+    REQUIRE(tl_val_static <= 10);
+
+    effolkronium::random_thread_local tl_inst;
+    auto tl_val_member = tl_inst.get(1, 10);
+    REQUIRE(tl_val_member >= 1);
+    REQUIRE(tl_val_member <= 10);
+
+    auto tl_val_functor = tl_inst(1, 10);
+    REQUIRE(tl_val_functor >= 1);
+    REQUIRE(tl_val_functor <= 10);
+
+    // Local engine supports instance and functor calls
+    effolkronium::random_local loc_inst;
+    auto loc_val_member = loc_inst.get(1, 10);
+    REQUIRE(loc_val_member >= 1);
+    REQUIRE(loc_val_member <= 10);
+
+    auto loc_val_functor = loc_inst(1, 10);
+    REQUIRE(loc_val_functor >= 1);
+    REQUIRE(loc_val_functor <= 10);
+}
+
