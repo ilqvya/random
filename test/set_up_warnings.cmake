@@ -21,6 +21,7 @@ else()
 		/EHsc # Warning fix!
 		/W4 
 		/WX # Treats all compilers warnings as errors
+		/wd4996 # Disable deprecation warnings in test framework (Catch1)
 		/w14242 # 'identfier': conversion from 'type1' to 'type1', possible loss of data
 		/w14254 # 'operator': conversion from 'type1:field_bits' to 'type2:field_bits', possible loss of data
 		/w14263 # 'function': member function does not override any base class virtual member function
