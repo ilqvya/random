@@ -848,11 +848,12 @@ namespace ilqvya {
                     return out;
                 using dist_t = typename std::iterator_traits<PopulationIt>::difference_type;
                 dist_t unsampled_sz = std::distance( first, last );
-                for ( n = ( std::min )( static_cast<dist_t>( n ), unsampled_sz ); n != 0; ++first ) {
+                dist_t needed = ( std::min )( static_cast<dist_t>( n ), unsampled_sz );
+                for ( ; needed != 0; ++first ) {
                     dist_t r = get<dist_t>( engine, 0, --unsampled_sz );
-                    if ( r < n ) {
+                    if ( r < needed ) {
                         *out++ = *first;
-                        --n;
+                        --needed;
                     }
                 }
                 return out;
@@ -864,9 +865,10 @@ namespace ilqvya {
                 if ( n <= 0 )
                     return out;
                 using ValueType = typename std::iterator_traits<PopulationIt>::value_type;
+                const std::size_t un = static_cast<std::size_t>( n );
                 std::vector<ValueType> reservoir;
-                reservoir.reserve( static_cast<std::size_t>( n ) );
-                for ( ; first != last && reservoir.size( ) < static_cast<std::size_t>( n ); ++first ) {
+                reservoir.reserve( un );
+                for ( ; first != last && reservoir.size( ) < un; ++first ) {
                     reservoir.push_back( *first );
                 }
                 std::size_t k = reservoir.size( );
