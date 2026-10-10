@@ -1,0 +1,53 @@
+name: Coverity Scan
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 0' # Run weekly on Sundays at midnight UTC
+
+jobs:
+  coverity:
+    name: Coverity Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure CMake
+        run: >
+          cmake -B build
+          -DRandom_BuildTests=ON
+          -DCMAKE_CXX_STANDARD=17
+          -DCMAKE_BUILD_TYPE=Debug
+
+      - name: Download Coverity Build Tool
+        env:
+          COVERITY_TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
+        run: |
+          if [ -z "$COVERITY_TOKEN" ]; then
+            echo "::error::COVERITY_SCAN_TOKEN secret is not set!"
+            exit 1
+          fi
+          echo "Downloading Coverity Scan analysis tool..."
+          curl -s -L -d "project=ilqvya-random&token=${COVERITY_TOKEN}" -X POST https://scan.coverity.com/download/linux64 -o coverity_tool.tar.gz
+          mkdir -p cov-analysis
+          tar -xzf coverity_tool.tar.gz -C cov-analysis --strip-components=1
+          echo "$(pwd)/cov-analysis/bin" >> $GITHUB_PATH
+
+      - name: Build with cov-build
+        run: |
+          cov-build --dir cov-int cmake --build build
+
+      - name: Submit to Coverity Scan
+        env:
+          COVERITY_TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
+          COVERITY_EMAIL: ${{ secrets.COVERITY_SCAN_EMAIL || 'ilqvya@icloud.com' }}
+        run: |
+          tar czf cov-int.tar.gz cov-int
+          RESPONSE=$(curl --silent --show-error \
+            --form token="${COVERITY_TOKEN}" \
+            --form email="${COVERITY_EMAIL}" \
+            --form file=@cov-int.tar.gz \
+            --form version="${GITHUB_SHA:0:7}" \
+            --form description="GitHub Actions ${GITHUB_REF_NAME}" \
+            https://scan.coverity.com/builds?project=ilqvya-random)
+          echo "Coverity Scan response: $RESPONSE"
