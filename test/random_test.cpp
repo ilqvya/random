@@ -1406,3 +1406,56 @@ TEST_CASE( "Weighted list with zero total weight fallback" ) {
                                   Random_t::weighted_result<std::string, double>{ "other", 0.0 } } );
     REQUIRE( res_real == "zero_fallback" );
 }
+
+TEST_CASE( "Random.min, default seed, and reseed coverage" ) {
+    REQUIRE( Random.min( ) <= Random.max( ) );
+    Random.seed( );
+    Random.reseed( );
+    REQUIRE( Random.get( ) <= Random.max( ) );
+}
+
+TEST_CASE( "random_local API coverage" ) {
+    ilqvya::random_local rl;
+    REQUIRE( rl.min( ) <= rl.max( ) );
+    rl.seed( );
+    rl.reseed( );
+    REQUIRE( rl.get_engine( ) == rl.engine( ) );
+    auto rl_val = rl( 1, 10 );
+    REQUIRE( rl_val >= 1 );
+    REQUIRE( rl_val <= 10 );
+}
+
+TEST_CASE( "weighted_result pair constructors and variadic get" ) {
+    std::pair<int, int> p1{ 10, 5 };
+    std::pair<int, int> p2{ 20, 15 };
+    Random_t::weighted_result<int, int> wr1( p1 );
+    Random_t::weighted_result<int, int> wr2( std::move( p2 ) );
+    REQUIRE( wr1.value == 10 );
+    REQUIRE( wr1.weight == 5 );
+    REQUIRE( wr2.value == 20 );
+    REQUIRE( wr2.weight == 15 );
+
+    Random_t::weighted_result<int, int> w1{ 1, 1 }, w2{ 2, 1 }, w3{ 3, 1 }, w4{ 4, 1 }, w5{ 5, 1 }, w6{ 6, 1 },
+        w7{ 7, 1 }, w8{ 8, 1 }, w9{ 9, 1 }, w10{ 10, 1 };
+
+    REQUIRE( Random.get( w1, w2 ) >= 1 );
+    REQUIRE( Random.get( w1, w2, w3 ) >= 1 );
+    REQUIRE( Random.get( w1, w2, w3, w4 ) >= 1 );
+    REQUIRE( Random.get( w1, w2, w3, w4, w5 ) >= 1 );
+    REQUIRE( Random.get( w1, w2, w3, w4, w5, w6 ) >= 1 );
+    REQUIRE( Random.get( w1, w2, w3, w4, w5, w6, w7 ) >= 1 );
+    REQUIRE( Random.get( w1, w2, w3, w4, w5, w6, w7, w8 ) >= 1 );
+    REQUIRE( Random.get( w1, w2, w3, w4, w5, w6, w7, w8, w9 ) >= 1 );
+    REQUIRE( Random.get( w1, w2, w3, w4, w5, w6, w7, w8, w9, w10 ) >= 1 );
+
+    ilqvya::random_local rl;
+    REQUIRE( rl.get( w1, w2 ) >= 1 );
+    REQUIRE( rl.get( w1, w2, w3 ) >= 1 );
+    REQUIRE( rl.get( w1, w2, w3, w4 ) >= 1 );
+    REQUIRE( rl.get( w1, w2, w3, w4, w5 ) >= 1 );
+    REQUIRE( rl.get( w1, w2, w3, w4, w5, w6 ) >= 1 );
+    REQUIRE( rl.get( w1, w2, w3, w4, w5, w6, w7 ) >= 1 );
+    REQUIRE( rl.get( w1, w2, w3, w4, w5, w6, w7, w8 ) >= 1 );
+    REQUIRE( rl.get( w1, w2, w3, w4, w5, w6, w7, w8, w9 ) >= 1 );
+    REQUIRE( rl.get( w1, w2, w3, w4, w5, w6, w7, w8, w9, w10 ) >= 1 );
+}

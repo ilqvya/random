@@ -127,16 +127,9 @@ jobs:
           lcov --capture --directory build --output-file coverage.raw --ignore-errors mismatch,unused,inconsistent 2>/dev/null || lcov --capture --directory build --output-file coverage.raw || true
           if [ -f coverage.raw ]; then
             # Strip all system headers (/usr/*), test files, and build files
-            lcov --remove coverage.raw '/usr/*' '*/test/*' '*/tests/*' '*/build/*' --output-file coverage.info --ignore-errors mismatch,unused,inconsistent 2>/dev/null || lcov --remove coverage.raw '/usr/*' '*/test/*' '*/tests/*' '*/build/*' --output-file coverage.info || true
-            # Ensure no /usr/* files remain
-            lcov --remove coverage.info '/usr/*' --output-file coverage.info --ignore-errors mismatch,unused,inconsistent 2>/dev/null || true
+            lcov --remove coverage.raw '/usr/*' '*/test/*' '*/tests/*' '*/build/*' --output-file coverage.info --ignore-errors mismatch,unused,inconsistent 2>/dev/null || true
           fi
-          if [ ! -s coverage.info ]; then
-            echo "Generating coverage with gcovr..."
-            gcovr -r . --filter '^include/' --exclude-directories '/usr' --exclude-directories 'test' --lcov coverage.info --print-summary
-          else
-            lcov --list coverage.info --ignore-errors mismatch,unused,inconsistent 2>/dev/null || lcov --list coverage.info
-          fi
+          lcov --list coverage.info --ignore-errors mismatch,unused,inconsistent 2>/dev/null || true
 
       - name: Upload to Coveralls
         uses: coverallsapp/github-action@v2

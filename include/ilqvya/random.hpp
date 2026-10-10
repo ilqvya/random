@@ -555,7 +555,7 @@ namespace ilqvya {
                 }
                 Weight random_weight = get( engine, Weight( 0 ), total_weight - 1 );
                 Weight sum = 0;
-                const auto last = last_nonzero ? last_nonzero : ( list.end( ) - 1 );
+                const auto last = last_nonzero;
                 for ( const auto& item : list ) {
                     if ( &item == last ) {
                         break;
@@ -586,7 +586,7 @@ namespace ilqvya {
                 }
                 Weight random_weight = get( engine, Weight( 0 ), total_weight );
                 Weight sum = 0;
-                const auto last = last_nonzero ? last_nonzero : ( list.end( ) - 1 );
+                const auto last = last_nonzero;
                 for ( const auto& item : list ) {
                     if ( &item == last ) {
                         break;
