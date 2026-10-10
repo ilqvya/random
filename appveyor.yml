@@ -1,6 +1,13 @@
 version: '{build}'
 
 image:
+  - Ubuntu
+  - Ubuntu2004
+  - Ubuntu2204
+  - Ubuntu2404
+  - macos-sonoma
+  - macos-ventura
+  - macos-monterey
   - Visual Studio 2015
   - Visual Studio 2017
   - Visual Studio 2019
@@ -16,5 +23,24 @@ configuration:
 
 build: off
 
-build_script:
-  - cmd: .\appveyor_build_win.bat
+for:
+  - matrix:
+      only:
+        - image: Ubuntu
+        - image: Ubuntu2004
+        - image: Ubuntu2204
+        - image: Ubuntu2404
+        - image: macos-sonoma
+        - image: macos-ventura
+        - image: macos-monterey
+    build_script:
+      - sh: ./appveyor_build_lin.sh
+
+  - matrix:
+      only:
+        - image: Visual Studio 2015
+        - image: Visual Studio 2017
+        - image: Visual Studio 2019
+        - image: Visual Studio 2022
+    build_script:
+      - cmd: .\appveyor_build_win.bat
