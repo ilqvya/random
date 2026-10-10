@@ -1647,3 +1647,32 @@ TEST_CASE( "Weighted get with lvalue container remains valid" ) {
     auto it_rl = rl.get<Random_t::weight>( pairs );
     REQUIRE( it_rl != pairs.end( ) );
 }
+
+TEST_CASE( "Empty initializer_list throws invalid_argument" ) {
+    bool caught_init_list = false;
+    try {
+        std::initializer_list<int> empty_list{ };
+        (void)Random.get( empty_list );
+    } catch ( const std::invalid_argument& ) {
+        caught_init_list = true;
+    }
+    REQUIRE( caught_init_list );
+
+    bool caught_weighted_int = false;
+    try {
+        std::initializer_list<Random_t::weighted_result<int, int>> empty_weighted{ };
+        (void)Random.get( empty_weighted );
+    } catch ( const std::invalid_argument& ) {
+        caught_weighted_int = true;
+    }
+    REQUIRE( caught_weighted_int );
+
+    bool caught_weighted_real = false;
+    try {
+        std::initializer_list<Random_t::weighted_result<int, double>> empty_weighted_real{ };
+        (void)Random.get( empty_weighted_real );
+    } catch ( const std::invalid_argument& ) {
+        caught_weighted_real = true;
+    }
+    REQUIRE( caught_weighted_real );
+}

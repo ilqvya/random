@@ -50,6 +50,7 @@ SOFTWARE.
 #include <array>
 #include <cstdint>
 #include <cstddef>
+#include <stdexcept>
 
 #if defined( _MSVC_LANG )
 #    define ILQVYA_CPLUSPLUS _MSVC_LANG
@@ -421,7 +422,8 @@ namespace ilqvya {
 
             template<typename T>
             ILQVYA_NODISCARD static T get( Engine& engine, std::initializer_list<T> init_list ) {
-                assert( 0u != init_list.size( ) );
+                if ( 0u == init_list.size( ) )
+                    throw std::invalid_argument( "Random::get: initializer list must not be empty" );
                 return *get( engine, init_list.begin( ), init_list.end( ) );
             }
 
@@ -601,7 +603,8 @@ namespace ilqvya {
             template<typename Target, typename Weight>
             ILQVYA_NODISCARD static typename std::enable_if<details::is_uniform_int<Weight>::value, Target>::type
             get_weighted_list( Engine& engine, std::initializer_list<details::weighted_result<Target, Weight>> list ) {
-                assert( list.size( ) > 0 );
+                if ( 0u == list.size( ) )
+                    throw std::invalid_argument( "Random::get: weighted list must not be empty" );
                 Weight total_weight = 0;
                 const details::weighted_result<Target, Weight>* last_nonzero = nullptr;
                 for ( const auto& item : list ) {
@@ -632,7 +635,8 @@ namespace ilqvya {
             template<typename Target, typename Weight>
             ILQVYA_NODISCARD static typename std::enable_if<details::is_uniform_real<Weight>::value, Target>::type
             get_weighted_list( Engine& engine, std::initializer_list<details::weighted_result<Target, Weight>> list ) {
-                assert( list.size( ) > 0 );
+                if ( 0u == list.size( ) )
+                    throw std::invalid_argument( "Random::get: weighted list must not be empty" );
                 Weight total_weight = 0;
                 const details::weighted_result<Target, Weight>* last_nonzero = nullptr;
                 for ( const auto& item : list ) {
