@@ -226,6 +226,8 @@ namespace ilqvya {
 
     /// Default seeder for 'random' classes
     struct seeder_default {
+        seeder_default( ) : entropy_source( ), seed_seq( entropy_source.data.begin( ), entropy_source.data.end( ) ) {}
+
         /// return seed sequence
         std::seed_seq& operator( )( ) {
             // Fill 624 32-bit words (full MT19937 internal state) using std::random_device
@@ -247,7 +249,7 @@ namespace ilqvya {
         };
 
         seed_data_624 entropy_source;
-        std::seed_seq seed_seq{ entropy_source.data.begin( ), entropy_source.data.end( ) };
+        std::seed_seq seed_seq;
     };
 
     namespace details {

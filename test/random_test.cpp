@@ -486,6 +486,7 @@ TEST_CASE( "custom seeder" ) {
 #ifdef RANDOM_LOCAL
     ilqvya::basic_random_local<std::mt19937, Seeder> tRandom;
 #endif
+    (void)tRandom;
 
     REQUIRE( mt( ) == tRandom.get( ) );
 }
@@ -504,6 +505,7 @@ TEST_CASE( "seed by default seeder" ) {
 #ifdef RANDOM_LOCAL
     ilqvya::basic_random_local<std::mt19937_64, Seeder_42> tRandom;
 #endif
+    (void)tRandom;
 
     std::mt19937_64 engine{ 42u };
 
@@ -537,6 +539,7 @@ TEST_CASE( "custom seeder with seedSeq" ) {
 #ifdef RANDOM_LOCAL
     ilqvya::basic_random_local<std::mt19937, Seeder> tRandom;
 #endif
+    (void)tRandom;
 
     REQUIRE( mt( ) == tRandom.get( ) );
 }
@@ -947,6 +950,7 @@ TEST_CASE( "Construct Seeder only once" ) {
 #ifdef RANDOM_LOCAL
     ilqvya::basic_random_local<std::mt19937, Seeder> tRandom;
 #endif
+    (void)tRandom;
 
     std::vector<int> randomValues;
     for ( int i = 0; i < 256; ++i ) {
