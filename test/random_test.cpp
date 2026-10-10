@@ -1688,3 +1688,41 @@ TEST_CASE( "Empty initializer_list throws invalid_argument" ) {
     }
     REQUIRE( caught_weighted_real );
 }
+
+TEST_CASE( "Negative weights throw invalid_argument" ) {
+    std::vector<std::pair<std::string, int>> negative_int_pairs = { { "A", 10 }, { "B", -1 } };
+    bool caught_pair_int = false;
+    try {
+        (void)Random.get<Random_t::weight>( negative_int_pairs );
+    } catch ( const std::invalid_argument& ) {
+        caught_pair_int = true;
+    }
+    REQUIRE( caught_pair_int );
+
+    std::vector<std::pair<std::string, double>> negative_real_pairs = { { "A", 1.5 }, { "B", -0.5 } };
+    bool caught_pair_real = false;
+    try {
+        (void)Random.get<Random_t::weight>( negative_real_pairs );
+    } catch ( const std::invalid_argument& ) {
+        caught_pair_real = true;
+    }
+    REQUIRE( caught_pair_real );
+
+    bool caught_list_int = false;
+    try {
+        (void)Random.get( { Random_t::weighted_result<int, int>{ 1, 10 },
+                            Random_t::weighted_result<int, int>{ 2, -5 } } );
+    } catch ( const std::invalid_argument& ) {
+        caught_list_int = true;
+    }
+    REQUIRE( caught_list_int );
+
+    bool caught_list_real = false;
+    try {
+        (void)Random.get( { Random_t::weighted_result<int, double>{ 1, 10.0 },
+                            Random_t::weighted_result<int, double>{ 2, -2.5 } } );
+    } catch ( const std::invalid_argument& ) {
+        caught_list_real = true;
+    }
+    REQUIRE( caught_list_real );
+}

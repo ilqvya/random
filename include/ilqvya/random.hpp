@@ -544,7 +544,8 @@ namespace ilqvya {
                 WeightType total_weight = 0;
                 IteratorType last_nonzero_it = std::end( pair_container );
                 for ( IteratorType it = std::begin( pair_container ); it != std::end( pair_container ); ++it ) {
-                    assert( it->second >= WeightType( 0 ) );
+                    if ( it->second < WeightType( 0 ) )
+                        throw std::invalid_argument( "Random::get: weights must be non-negative" );
                     if ( it->second > WeightType( 0 ) ) {
                         last_nonzero_it = it;
                     }
@@ -577,7 +578,8 @@ namespace ilqvya {
                 WeightType total_weight = 0;
                 IteratorType last_nonzero_it = std::end( pair_container );
                 for ( IteratorType it = std::begin( pair_container ); it != std::end( pair_container ); ++it ) {
-                    assert( it->second >= WeightType( 0 ) );
+                    if ( it->second < WeightType( 0 ) )
+                        throw std::invalid_argument( "Random::get: weights must be non-negative" );
                     if ( it->second > WeightType( 0 ) ) {
                         last_nonzero_it = it;
                     }
@@ -609,7 +611,8 @@ namespace ilqvya {
                 Weight total_weight = 0;
                 const details::weighted_result<Target, Weight>* last_nonzero = nullptr;
                 for ( const auto& item : list ) {
-                    assert( item.weight >= Weight( 0 ) );
+                    if ( item.weight < Weight( 0 ) )
+                        throw std::invalid_argument( "Random::get: weights must be non-negative" );
                     if ( item.weight > Weight( 0 ) ) {
                         last_nonzero = &item;
                     }
@@ -641,7 +644,8 @@ namespace ilqvya {
                 Weight total_weight = 0;
                 const details::weighted_result<Target, Weight>* last_nonzero = nullptr;
                 for ( const auto& item : list ) {
-                    assert( item.weight >= Weight( 0 ) );
+                    if ( item.weight < Weight( 0 ) )
+                        throw std::invalid_argument( "Random::get: weights must be non-negative" );
                     if ( item.weight > Weight( 0 ) ) {
                         last_nonzero = &item;
                     }
