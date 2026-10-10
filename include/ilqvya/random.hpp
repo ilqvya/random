@@ -59,6 +59,10 @@ SOFTWARE.
 #    define ILQVYA_CPLUSPLUS __cplusplus
 #endif
 
+#if ILQVYA_CPLUSPLUS >= 201703L
+#    include <string_view>
+#endif
+
 #if defined( __has_cpp_attribute )
 #    if __has_cpp_attribute( nodiscard ) && ILQVYA_CPLUSPLUS >= 201703L
 #        define ILQVYA_NODISCARD [[nodiscard]]
@@ -460,6 +464,13 @@ namespace ilqvya {
 
             template<typename Container>
             ILQVYA_NODISCARD static auto get( Engine& engine, Container& container ) ->
+                typename std::enable_if<details::is_iterator<decltype( std::begin( container ) )>::value,
+                                        decltype( std::begin( container ) )>::type {
+                return get( engine, std::begin( container ), std::end( container ) );
+            }
+
+            template<typename Container>
+            ILQVYA_NODISCARD static auto get( Engine& engine, const Container& container ) ->
                 typename std::enable_if<details::is_iterator<decltype( std::begin( container ) )>::value,
                                         decltype( std::begin( container ) )>::type {
                 return get( engine, std::begin( container ), std::end( container ) );
@@ -914,6 +925,13 @@ namespace ilqvya {
             return impl::get( engine_instance( ), container );
         }
 
+        template<typename Container>
+        ILQVYA_NODISCARD static auto get( const Container& container ) ->
+            typename std::enable_if<details::is_iterator<decltype( std::begin( container ) )>::value,
+                                    decltype( std::begin( container ) )>::type {
+            return impl::get( engine_instance( ), container );
+        }
+
         template<template<typename...> class Container, typename A>
         ILQVYA_NODISCARD static typename std::enable_if<details::has_reserve<Container<A>>::value, Container<A>>::type
         get( A from, A to, std::size_t size ) {
@@ -1267,6 +1285,13 @@ namespace ilqvya {
 
         template<typename Container>
         ILQVYA_NODISCARD auto get( Container& container ) ->
+            typename std::enable_if<details::is_iterator<decltype( std::begin( container ) )>::value,
+                                    decltype( std::begin( container ) )>::type {
+            return impl::get( m_engine, container );
+        }
+
+        template<typename Container>
+        ILQVYA_NODISCARD auto get( const Container& container ) ->
             typename std::enable_if<details::is_iterator<decltype( std::begin( container ) )>::value,
                                     decltype( std::begin( container ) )>::type {
             return impl::get( m_engine, container );

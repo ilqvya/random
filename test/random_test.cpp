@@ -1853,3 +1853,41 @@ TEST_CASE( "conditional noexcept with nothrow engine" ) {
     static_assert( noexcept( nothrow_static::get( ) ), "nothrow_static::get() must be noexcept" );
     static_assert( noexcept( nothrow_static::is_equal( nt_eng ) ), "nothrow_static::is_equal must be noexcept" );
 }
+
+TEST_CASE( "sampling from const containers and string views" ) {
+    const std::vector<int> const_vec = { 10, 20, 30 };
+    auto it_vec = Random.get( const_vec );
+    REQUIRE( it_vec != const_vec.end( ) );
+    REQUIRE( ( *it_vec == 10 || *it_vec == 20 || *it_vec == 30 ) );
+    static_assert( std::is_same<decltype( it_vec ), std::vector<int>::const_iterator>::value,
+                   "get(const Container&) must return const_iterator" );
+
+    const std::string const_str = "hello";
+    auto it_str = Random.get( const_str );
+    REQUIRE( it_str != const_str.end( ) );
+    REQUIRE( const_str.find( *it_str ) != std::string::npos );
+
+    const std::vector<int> empty_const_vec;
+    REQUIRE( Random.get( empty_const_vec ) == empty_const_vec.end( ) );
+
+    ilqvya::random_local rl;
+    auto it_rl = rl.get( const_vec );
+    REQUIRE( it_rl != const_vec.end( ) );
+    REQUIRE( ( *it_rl == 10 || *it_rl == 20 || *it_rl == 30 ) );
+
+#if ILQVYA_CPLUSPLUS >= 201703L
+    std::string_view sv = "abcdef";
+    auto it_sv = Random.get( sv );
+    REQUIRE( it_sv != sv.end( ) );
+    REQUIRE( sv.find( *it_sv ) != std::string_view::npos );
+
+    auto it_sv_rl = rl.get( sv );
+    REQUIRE( it_sv_rl != sv.end( ) );
+    REQUIRE( sv.find( *it_sv_rl ) != std::string_view::npos );
+
+    std::string_view empty_sv;
+    REQUIRE( Random.get( empty_sv ) == empty_sv.end( ) );
+    REQUIRE( rl.get( empty_sv ) == empty_sv.end( ) );
+#endif
+}
+
