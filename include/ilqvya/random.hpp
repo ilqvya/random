@@ -229,16 +229,16 @@ namespace ilqvya {
         seeder_default( ) : entropy_source( ), seed_seq( entropy_source.data.begin( ), entropy_source.data.end( ) ) {}
 
         /// return seed sequence
-        std::seed_seq& operator( )( ) {
-            // Fill 624 32-bit words (full MT19937 internal state) using std::random_device
-            // and high-resolution clock entropy to ensure all states are reachable.
-            return seed_seq;
-        }
+        std::seed_seq& operator( )( ) { return seed_seq; }
 
     private:
-        struct seed_data_624 {
-            std::array<std::uint32_t, 624> data;
-            seed_data_624( ) {
+        // 8 x 32-bit words (256 bits) of std::random_device entropy, mixed with the high-resolution clock
+        // in case random_device is deterministic on the platform. std::seed_seq expands it to the full
+        // engine state. More words would not add practical value: 256 bits already makes seed collisions
+        // and brute-forcing infeasible, while each extra random_device call adds measurable cost.
+        struct seed_data {
+            std::array<std::uint32_t, 8> data;
+            seed_data( ) {
                 std::random_device rd;
                 for ( std::size_t i = 0; i < data.size( ); ++i ) {
                     data[i] = static_cast<std::uint32_t>( rd( ) ) ^
@@ -248,7 +248,7 @@ namespace ilqvya {
             }
         };
 
-        seed_data_624 entropy_source;
+        seed_data entropy_source;
         std::seed_seq seed_seq;
     };
 
