@@ -549,6 +549,11 @@ namespace ilqvya {
                 return last_nonzero_it;
             }
 
+            template<typename Key, class PairContainer>
+            static auto get( Engine&, const PairContainer&& ) -> typename std::enable_if<
+                details::is_pair_container<PairContainer>::value && std::is_same<Key, details::weight>::value,
+                void>::type = delete;
+
             template<typename Target, typename Weight>
             ILQVYA_NODISCARD static typename std::enable_if<details::is_uniform_int<Weight>::value, Target>::type
             get_weighted_list( Engine& engine, std::initializer_list<details::weighted_result<Target, Weight>> list ) {
@@ -894,6 +899,11 @@ namespace ilqvya {
             return impl::template get<Key>( engine_instance( ), pair_container );
         }
 
+        template<typename Key, class PairContainer>
+        static auto get( const PairContainer&& ) -> typename std::enable_if<
+            details::is_pair_container<PairContainer>::value && std::is_same<Key, details::weight>::value,
+            void>::type = delete;
+
         template<typename Target, typename Weight = double>
         ILQVYA_NODISCARD static Target get( std::initializer_list<details::weighted_result<Target, Weight>> list ) {
             return impl::template get<Target, Weight>( engine_instance( ), list );
@@ -1179,6 +1189,11 @@ namespace ilqvya {
             decltype( std::begin( pair_container ) )>::type {
             return impl::template get<Key>( m_engine, pair_container );
         }
+
+        template<typename Key, class PairContainer>
+        auto get( const PairContainer&& ) -> typename std::enable_if<
+            details::is_pair_container<PairContainer>::value && std::is_same<Key, details::weight>::value,
+            void>::type = delete;
 
         template<typename Target, typename Weight = double>
         ILQVYA_NODISCARD Target get( std::initializer_list<details::weighted_result<Target, Weight>> list ) {

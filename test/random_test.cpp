@@ -1504,3 +1504,14 @@ TEST_CASE( "Forward iterator support for get" ) {
     static_assert( !ilqvya::details::is_forward_iterator<std::istream_iterator<int>>::value,
                    "istream_iterator must not satisfy is_forward_iterator" );
 }
+
+TEST_CASE( "Weighted get with lvalue container remains valid" ) {
+    std::vector<std::pair<int, int>> pairs = { { 1, 10 }, { 2, 20 } };
+    auto it = Random.get<Random_t::weight>( pairs );
+    REQUIRE( it != pairs.end( ) );
+    REQUIRE( ( it->first == 1 || it->first == 2 ) );
+
+    ilqvya::random_local rl;
+    auto it_rl = rl.get<Random_t::weight>( pairs );
+    REQUIRE( it_rl != pairs.end( ) );
+}
