@@ -20,14 +20,16 @@ function(add_basic_test TARGET COMPILE_DEFS TEST_SOURCES)
     add_executable(${TARGET} ${TEST_SOURCES})
     
     set_up_warnings(${TARGET})
-    target_link_libraries(${TARGET} Threads::Threads)
+    target_link_libraries(${TARGET} Threads::Threads effolkronium::random)
     target_compile_definitions(${TARGET} PRIVATE ${COMPILE_DEFS})
-    target_include_directories(${TARGET} PRIVATE "../include" ${CMAKE_CURRENT_SOURCE_DIR})
+    target_include_directories(${TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     
-    set_target_properties(${TARGET} PROPERTIES
-        CXX_STANDARD 11
-        CXX_STANDARD_REQUIRED ON
-    )
+    if(NOT CMAKE_CXX_STANDARD)
+        set_target_properties(${TARGET} PROPERTIES
+            CXX_STANDARD 11
+            CXX_STANDARD_REQUIRED ON
+        )
+    endif()
     
     add_test(NAME ${TARGET} COMMAND ${TARGET})
 endfunction(add_basic_test)

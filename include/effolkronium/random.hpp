@@ -42,6 +42,17 @@ SOFTWARE.
 #include <limits> // std::numeric_limits
 #include <ostream>
 #include <istream>
+#include <array>
+#include <cstdint>
+
+#if defined(__has_cpp_attribute)
+#  if __has_cpp_attribute(nodiscard) && __cplusplus >= 201703L
+#    define EFFOLKRONIUM_NODISCARD [[nodiscard]]
+#  endif
+#endif
+#ifndef EFFOLKRONIUM_NODISCARD
+#  define EFFOLKRONIUM_NODISCARD
+#endif
 
 namespace effolkronium {
 
@@ -99,7 +110,11 @@ namespace effolkronium {
                    std::is_same<T, char>::value
                 || std::is_same<T, wchar_t>::value
                 || std::is_same<T, char16_t>::value
-                || std::is_same<T, char32_t>::value;
+                || std::is_same<T, char32_t>::value
+#if defined(__cpp_char8_t)
+                || std::is_same<T, char8_t>::value
+#endif
+                ;
         };
 
         /// True if type T is iterator
@@ -120,36 +135,29 @@ namespace effolkronium {
                 decltype( test( std::declval<T>( ) ) ), long>::value;
         };
 
-        template <typename T>
-        class has_reserve
-        {
-        private:
-            template <typename C>
-            static char test(...);
-
-            template <typename C>
-            static long test(decltype(&C::reserve));
-        public:
-            static constexpr bool value = std::is_same<
-                decltype(test<T>(0)), long>::value;
-        };
-
-        template <typename T>
-        class has_insert
-        {
-        private:
-            template <typename C>
-            static char test(...);
-
-            template <typename C>
-            static long test(decltype(&C::insert));
-        public:
-            static constexpr bool value = std::is_same<
-                decltype(test<T>(0)), long>::value;
-        };
-
         template<typename...>
         using void_t = void;
+
+        template <typename C, typename = void>
+        struct has_reserve : std::false_type {};
+
+        template <typename C>
+        struct has_reserve<C, void_t<decltype(std::declval<C&>().reserve(std::declval<std::size_t>()))>> : std::true_type {};
+
+        template <typename C, typename = void>
+        struct has_insert_with_pos : std::false_type {};
+
+        template <typename C>
+        struct has_insert_with_pos<C, void_t<decltype(std::declval<C&>().insert(std::declval<typename C::const_iterator>(), std::declval<typename C::value_type>()))>> : std::true_type {};
+
+        template <typename C, typename = void>
+        struct has_insert_val : std::false_type {};
+
+        template <typename C>
+        struct has_insert_val<C, void_t<decltype(std::declval<C&>().insert(std::declval<typename C::value_type>()))>> : std::true_type {};
+
+        template <typename C>
+        struct has_insert : std::integral_constant<bool, has_insert_with_pos<C>::value || has_insert_val<C>::value> {};
 
         template<typename Type, typename = void>
         struct is_map : public std::false_type  {};
@@ -163,16 +171,24 @@ namespace effolkronium {
     struct seeder_default {
         /// return seed sequence
         std::seed_seq& operator() ( ) {
-            // MinGW issue, std::random_device returns constant value
-            // Use std::seed_seq with additional seed from C++ chrono
+            // Fill 624 32-bit words (full MT19937 internal state) using std::random_device
+            // and high-resolution clock entropy to ensure all states are reachable.
             return seed_seq;
         }
     private:
-        std::seed_seq seed_seq{ {
-                static_cast<std::uintmax_t>( std::random_device{ }( ) ),
-                static_cast<std::uintmax_t>( std::chrono::steady_clock::now( )
-                                             .time_since_epoch( ).count( ) ),
-        } };
+        struct seed_data_624 {
+            std::array<std::uint32_t, 624> data;
+            seed_data_624() {
+                std::random_device rd;
+                for (std::size_t i = 0; i < data.size(); ++i) {
+                    data[i] = static_cast<std::uint32_t>(rd()) ^
+                        static_cast<std::uint32_t>(std::chrono::high_resolution_clock::now().time_since_epoch().count());
+                }
+            }
+        };
+
+        seed_data_624 entropy_source;
+        std::seed_seq seed_seq{ entropy_source.data.begin(), entropy_source.data.end() };
     };
 
     namespace details {
@@ -196,15 +212,15 @@ namespace effolkronium {
             using common = details::common;
             using weight = details::weight;
 
-            static constexpr typename Engine::result_type (min)( ) {
+            EFFOLKRONIUM_NODISCARD static constexpr typename Engine::result_type (min)( ) noexcept {
                 return (Engine::min)( );
             }
 
-            static constexpr typename Engine::result_type (max)( ) {
+            EFFOLKRONIUM_NODISCARD static constexpr typename Engine::result_type (max)( ) noexcept {
                 return (Engine::max)( );
             }
 
-            static void discard( Engine& engine, const unsigned long long z ) {
+            static void discard( Engine& engine, const unsigned long long z ) noexcept {
                 engine.discard( z );
             }
 
@@ -222,11 +238,11 @@ namespace effolkronium {
                 engine.seed( seq );
             }
 
-            static typename Engine::result_type get( Engine& engine ) {
+            EFFOLKRONIUM_NODISCARD static typename Engine::result_type get( Engine& engine ) {
                 return engine( );
             }
 
-            static bool is_equal( const Engine& engine, const Engine& other ) {
+            EFFOLKRONIUM_NODISCARD static bool is_equal( const Engine& engine, const Engine& other ) noexcept {
                 return engine == other;
             }
 
@@ -241,7 +257,7 @@ namespace effolkronium {
             }
 
             template<typename T>
-            static typename std::enable_if<details::is_uniform_int<T>::value, T>::type
+            EFFOLKRONIUM_NODISCARD static typename std::enable_if<details::is_uniform_int<T>::value, T>::type
             get( Engine& engine, T from = (std::numeric_limits<T>::min)( ), T to = (std::numeric_limits<T>::max)( ) ) {
                 if( from < to )
                     return IntegerDist<T>{ from, to }( engine );
@@ -249,22 +265,22 @@ namespace effolkronium {
             }
 
             template<typename T>
-            static typename std::enable_if<details::is_uniform_real<T>::value, T>::type
-            get( Engine& engine, T from = (std::numeric_limits<T>::min)( ), T to = (std::numeric_limits<T>::max)( ) ) {
+            EFFOLKRONIUM_NODISCARD static typename std::enable_if<details::is_uniform_real<T>::value, T>::type
+            get( Engine& engine, T from = T( 0 ), T to = T( 1 ) ) {
                 if( from < to )
                     return RealDist<T>{ from, to }( engine );
                 return RealDist<T>{ to, from }( engine );
             }
 
             template<typename T>
-            static typename std::enable_if<details::is_byte<T>::value, T>::type
+            EFFOLKRONIUM_NODISCARD static typename std::enable_if<details::is_byte<T>::value, T>::type
             get( Engine& engine, T from = (std::numeric_limits<T>::min)( ), T to = (std::numeric_limits<T>::max)( ) ) {
                 using short_t = typename std::conditional<std::is_signed<T>::value, short, unsigned short>::type;
                 return static_cast<T>( get<short_t>( engine, from, to ) );
             }
 
             template<typename Key, typename A, typename B, typename C = typename std::common_type<A, B>::type>
-            static typename std::enable_if<
+            EFFOLKRONIUM_NODISCARD static typename std::enable_if<
                    std::is_same<Key, common>::value
                 && details::is_supported_number<A>::value
                 && details::is_supported_number<B>::value
@@ -275,7 +291,7 @@ namespace effolkronium {
             }
 
             template<typename T>
-            static typename std::enable_if<details::is_supported_character<T>::value, T>::type
+            EFFOLKRONIUM_NODISCARD static typename std::enable_if<details::is_supported_character<T>::value, T>::type
             get( Engine& engine, T from = (std::numeric_limits<T>::min)(), T to = (std::numeric_limits<T>::max)() ) {
                 if (from < to)
                     return static_cast<T>(IntegerDist<std::int64_t>{ static_cast<std::int64_t>(from), static_cast<std::int64_t>(to) }(engine));
@@ -283,20 +299,20 @@ namespace effolkronium {
             }
 
             template<typename T>
-            static typename std::enable_if<std::is_same<T, bool>::value, bool>::type
+            EFFOLKRONIUM_NODISCARD static typename std::enable_if<std::is_same<T, bool>::value, bool>::type
             get( Engine& engine, const double probability = 0.5 ) {
                 assert( 0 <= probability && 1 >= probability );
                 return BoolDist{ probability }( engine );
             }
 
             template<typename T>
-            static T get( Engine& engine, std::initializer_list<T> init_list ) {
+            EFFOLKRONIUM_NODISCARD static T get( Engine& engine, std::initializer_list<T> init_list ) {
                 assert( 0u != init_list.size( ) );
                 return *get( engine, init_list.begin( ), init_list.end( ) );
             }
 
             template<typename InputIt>
-            static typename std::enable_if<details::is_iterator<InputIt>::value, InputIt>::type
+            EFFOLKRONIUM_NODISCARD static typename std::enable_if<details::is_iterator<InputIt>::value, InputIt>::type
             get( Engine& engine, InputIt first, InputIt last ) {
                 const auto size = std::distance( first, last );
                 if( 0 == size ) return last;
@@ -305,13 +321,13 @@ namespace effolkronium {
             }
 
             template<typename Container>
-            static auto get( Engine& engine, Container& container ) ->
+            EFFOLKRONIUM_NODISCARD static auto get( Engine& engine, Container& container ) ->
                 typename std::enable_if<details::is_iterator<decltype(std::begin(container))>::value, decltype(std::begin(container))>::type {
                 return get( engine, std::begin( container ), std::end( container ) );
             }
 
             template<template<typename...> class Container, typename A>
-            static typename std::enable_if<details::has_reserve<Container<A>>::value, Container<A>>::type
+            EFFOLKRONIUM_NODISCARD static typename std::enable_if<details::has_reserve<Container<A>>::value, Container<A>>::type
             get( Engine& engine, A from, A to, std::size_t size) {
                 Container<A> container;
                 container.reserve(size);
@@ -321,7 +337,7 @@ namespace effolkronium {
             }
 
             template<template<typename...> class Container, typename Key, typename A, typename B, typename C = typename std::common_type<A, B>::type>
-            static typename std::enable_if<std::is_same<Key, common>::value && details::has_reserve<Container<A>>::value, Container<C>>::type
+            EFFOLKRONIUM_NODISCARD static typename std::enable_if<std::is_same<Key, common>::value && details::has_reserve<Container<C>>::value, Container<C>>::type
             get( Engine& engine, A start, B end, std::size_t size) {
                 Container<C> container;
                 container.reserve(size);
@@ -331,7 +347,7 @@ namespace effolkronium {
             }
 
             template<template<typename...> class Container, typename A>
-            static typename std::enable_if<!details::has_reserve<Container<A>>::value, Container<A>>::type
+            EFFOLKRONIUM_NODISCARD static typename std::enable_if<!details::has_reserve<Container<A>>::value, Container<A>>::type
             get( Engine& engine, A start, A end, std::size_t size) {
                 Container<A> container;
                 for (std::size_t i = 0; i < size; ++i)
@@ -340,7 +356,7 @@ namespace effolkronium {
             }
 
             template<template<typename...> class Container, typename Key, typename A, typename B, typename C = typename std::common_type<A, B>::type>
-            static typename std::enable_if<std::is_same<Key, common>::value && !details::has_reserve<Container<C>>::value, Container<C>>::type
+            EFFOLKRONIUM_NODISCARD static typename std::enable_if<std::is_same<Key, common>::value && !details::has_reserve<Container<C>>::value, Container<C>>::type
             get( Engine& engine, A start, B end, std::size_t size) {
                 Container<C> container;
                 for (std::size_t i = 0; i < size; ++i)
@@ -349,52 +365,58 @@ namespace effolkronium {
             }
 
             template<template<typename AA, std::size_t NN, typename...> class Container, std::size_t N, typename A>
-            static typename std::enable_if<!details::has_insert<Container<A, N>>::value, Container<A, N>>::type
+            EFFOLKRONIUM_NODISCARD static typename std::enable_if<!details::has_insert<Container<A, N>>::value, Container<A, N>>::type
             get( Engine& engine, A start, A end) {
-                Container<A, N> container = {{ 0 }};
+                Container<A, N> container{};
                 for (std::size_t i = 0; i < N; ++i)
                     container[i] = get(engine, start, end);
                 return container;
             }
 
             template<template<typename AA, std::size_t NN, typename...> class Container, std::size_t N, typename Key, typename A, typename B, typename C = typename std::common_type<A, B>::type>
-            static typename std::enable_if<std::is_same<Key, common>::value && !details::has_insert<Container<C, N>>::value, Container<C, N>>::type
+            EFFOLKRONIUM_NODISCARD static typename std::enable_if<std::is_same<Key, common>::value && !details::has_insert<Container<C, N>>::value, Container<C, N>>::type
             get( Engine& engine, A start, B end) {
-                Container<C, N> container = {{ 0 }};
+                Container<C, N> container{};
                 for (std::size_t i = 0; i < N; ++i)
                     container[i] = get<common>(engine, start, end);
                 return container;
             }
 
             template<typename T, std::size_t N>
-            static T* get( Engine& engine, T( &array )[ N ] ) {
+            EFFOLKRONIUM_NODISCARD static T* get( Engine& engine, T( &array )[ N ] ) {
                 return std::addressof( array[ get<std::size_t>( engine, 0, N - 1 ) ] );
             }
 
             template<typename Dist, typename... Args>
-            static typename Dist::result_type get( Engine& engine, Args&&... args ) {
+            EFFOLKRONIUM_NODISCARD static typename Dist::result_type get( Engine& engine, Args&&... args ) {
                 return Dist{ std::forward<Args>( args )... }( engine );
             }
 
             template<typename Dist>
-            static typename Dist::result_type get( Engine& engine, Dist& dist ) {
+            EFFOLKRONIUM_NODISCARD static typename Dist::result_type get( Engine& engine, Dist& dist ) {
                 return dist( engine );
             }
 
             template<typename Key, class MapContainer>
-            static auto get(Engine& engine, const MapContainer& map_container) ->
+            EFFOLKRONIUM_NODISCARD static auto get(Engine& engine, const MapContainer& map_container) ->
                 typename std::enable_if<
                     details::is_map<MapContainer>::value &&
                     details::is_iterator<decltype(std::begin(map_container))>::value &&
-                    !std::is_signed<typename MapContainer::mapped_type>::value &&
+                    details::is_uniform_int<typename MapContainer::mapped_type>::value &&
                     std::is_same<Key, details::weight>::value,
                 decltype(std::begin(map_container))>::type {
                 using MappedType = typename MapContainer::mapped_type;
                 using IteratorType = decltype(std::begin(map_container));
                 
                 MappedType total_weight = 0;
-                for (IteratorType it = std::begin(map_container); it != std::end(map_container); ++it)
+                IteratorType last_nonzero_it = std::end(map_container);
+                for (IteratorType it = std::begin(map_container); it != std::end(map_container); ++it) {
+                    assert(it->second >= MappedType(0));
+                    if (it->second > MappedType(0)) {
+                        last_nonzero_it = it;
+                    }
                     total_weight += it->second;
+                }
                 if(total_weight == MappedType(0)) return std::end(map_container);
 
                 MappedType random_weight = get(engine, MappedType(0), total_weight - 1);
@@ -403,11 +425,11 @@ namespace effolkronium {
                     sum += it->second;
                     if(sum > random_weight) return it;
                 }
-                return std::end(map_container);
+                return last_nonzero_it;
             }
 
             template<typename Key, class MapContainer>
-            static auto get(Engine& engine, const MapContainer& map_container) ->
+            EFFOLKRONIUM_NODISCARD static auto get(Engine& engine, const MapContainer& map_container) ->
                 typename std::enable_if<
                     details::is_map<MapContainer>::value &&
                     details::is_iterator<decltype(std::begin(map_container))>::value &&
@@ -418,19 +440,23 @@ namespace effolkronium {
                 using IteratorType = decltype(std::begin(map_container));
                 
                 MappedType total_weight = 0;
+                IteratorType last_nonzero_it = std::end(map_container);
                 for (IteratorType it = std::begin(map_container); it != std::end(map_container); ++it) {
                     assert(it->second >= MappedType(0));
+                    if (it->second > MappedType(0)) {
+                        last_nonzero_it = it;
+                    }
                     total_weight += it->second;
                 }
-                if(total_weight == MappedType(0)) return std::end(map_container);
+                if(total_weight <= MappedType(0)) return std::end(map_container);
 
-                MappedType random_weight = get(engine, MappedType(0), std::nextafter(total_weight, (std::numeric_limits<MappedType>::min)( )));
+                MappedType random_weight = get(engine, MappedType(0), total_weight);
                 MappedType sum = 0;
                 for(IteratorType it = std::begin(map_container); it != std::end(map_container); ++it) {
                     sum += it->second;
                     if(sum > random_weight) return it;
                 }
-                return std::end(map_container);
+                return last_nonzero_it;
             }
 
             template<typename RandomIt>
@@ -470,133 +496,133 @@ namespace effolkronium {
 
         constexpr basic_random_base( ) = default;
 
-        static constexpr typename Engine::result_type (min)( ) { return impl::min( ); }
-        static constexpr typename Engine::result_type (max)( ) { return impl::max( ); }
-        static void discard( const unsigned long long z ) { impl::discard( engine_instance( ), z ); }
+        EFFOLKRONIUM_NODISCARD static constexpr typename Engine::result_type (min)( ) noexcept { return impl::min( ); }
+        EFFOLKRONIUM_NODISCARD static constexpr typename Engine::result_type (max)( ) noexcept { return impl::max( ); }
+        static void discard( const unsigned long long z ) noexcept { impl::discard( engine_instance( ), z ); }
         static void reseed( ) { impl::reseed( engine_instance( ) ); }
         static void seed( const typename Engine::result_type value = Engine::default_seed ) { impl::seed( engine_instance( ), value ); }
         template<typename Sseq> static void seed( Sseq& seq ) { impl::seed( engine_instance( ), seq ); }
-        static typename Engine::result_type get( ) { return impl::get( engine_instance( ) ); }
-        static bool is_equal( const Engine& other ) { return impl::is_equal( engine_instance( ), other ); }
+        EFFOLKRONIUM_NODISCARD static typename Engine::result_type get( ) { return impl::get( engine_instance( ) ); }
+        EFFOLKRONIUM_NODISCARD static bool is_equal( const Engine& other ) noexcept { return impl::is_equal( engine_instance( ), other ); }
         template<typename CharT, typename Traits> static void serialize( std::basic_ostream<CharT, Traits>& ost ) { impl::serialize( engine_instance( ), ost ); }
         template<typename CharT, typename Traits> static void deserialize( std::basic_istream<CharT, Traits>& ist ) { impl::deserialize( engine_instance( ), ist ); }
 
         template<typename T>
-        static typename std::enable_if<details::is_uniform_int<T>::value, T>::type
+        EFFOLKRONIUM_NODISCARD static typename std::enable_if<details::is_uniform_int<T>::value, T>::type
         get( T from = (std::numeric_limits<T>::min)( ), T to = (std::numeric_limits<T>::max)( ) ) {
             return impl::template get<T>( engine_instance( ), from, to );
         }
 
         template<typename T>
-        static typename std::enable_if<details::is_uniform_real<T>::value, T>::type
-        get( T from = (std::numeric_limits<T>::min)( ), T to = (std::numeric_limits<T>::max)( ) ) {
+        EFFOLKRONIUM_NODISCARD static typename std::enable_if<details::is_uniform_real<T>::value, T>::type
+        get( T from = T( 0 ), T to = T( 1 ) ) {
             return impl::template get<T>( engine_instance( ), from, to );
         }
 
         template<typename T>
-        static typename std::enable_if<details::is_byte<T>::value, T>::type
+        EFFOLKRONIUM_NODISCARD static typename std::enable_if<details::is_byte<T>::value, T>::type
         get( T from = (std::numeric_limits<T>::min)( ), T to = (std::numeric_limits<T>::max)( ) ) {
             return impl::template get<T>( engine_instance( ), from, to );
         }
 
         template<typename Key, typename A, typename B, typename C = typename std::common_type<A, B>::type>
-        static typename std::enable_if<std::is_same<Key, common>::value && details::is_supported_number<A>::value && details::is_supported_number<B>::value && std::is_signed<A>::value != std::is_unsigned<B>::value, C>::type
+        EFFOLKRONIUM_NODISCARD static typename std::enable_if<std::is_same<Key, common>::value && details::is_supported_number<A>::value && details::is_supported_number<B>::value && std::is_signed<A>::value != std::is_unsigned<B>::value, C>::type
         get( A from = (std::numeric_limits<A>::min)( ), B to = (std::numeric_limits<B>::max)( ) ) {
             return impl::template get<Key, A, B, C>( engine_instance( ), from, to );
         }
 
         template<typename T>
-        static typename std::enable_if<details::is_supported_character<T>::value, T>::type
+        EFFOLKRONIUM_NODISCARD static typename std::enable_if<details::is_supported_character<T>::value, T>::type
         get(T from = (std::numeric_limits<T>::min)(), T to = (std::numeric_limits<T>::max)()) {
             return impl::template get<T>( engine_instance( ), from, to );
         }
 
         template<typename T>
-        static typename std::enable_if<std::is_same<T, bool>::value, bool>::type
+        EFFOLKRONIUM_NODISCARD static typename std::enable_if<std::is_same<T, bool>::value, bool>::type
         get( const double probability = 0.5 ) {
             return impl::template get<T>( engine_instance( ), probability );
         }
 
         template<typename T>
-        static T get( std::initializer_list<T> init_list ) {
+        EFFOLKRONIUM_NODISCARD static T get( std::initializer_list<T> init_list ) {
             return impl::template get<T>( engine_instance( ), init_list );
         }
 
         template<typename InputIt>
-        static typename std::enable_if<details::is_iterator<InputIt>::value, InputIt>::type
+        EFFOLKRONIUM_NODISCARD static typename std::enable_if<details::is_iterator<InputIt>::value, InputIt>::type
         get( InputIt first, InputIt last ) {
             return impl::get( engine_instance( ), first, last );
         }
 
         template<typename Container>
-        static auto get( Container& container ) ->
+        EFFOLKRONIUM_NODISCARD static auto get( Container& container ) ->
             typename std::enable_if<details::is_iterator<decltype(std::begin(container))>::value, decltype(std::begin(container))>::type {
             return impl::get( engine_instance( ), container );
         }
 
         template<template<typename...> class Container, typename A>
-        static typename std::enable_if<details::has_reserve<Container<A>>::value, Container<A>>::type
+        EFFOLKRONIUM_NODISCARD static typename std::enable_if<details::has_reserve<Container<A>>::value, Container<A>>::type
         get(A from, A to, std::size_t size) {
             return impl::template get<Container, A>( engine_instance( ), from, to, size );
         }
 
         template<template<typename...> class Container, typename Key, typename A, typename B, typename C = typename std::common_type<A, B>::type>
-        static typename std::enable_if<std::is_same<Key, common>::value && details::has_reserve<Container<A>>::value, Container<C>>::type
+        EFFOLKRONIUM_NODISCARD static typename std::enable_if<std::is_same<Key, common>::value && details::has_reserve<Container<C>>::value, Container<C>>::type
         get(A start, B end, std::size_t size) {
             return impl::template get<Container, Key, A, B, C>( engine_instance( ), start, end, size );
         }
 
         template<template<typename...> class Container, typename A>
-        static typename std::enable_if<!details::has_reserve<Container<A>>::value, Container<A>>::type
+        EFFOLKRONIUM_NODISCARD static typename std::enable_if<!details::has_reserve<Container<A>>::value, Container<A>>::type
         get(A start, A end, std::size_t size) {
             return impl::template get<Container, A>( engine_instance( ), start, end, size );
         }
 
         template<template<typename...> class Container, typename Key, typename A, typename B, typename C = typename std::common_type<A, B>::type>
-        static typename std::enable_if<std::is_same<Key, common>::value && !details::has_reserve<Container<C>>::value, Container<C>>::type
+        EFFOLKRONIUM_NODISCARD static typename std::enable_if<std::is_same<Key, common>::value && !details::has_reserve<Container<C>>::value, Container<C>>::type
         get(A start, B end, std::size_t size) {
             return impl::template get<Container, Key, A, B, C>( engine_instance( ), start, end, size );
         }
 
         template<template<typename AA, std::size_t NN, typename...> class Container, std::size_t N, typename A>
-        static typename std::enable_if<!details::has_insert<Container<A, N>>::value, Container<A, N>>::type
+        EFFOLKRONIUM_NODISCARD static typename std::enable_if<!details::has_insert<Container<A, N>>::value, Container<A, N>>::type
         get(A start, A end) {
             return impl::template get<Container, N, A>( engine_instance( ), start, end );
         }
 
         template<template<typename AA, std::size_t NN, typename...> class Container, std::size_t N, typename Key, typename A, typename B, typename C = typename std::common_type<A, B>::type>
-        static typename std::enable_if<std::is_same<Key, common>::value && !details::has_insert<Container<C, N>>::value, Container<C, N>>::type
+        EFFOLKRONIUM_NODISCARD static typename std::enable_if<std::is_same<Key, common>::value && !details::has_insert<Container<C, N>>::value, Container<C, N>>::type
         get(A start, B end) {
             return impl::template get<Container, N, Key, A, B, C>( engine_instance( ), start, end );
         }
 
         template<typename T, std::size_t N>
-        static T* get( T( &array )[ N ] ) {
+        EFFOLKRONIUM_NODISCARD static T* get( T( &array )[ N ] ) {
             return impl::get( engine_instance( ), array );
         }
 
         template<typename Dist, typename... Args>
-        static typename Dist::result_type get( Args&&... args ) {
+        EFFOLKRONIUM_NODISCARD static typename Dist::result_type get( Args&&... args ) {
             return impl::template get<Dist>( engine_instance( ), std::forward<Args>( args )... );
         }
 
         template<typename Dist>
-        static typename Dist::result_type get( Dist& dist ) {
+        EFFOLKRONIUM_NODISCARD static typename Dist::result_type get( Dist& dist ) {
             return impl::get( engine_instance( ), dist );
         }
 
         template<typename Key, class MapContainer>
-        static auto get(const MapContainer& map_container) -> typename std::enable_if<
+        EFFOLKRONIUM_NODISCARD static auto get(const MapContainer& map_container) -> typename std::enable_if<
             details::is_map<MapContainer>::value &&
             details::is_iterator<decltype(std::begin(map_container))>::value &&
-            !std::is_signed<typename MapContainer::mapped_type>::value &&
+            details::is_uniform_int<typename MapContainer::mapped_type>::value &&
             std::is_same<Key, details::weight>::value,
         decltype(std::begin(map_container))>::type {
             return impl::template get<Key>( engine_instance( ), map_container );
         }
 
         template<typename Key, class MapContainer>
-        static auto get(const MapContainer& map_container) -> typename std::enable_if<
+        EFFOLKRONIUM_NODISCARD static auto get(const MapContainer& map_container) -> typename std::enable_if<
             details::is_map<MapContainer>::value &&
             details::is_iterator<decltype(std::begin(map_container))>::value &&
             details::is_uniform_real<typename MapContainer::mapped_type>::value &&
@@ -612,12 +638,12 @@ namespace effolkronium {
         static void shuffle( Container& container ) { impl::shuffle( engine_instance( ), container ); }
 
         template<typename... Args>
-        auto operator()( Args&&... args ) const -> decltype( get( std::forward<Args>( args )... ) ) {
+        EFFOLKRONIUM_NODISCARD auto operator()( Args&&... args ) const -> decltype( get( std::forward<Args>( args )... ) ) {
             return get( std::forward<Args>( args )... );
         }
 
     private:
-        static Engine& engine_instance( ) { return Derived::engine(); }
+        static Engine& engine_instance( ) noexcept { return Derived::engine(); }
     };
 
     /**
@@ -643,10 +669,10 @@ namespace effolkronium {
 
         basic_random_static( ) = default;
 
-        static Engine get_engine( ) { return engine_instance( ); }
-        static Engine& engine() { return engine_instance(); }
+        EFFOLKRONIUM_NODISCARD static Engine get_engine( ) noexcept { return engine_instance( ); }
+        static Engine& engine() noexcept { return engine_instance(); }
     private:
-        static Engine& engine_instance( ) {
+        static Engine& engine_instance( ) noexcept {
             static Engine engine{ Seeder{ }( ) };
             return engine;
         }
@@ -675,10 +701,10 @@ namespace effolkronium {
 
         basic_random_thread_local( ) = default;
 
-        static Engine get_engine( ) { return engine_instance( ); }
-        static Engine& engine() { return engine_instance(); }
+        EFFOLKRONIUM_NODISCARD static Engine get_engine( ) noexcept { return engine_instance( ); }
+        static Engine& engine() noexcept { return engine_instance(); }
     private:
-        static Engine& engine_instance( ) {
+        static Engine& engine_instance( ) noexcept {
             thread_local Engine engine{ Seeder{ }( ) };
             return engine;
         }
@@ -707,133 +733,133 @@ namespace effolkronium {
 
         basic_random_local( ) = default;
 
-        static constexpr typename Engine::result_type (min)( ) { return impl::min( ); }
-        static constexpr typename Engine::result_type (max)( ) { return impl::max( ); }
-        void discard( const unsigned long long z ) { impl::discard( m_engine, z ); }
+        EFFOLKRONIUM_NODISCARD static constexpr typename Engine::result_type (min)( ) noexcept { return impl::min( ); }
+        EFFOLKRONIUM_NODISCARD static constexpr typename Engine::result_type (max)( ) noexcept { return impl::max( ); }
+        void discard( const unsigned long long z ) noexcept { impl::discard( m_engine, z ); }
         void reseed( ) { impl::reseed( m_engine ); }
         void seed( const typename Engine::result_type value = Engine::default_seed ) { impl::seed( m_engine, value ); }
         template<typename Sseq> void seed( Sseq& seq ) { impl::seed( m_engine, seq ); }
-        typename Engine::result_type get( ) { return impl::get( m_engine ); }
-        bool is_equal( const Engine& other ) const { return impl::is_equal( m_engine, other ); }
+        EFFOLKRONIUM_NODISCARD typename Engine::result_type get( ) { return impl::get( m_engine ); }
+        EFFOLKRONIUM_NODISCARD bool is_equal( const Engine& other ) const noexcept { return impl::is_equal( m_engine, other ); }
         template<typename CharT, typename Traits> void serialize( std::basic_ostream<CharT, Traits>& ost ) const { impl::serialize( m_engine, ost ); }
         template<typename CharT, typename Traits> void deserialize( std::basic_istream<CharT, Traits>& ist ) { impl::deserialize( m_engine, ist ); }
 
         template<typename T>
-        typename std::enable_if<details::is_uniform_int<T>::value, T>::type
+        EFFOLKRONIUM_NODISCARD typename std::enable_if<details::is_uniform_int<T>::value, T>::type
         get( T from = (std::numeric_limits<T>::min)( ), T to = (std::numeric_limits<T>::max)( ) ) {
             return impl::template get<T>( m_engine, from, to );
         }
 
         template<typename T>
-        typename std::enable_if<details::is_uniform_real<T>::value, T>::type
-        get( T from = (std::numeric_limits<T>::min)( ), T to = (std::numeric_limits<T>::max)( ) ) {
+        EFFOLKRONIUM_NODISCARD typename std::enable_if<details::is_uniform_real<T>::value, T>::type
+        get( T from = T( 0 ), T to = T( 1 ) ) {
             return impl::template get<T>( m_engine, from, to );
         }
 
         template<typename T>
-        typename std::enable_if<details::is_byte<T>::value, T>::type
+        EFFOLKRONIUM_NODISCARD typename std::enable_if<details::is_byte<T>::value, T>::type
         get( T from = (std::numeric_limits<T>::min)( ), T to = (std::numeric_limits<T>::max)( ) ) {
             return impl::template get<T>( m_engine, from, to );
         }
 
         template<typename Key, typename A, typename B, typename C = typename std::common_type<A, B>::type>
-        typename std::enable_if<std::is_same<Key, common>::value && details::is_supported_number<A>::value && details::is_supported_number<B>::value && std::is_signed<A>::value != std::is_unsigned<B>::value, C>::type
+        EFFOLKRONIUM_NODISCARD typename std::enable_if<std::is_same<Key, common>::value && details::is_supported_number<A>::value && details::is_supported_number<B>::value && std::is_signed<A>::value != std::is_unsigned<B>::value, C>::type
         get( A from = (std::numeric_limits<A>::min)( ), B to = (std::numeric_limits<B>::max)( ) ) {
             return impl::template get<Key, A, B, C>( m_engine, from, to );
         }
 
         template<typename T>
-        typename std::enable_if<details::is_supported_character<T>::value, T>::type
+        EFFOLKRONIUM_NODISCARD typename std::enable_if<details::is_supported_character<T>::value, T>::type
         get(T from = (std::numeric_limits<T>::min)(), T to = (std::numeric_limits<T>::max)()) {
             return impl::template get<T>( m_engine, from, to );
         }
 
         template<typename T>
-        typename std::enable_if<std::is_same<T, bool>::value, bool>::type
+        EFFOLKRONIUM_NODISCARD typename std::enable_if<std::is_same<T, bool>::value, bool>::type
         get( const double probability = 0.5 ) {
             return impl::template get<T>( m_engine, probability );
         }
 
         template<typename T>
-        T get( std::initializer_list<T> init_list ) {
+        EFFOLKRONIUM_NODISCARD T get( std::initializer_list<T> init_list ) {
             return impl::template get<T>( m_engine, init_list );
         }
 
         template<typename InputIt>
-        typename std::enable_if<details::is_iterator<InputIt>::value, InputIt>::type
+        EFFOLKRONIUM_NODISCARD typename std::enable_if<details::is_iterator<InputIt>::value, InputIt>::type
         get( InputIt first, InputIt last ) {
             return impl::get( m_engine, first, last );
         }
 
         template<typename Container>
-        auto get( Container& container ) ->
+        EFFOLKRONIUM_NODISCARD auto get( Container& container ) ->
             typename std::enable_if<details::is_iterator<decltype(std::begin(container))>::value, decltype(std::begin(container))>::type {
             return impl::get( m_engine, container );
         }
 
         template<template<typename...> class Container, typename A>
-        typename std::enable_if<details::has_reserve<Container<A>>::value, Container<A>>::type
+        EFFOLKRONIUM_NODISCARD typename std::enable_if<details::has_reserve<Container<A>>::value, Container<A>>::type
         get(A from, A to, std::size_t size) {
             return impl::template get<Container, A>( m_engine, from, to, size );
         }
 
         template<template<typename...> class Container, typename Key, typename A, typename B, typename C = typename std::common_type<A, B>::type>
-        typename std::enable_if<std::is_same<Key, common>::value && details::has_reserve<Container<A>>::value, Container<C>>::type
+        EFFOLKRONIUM_NODISCARD typename std::enable_if<std::is_same<Key, common>::value && details::has_reserve<Container<C>>::value, Container<C>>::type
         get(A start, B end, std::size_t size) {
             return impl::template get<Container, Key, A, B, C>( m_engine, start, end, size );
         }
 
         template<template<typename...> class Container, typename A>
-        typename std::enable_if<!details::has_reserve<Container<A>>::value, Container<A>>::type
+        EFFOLKRONIUM_NODISCARD typename std::enable_if<!details::has_reserve<Container<A>>::value, Container<A>>::type
         get(A start, A end, std::size_t size) {
             return impl::template get<Container, A>( m_engine, start, end, size );
         }
 
         template<template<typename...> class Container, typename Key, typename A, typename B, typename C = typename std::common_type<A, B>::type>
-        typename std::enable_if<std::is_same<Key, common>::value && !details::has_reserve<Container<C>>::value, Container<C>>::type
+        EFFOLKRONIUM_NODISCARD typename std::enable_if<std::is_same<Key, common>::value && !details::has_reserve<Container<C>>::value, Container<C>>::type
         get(A start, B end, std::size_t size) {
             return impl::template get<Container, Key, A, B, C>( m_engine, start, end, size );
         }
 
         template<template<typename AA, std::size_t NN, typename...> class Container, std::size_t N, typename A>
-        typename std::enable_if<!details::has_insert<Container<A, N>>::value, Container<A, N>>::type
+        EFFOLKRONIUM_NODISCARD typename std::enable_if<!details::has_insert<Container<A, N>>::value, Container<A, N>>::type
         get(A start, A end) {
             return impl::template get<Container, N, A>( m_engine, start, end );
         }
 
         template<template<typename AA, std::size_t NN, typename...> class Container, std::size_t N, typename Key, typename A, typename B, typename C = typename std::common_type<A, B>::type>
-        typename std::enable_if<std::is_same<Key, common>::value && !details::has_insert<Container<C, N>>::value, Container<C, N>>::type
+        EFFOLKRONIUM_NODISCARD typename std::enable_if<std::is_same<Key, common>::value && !details::has_insert<Container<C, N>>::value, Container<C, N>>::type
         get(A start, B end) {
             return impl::template get<Container, N, Key, A, B, C>( m_engine, start, end );
         }
 
         template<typename T, std::size_t N>
-        T* get( T( &array )[ N ] ) {
+        EFFOLKRONIUM_NODISCARD T* get( T( &array )[ N ] ) {
             return impl::get( m_engine, array );
         }
 
         template<typename Dist, typename... Args>
-        typename Dist::result_type get( Args&&... args ) {
+        EFFOLKRONIUM_NODISCARD typename Dist::result_type get( Args&&... args ) {
             return impl::template get<Dist>( m_engine, std::forward<Args>( args )... );
         }
 
         template<typename Dist>
-        typename Dist::result_type get( Dist& dist ) {
+        EFFOLKRONIUM_NODISCARD typename Dist::result_type get( Dist& dist ) {
             return impl::get( m_engine, dist );
         }
 
         template<typename Key, class MapContainer>
-        auto get(const MapContainer& map_container) -> typename std::enable_if<
+        EFFOLKRONIUM_NODISCARD auto get(const MapContainer& map_container) -> typename std::enable_if<
             details::is_map<MapContainer>::value &&
             details::is_iterator<decltype(std::begin(map_container))>::value &&
-            !std::is_signed<typename MapContainer::mapped_type>::value &&
+            details::is_uniform_int<typename MapContainer::mapped_type>::value &&
             std::is_same<Key, details::weight>::value,
         decltype(std::begin(map_container))>::type {
             return impl::template get<Key>( m_engine, map_container );
         }
 
         template<typename Key, class MapContainer>
-        auto get(const MapContainer& map_container) -> typename std::enable_if<
+        EFFOLKRONIUM_NODISCARD auto get(const MapContainer& map_container) -> typename std::enable_if<
             details::is_map<MapContainer>::value &&
             details::is_iterator<decltype(std::begin(map_container))>::value &&
             details::is_uniform_real<typename MapContainer::mapped_type>::value &&
@@ -849,12 +875,12 @@ namespace effolkronium {
         void shuffle( Container& container ) { impl::shuffle( m_engine, container ); }
 
         template<typename... Args>
-        auto operator()( Args&&... args ) -> decltype( this->get( std::forward<Args>( args )... ) ) {
+        EFFOLKRONIUM_NODISCARD auto operator()( Args&&... args ) -> decltype( this->get( std::forward<Args>( args )... ) ) {
             return this->get( std::forward<Args>( args )... );
         }
 
-        Engine get_engine( ) const { return m_engine; }
-        Engine& engine() { return m_engine; }
+        EFFOLKRONIUM_NODISCARD Engine get_engine( ) const noexcept { return m_engine; }
+        Engine& engine() noexcept { return m_engine; }
     private:
         static Engine make_seeded_engine( ) { return Engine{ Seeder{ }( ) }; }
         Engine m_engine{ make_seeded_engine( ) };

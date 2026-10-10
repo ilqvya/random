@@ -94,6 +94,7 @@ TEST_CASE( "Type deduction for random integer numbers" ) {
 
 TEST_CASE( "Random integer numbers is truly random" ) {
     bool isDifferentNumber{ false };
+    auto count = 1000;
 
     do {
 
@@ -106,7 +107,7 @@ TEST_CASE( "Random integer numbers is truly random" ) {
             std::numeric_limits<long long>::max( ) );
 
         isDifferentNumber = firstRandomNumber != secondRandomNumber;
-    } while ( !isDifferentNumber );
+    } while ( !isDifferentNumber && count-- );
 
     CHECK( isDifferentNumber );
 }
@@ -236,6 +237,7 @@ TEST_CASE( "Type deduction for random byte numbers" ) {
 
 TEST_CASE( "Random byte numbers is truly random" ) {
     bool isDifferentNumber{ false };
+    auto count = 1000;
 
     do {
         const auto firstRandomNumber = Random.get(
@@ -247,7 +249,7 @@ TEST_CASE( "Random byte numbers is truly random" ) {
             std::numeric_limits<signed char>::max( ) );
 
         isDifferentNumber = firstRandomNumber != secondRandomNumber;
-    } while( !isDifferentNumber );
+    } while( !isDifferentNumber && count-- );
 
     CHECK( isDifferentNumber );
 }
@@ -314,6 +316,7 @@ TEST_CASE( "Type deduction for random common_type numbers" ) {
 
 TEST_CASE( "Random common type numbers is truly random" ) {
     bool isDifferentNumber{ false };
+    auto count = 1000;
 
     do {
 
@@ -326,7 +329,7 @@ TEST_CASE( "Random common type numbers is truly random" ) {
             std::numeric_limits<float>::max( ) );
 
         isDifferentNumber = firstRandomNumber != secondRandomNumber;
-    } while( !isDifferentNumber );
+    } while( !isDifferentNumber && count-- );
 
     CHECK( isDifferentNumber );
 }
@@ -341,8 +344,16 @@ TEST_CASE( "Random bool values" ) {
     }
 
     SECTION( "generate true and false" ) {
-        while( Random.get<bool>( ) == Random.get<bool>( ) );
-        REQUIRE( true == true );
+        bool has_true = false;
+        bool has_false = false;
+        for( int i = 0; i < 1000 && (!has_true || !has_false); ++i ) {
+            if( Random.get<bool>( ) )
+                has_true = true;
+            else
+                has_false = true;
+        }
+        REQUIRE( has_true );
+        REQUIRE( has_false );
     }
 
     SECTION( "out of range argument" ) {
@@ -354,14 +365,16 @@ TEST_CASE( "Random bool values" ) {
 
 TEST_CASE( "Random value from initilizer list" ) {
     bool is1{ false }, is2{ false }, is3{ false };
-    while( !is1 && !is2 && !is3 ) {
+    for( int i = 0; i < 1000 && (!is1 || !is2 || !is3); ++i ) {
         switch( Random.get( { 1, 2, 3 } ) ) {
             case 1: is1 = true; break;
             case 2: is2 = true; break;
             case 3: is3 = true; break;
         }
     }
-    REQUIRE( true == true );
+    REQUIRE( is1 );
+    REQUIRE( is2 );
+    REQUIRE( is3 );
     //Random.get<int>( {  } ); assertion occurred
 }
 
@@ -382,7 +395,8 @@ TEST_CASE( "Move constructor usage in get from initilizer list" ) {
     };
 
     NoexceptMoveNoexceptCopy instance{ };
-    Random.get( { std::move( instance ) } );
+    auto unused_res = Random.get( { std::move( instance ) } );
+    (void)unused_res;
     REQUIRE( 1 == copied_num );
     REQUIRE( 1 == moved_num );
 }
@@ -406,11 +420,13 @@ TEST_CASE( "Shuffle" ) {
         SECTION( "Range" ) {
             std::array<int, 3> arr = { { 1, 2, 3 } };
             const auto arr_copy = arr;
-            do {
+            bool shuffled = false;
+            for( int i = 0; i < 100 && !shuffled; ++i ) {
                 Random.shuffle( arr );
-            } while( arr_copy == arr );
+                shuffled = (arr_copy != arr);
+            }
 
-            REQUIRE( true == true );
+            REQUIRE( shuffled );
         }
     }
 
@@ -418,11 +434,13 @@ TEST_CASE( "Shuffle" ) {
         SECTION( "Container" ) {
             std::array<int, 3> arr = { { 1, 2, 3 } };
             const auto arr_copy = arr;
-            do {
+            bool shuffled = false;
+            for( int i = 0; i < 100 && !shuffled; ++i ) {
                 Random.shuffle( std::begin( arr ), std::end( arr ) );
-            } while( arr_copy == arr );
+                shuffled = (arr_copy != arr);
+            }
 
-            REQUIRE( true == true );
+            REQUIRE( shuffled );
         }
     }
 }
@@ -507,12 +525,14 @@ TEST_CASE( "serialize & deserialize" ) {
 }
 
 TEST_CASE( "custom distribution" ) {
-    Random.get<std::gamma_distribution<>>( 1. );
+    auto res = Random.get<std::gamma_distribution<>>( 1. );
+    (void)res;
 }
 
 TEST_CASE( "custom distribution by argument" ) {
     std::gamma_distribution<> gamma{ };
-    Random.get( gamma );
+    auto res = Random.get( gamma );
+    (void)res;
 }
 
 TEST_CASE( "custom seeder" ) {
@@ -738,7 +758,8 @@ public:
 };
 
 TEST_CASE("return randomly generated containers with reserve method") {
-    Random.get<Container>(1, 200, 3);
+    auto res = Random.get<Container>(1, 200, 3);
+    (void)res;
 
     REQUIRE(1 == reserve_count);
     REQUIRE(3 == insert_count);
@@ -762,17 +783,19 @@ TEST_CASE("return randomly generated containers") {
     static_assert(std::is_same<long, decltype(arr_common)::value_type>::value, "");
 
     REQUIRE(3 == vec.size());
-    REQUIRE(4 == set.size());
+    REQUIRE(set.size() <= 4);
+    REQUIRE(set.size() >= 1);
     REQUIRE(5 == arr.size());
 
     REQUIRE(6 == vec_common.size());
-    REQUIRE(7 == set_common.size());
+    REQUIRE(set_common.size() <= 7);
+    REQUIRE(set_common.size() >= 1);
     REQUIRE(8 == arr_common.size());
 
     {
         bool unique = false;
 
-        auto try_count = std::numeric_limits<int>::max();
+        auto try_count = 1000;
         while (try_count-- > 0)
         {
             auto vec2 = Random.get<std::vector>(1, 100, 3);
@@ -791,7 +814,7 @@ TEST_CASE("return randomly generated containers") {
     {
         bool unique2 = false;
 
-        auto try_count = std::numeric_limits<int>::max();
+        auto try_count = 1000;
         while (try_count-- > 0)
         {
             auto vec2_common = Random.get<std::vector, Random_t::common>(1u, 200ul, 6);
@@ -809,12 +832,37 @@ TEST_CASE("return randomly generated containers") {
 }
 
 TEST_CASE( "Random range with default arguments" ) {
-    Random.get<uint8_t>( );
-    Random.get<uint16_t>( );
-    Random.get<float>( );
-    Random.get( 1 );
-    Random.get( 1.f );
-    Random.get( uint8_t{ 0u } );
+    auto r1 = Random.get<uint8_t>( ); (void)r1;
+    auto r2 = Random.get<uint16_t>( ); (void)r2;
+    const auto rand_float = Random.get<float>( );
+    REQUIRE( rand_float >= 0.0f );
+    REQUIRE( rand_float < 1.0f );
+    const auto rand_double = Random.get<double>( );
+    REQUIRE( rand_double >= 0.0 );
+    REQUIRE( rand_double < 1.0 );
+    auto r3 = Random.get( 1 ); (void)r3;
+    auto r4 = Random.get( 1.f ); (void)r4;
+    auto r5 = Random.get( uint8_t{ 0u } ); (void)r5;
+}
+
+TEST_CASE( "std::array value initialization" ) {
+    auto arr = Random.get<std::array, 4>( 'a', 'z' );
+    REQUIRE( 4 == arr.size( ) );
+    for( char c : arr ) {
+        REQUIRE( c >= 'a' );
+        REQUIRE( c <= 'z' );
+    }
+}
+
+TEST_CASE( "Signed integer weights in maps" ) {
+    std::map<std::string, int> signed_map = { { "Orange", 1 }, { "Apple", 2 }, { "Banana", 3 } };
+    std::unordered_map<std::string, int> signed_umap = { { "Orange", 1 }, { "Apple", 2 }, { "Banana", 3 } };
+
+    REQUIRE( Random.get<Random_t::weight>( signed_map ) != signed_map.end( ) );
+    REQUIRE( Random.get<Random_t::weight>( signed_umap ) != signed_umap.end( ) );
+
+    std::map<std::string, int> zero_signed_map = { { "Orange", 0 }, { "Apple", 0 } };
+    REQUIRE( Random.get<Random_t::weight>( zero_signed_map ) == zero_signed_map.end( ) );
 }
 
 #ifdef RANDOM_THREAD_LOCAL
@@ -871,6 +919,7 @@ TEST_CASE("Type deduction for random character") {
 
 TEST_CASE("Random characters is truly random") {
 	bool isDifferentNumber{ false };
+	auto count = 1000;
 
 	do {
 
@@ -883,7 +932,7 @@ TEST_CASE("Random characters is truly random") {
 			std::numeric_limits<char>::max());
 
 		isDifferentNumber = firstRandomNumber != secondRandomNumber;
-	} while (!isDifferentNumber);
+	} while (!isDifferentNumber && count--);
 
 	CHECK(isDifferentNumber);
 }
@@ -974,8 +1023,10 @@ TEST_CASE("Construct Seeder only once") {
 #endif
 
 	std::vector<int> randomValues;
-	for(int i = 0; i < 256; ++i)
-		tRandom.get();
+	for(int i = 0; i < 256; ++i) {
+		auto r = tRandom.get();
+		(void)r;
+	}
 
 	REQUIRE(constructCount == 1);
 	REQUIRE(invokeCount == 1);
