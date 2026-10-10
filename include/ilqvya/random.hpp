@@ -237,6 +237,16 @@ namespace ilqvya {
             constexpr weighted_result( const std::pair<Value, Weight>& p ) : value( p.first ), weight( p.second ) {}
             constexpr weighted_result( std::pair<Value, Weight>&& p )
                 : value( std::move( p.first ) ), weight( std::move( p.second ) ) {}
+
+            friend constexpr bool operator==( const weighted_result& lhs, const weighted_result& rhs ) noexcept(
+                noexcept( lhs.value == rhs.value ) && noexcept( lhs.weight == rhs.weight ) ) {
+                return lhs.value == rhs.value && lhs.weight == rhs.weight;
+            }
+
+            friend constexpr bool operator!=( const weighted_result& lhs, const weighted_result& rhs ) noexcept(
+                noexcept( !( lhs == rhs ) ) ) {
+                return !( lhs == rhs );
+            }
         };
 
 #if defined( ILQVYA_HAS_REFLECTION )

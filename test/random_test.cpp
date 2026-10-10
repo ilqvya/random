@@ -1470,6 +1470,10 @@ TEST_CASE( "weighted_result pair constructors and variadic get" ) {
     REQUIRE( wr1.weight == 5 );
     REQUIRE( wr2.value == 20 );
     REQUIRE( wr2.weight == 15 );
+    REQUIRE( ( wr1 == Random_t::weighted_result<int, int>{ 10, 5 } ) );
+    REQUIRE( wr1 != wr2 );
+    REQUIRE( !( wr1 == wr2 ) );
+    REQUIRE( !( wr1 != Random_t::weighted_result<int, int>{ 10, 5 } ) );
 
     Random_t::weighted_result<int, int> w1{ 1, 1 }, w2{ 2, 1 }, w3{ 3, 1 }, w4{ 4, 1 }, w5{ 5, 1 }, w6{ 6, 1 },
         w7{ 7, 1 }, w8{ 8, 1 }, w9{ 9, 1 }, w10{ 10, 1 };
