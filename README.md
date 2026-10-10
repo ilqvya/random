@@ -66,6 +66,7 @@ There are a few ways to work with random in C++:
     * *random* (or *random_thread_local*): static methods and [thread_local](http://en.cppreference.com/w/cpp/keyword/thread_local) internal state. Fully thread-safe default!
     * *random_static*: static methods and static internal state. Fast, but not thread-safe across concurrent threads.
     * *random_local*: non-static member methods and local member state. Can be created on the stack at local scope.
+  * **Next-Gen Performance**. Uses `std::philox4x64` as the default engine in C++26 (when available), delivering fast counter-based random number generation with minimal 32-byte state and full 256-bit entropy seeding, while seamlessly falling back to `std::mt19937` in C++11–C++23.
 ## Supported compilers
 * GCC 4.9+ (and later)
 * Clang 3.7+ (and later)

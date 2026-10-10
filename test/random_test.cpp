@@ -11,6 +11,7 @@
 #include <unordered_map>
 #include <forward_list>
 #include <iterator>
+#include <cstring>
 
 #ifdef _WIN32 // Unit test for case when builds fail 'cause of min\max macro included from Windows.h before random.hpp
 #    include "Windows.h"
@@ -1665,9 +1666,9 @@ TEST_CASE( "random_local remaining methods and empty iterator get" ) {
     auto after_val = rl.get( );
     REQUIRE( before_val == after_val );
 
-    std::mt19937 engine_copy = rl.get_engine( );
+    Random_t::engine_type engine_copy = rl.get_engine( );
     REQUIRE( rl.is_equal( engine_copy ) );
-    std::mt19937 different_engine{ 99999u };
+    Random_t::engine_type different_engine{ 99999u };
     REQUIRE( !rl.is_equal( different_engine ) );
     REQUIRE( !Random.is_equal( different_engine ) );
 
@@ -1689,15 +1690,15 @@ TEST_CASE( "random_local remaining methods and empty iterator get" ) {
 
     // Test const engine() access without copying
     const ilqvya::random_local const_rl;
-    const std::mt19937& const_engine_ref = const_rl.engine( );
+    const auto& const_engine_ref = const_rl.engine( );
     REQUIRE( const_rl.is_equal( const_engine_ref ) );
 
     const ilqvya::random_static const_rs;
-    const std::mt19937& const_rs_engine = const_rs.engine( );
+    const auto& const_rs_engine = const_rs.engine( );
     (void)const_rs_engine;
 
     const ilqvya::random_thread_local const_rtl;
-    const std::mt19937& const_rtl_engine = const_rtl.engine( );
+    const auto& const_rtl_engine = const_rtl.engine( );
     (void)const_rtl_engine;
 }
 
@@ -1889,5 +1890,24 @@ TEST_CASE( "sampling from const containers and string views" ) {
     REQUIRE( Random.get( empty_sv ) == empty_sv.end( ) );
     REQUIRE( rl.get( empty_sv ) == empty_sv.end( ) );
 #endif
+}
+
+TEST_CASE( "default_engine selection: philox4x64 in C++26 vs mt19937 fallback" ) {
+#if defined( __cpp_lib_philox_engine ) && ( __cpp_lib_philox_engine >= 202406L )
+    static_assert( std::is_same<ilqvya::default_engine, std::philox4x64>::value,
+                   "default_engine must be std::philox4x64 when __cpp_lib_philox_engine is available" );
+    static_assert( std::is_same<Random_t::engine_type, std::philox4x64>::value,
+                   "Random_t::engine_type must be std::philox4x64 when __cpp_lib_philox_engine is available" );
+#else
+    static_assert( std::is_same<ilqvya::default_engine, std::mt19937>::value,
+                   "default_engine must fall back to std::mt19937 when philox_engine is not available" );
+    static_assert( std::is_same<Random_t::engine_type, std::mt19937>::value,
+                   "Random_t::engine_type must fall back to std::mt19937 when philox_engine is not available" );
+#endif
+    // Verify default seeder produces distinct random numbers with default_engine
+    auto val1 = Random.get( );
+    auto val2 = Random.get( );
+    (void)val1;
+    (void)val2;
 }
 

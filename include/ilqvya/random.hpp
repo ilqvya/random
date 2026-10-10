@@ -1428,25 +1428,33 @@ namespace ilqvya {
 
 #undef ILQVYA_WEIGHTED_VARIADIC_MEMBERS
 
-    /**
-     * \brief The basic static random alias based on a std::mt19937
-     */
-    using random_static = basic_random_static<std::mt19937>;
+#if defined( __cpp_lib_philox_engine ) && ( __cpp_lib_philox_engine >= 202406L )
+    /// C++26 default pseudo-random number engine (counter-based, optimal performance and state)
+    using default_engine = std::philox4x64;
+#else
+    /// Default pseudo-random number engine for C++11 through C++23
+    using default_engine = std::mt19937;
+#endif
 
     /**
-     * \brief The basic thread_local random alias based on a std::mt19937
+     * \brief The basic static random alias based on the default engine (std::philox4x64 in C++26, std::mt19937 fallback)
      */
-    using random_thread_local = basic_random_thread_local<std::mt19937>;
+    using random_static = basic_random_static<default_engine>;
 
     /**
-     * \brief The default random alias based on std::mt19937 with thread_local storage
+     * \brief The basic thread_local random alias based on the default engine
+     */
+    using random_thread_local = basic_random_thread_local<default_engine>;
+
+    /**
+     * \brief The default random alias based on the default engine with thread_local storage
      */
     using random = random_thread_local;
 
     /**
-     * \brief The basic local random alias based on a std::mt19937
+     * \brief The basic local random alias based on the default engine
      */
-    using random_local = basic_random_local<std::mt19937>;
+    using random_local = basic_random_local<default_engine>;
 
 } // namespace ilqvya
 
