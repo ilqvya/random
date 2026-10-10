@@ -247,6 +247,12 @@ TEST_CASE( "Type deduction for random common_type numbers" ) {
     static_assert( std::is_same<double, decltype( Random.get<Random_t::common>( 0., std::int8_t{ 0 } ) )>::value, "" );
     // long double
     static_assert( std::is_same<long double, decltype( Random.get<Random_t::common>( 0.f, 0.l ) )>::value, "" );
+    // float with unsigned int
+    static_assert( std::is_same<float, decltype( Random.get<Random_t::common>( 0u, 1.0f ) )>::value, "" );
+    static_assert( std::is_same<float, decltype( Random.get<Random_t::common>( 1.0f, 0u ) )>::value, "" );
+    auto u_float_val = Random.get<Random_t::common>( 0u, 1.0f );
+    REQUIRE( u_float_val >= 0.0f );
+    REQUIRE( u_float_val <= 1.0f );
 }
 
 TEST_CASE( "Random common type numbers is truly random" ) {

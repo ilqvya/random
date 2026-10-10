@@ -116,6 +116,16 @@ namespace ilqvya {
             static constexpr bool value = is_byte<T>::value || is_uniform_real<T>::value || is_uniform_int<T>::value;
         };
 
+        /// True if types A and B are supported numbers compatible for common_type selection.
+        /// Disallows mixing signed and unsigned integer types to prevent negative wrap-around.
+        template<typename A, typename B>
+        struct is_valid_common_numbers {
+            static constexpr bool value =
+                is_supported_number<A>::value && is_supported_number<B>::value &&
+                !( std::is_integral<A>::value && std::is_integral<B>::value &&
+                   ( std::is_signed<A>::value != std::is_signed<B>::value ) );
+        };
+
         /// True if type T is character type
         template<typename T>
         struct is_supported_character {
@@ -354,9 +364,8 @@ namespace ilqvya {
 
             template<typename Key, typename A, typename B, typename C = typename std::common_type<A, B>::type>
             ILQVYA_NODISCARD static
-                typename std::enable_if<std::is_same<Key, common>::value && details::is_supported_number<A>::value &&
-                                            details::is_supported_number<B>::value &&
-                                            std::is_signed<A>::value != std::is_unsigned<B>::value,
+                typename std::enable_if<std::is_same<Key, common>::value &&
+                                            details::is_valid_common_numbers<A, B>::value,
                                         C>::type
                 get( Engine& engine, A from = ( std::numeric_limits<A>::min )( ),
                      B to = ( std::numeric_limits<B>::max )( ) ) {
@@ -786,9 +795,8 @@ namespace ilqvya {
 
         template<typename Key, typename A, typename B, typename C = typename std::common_type<A, B>::type>
         ILQVYA_NODISCARD static
-            typename std::enable_if<std::is_same<Key, common>::value && details::is_supported_number<A>::value &&
-                                        details::is_supported_number<B>::value &&
-                                        std::is_signed<A>::value != std::is_unsigned<B>::value,
+            typename std::enable_if<std::is_same<Key, common>::value &&
+                                        details::is_valid_common_numbers<A, B>::value,
                                     C>::type
             get( A from = ( std::numeric_limits<A>::min )( ), B to = ( std::numeric_limits<B>::max )( ) ) {
             return impl::template get<Key, A, B, C>( engine_instance( ), from, to );
@@ -1078,9 +1086,8 @@ namespace ilqvya {
 
         template<typename Key, typename A, typename B, typename C = typename std::common_type<A, B>::type>
         ILQVYA_NODISCARD
-            typename std::enable_if<std::is_same<Key, common>::value && details::is_supported_number<A>::value &&
-                                        details::is_supported_number<B>::value &&
-                                        std::is_signed<A>::value != std::is_unsigned<B>::value,
+            typename std::enable_if<std::is_same<Key, common>::value &&
+                                        details::is_valid_common_numbers<A, B>::value,
                                     C>::type
             get( A from = ( std::numeric_limits<A>::min )( ), B to = ( std::numeric_limits<B>::max )( ) ) {
             return impl::template get<Key, A, B, C>( m_engine, from, to );
