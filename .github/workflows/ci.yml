@@ -96,3 +96,51 @@ jobs:
 
       - name: Test
         run: ctest --test-dir build -C Release --output-on-failure
+
+  coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install coverage tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lcov
+          python3 -m pip install --upgrade pip gcovr
+
+      - name: Configure CMake
+        run: >
+          cmake -B build
+          -DRandom_BuildTests=ON
+          -DCOVERAGE_ENABLED=ON
+          -DCMAKE_BUILD_TYPE=Debug
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Generate Coverage Report
+        run: |
+          lcov --capture --directory build --output-file coverage.raw --ignore-errors mismatch,unused,inconsistent 2>/dev/null || lcov --capture --directory build --output-file coverage.raw || true
+          if [ -f coverage.raw ]; then
+            lcov --extract coverage.raw '*/include/*' --output-file coverage.info --ignore-errors mismatch,unused,inconsistent 2>/dev/null || lcov --extract coverage.raw '*/include/*' --output-file coverage.info || true
+          fi
+          if [ ! -s coverage.info ]; then
+            echo "Generating coverage with gcovr..."
+            gcovr -r . --filter 'include/' --lcov coverage.info --print-summary
+          else
+            lcov --list coverage.info --ignore-errors mismatch,unused,inconsistent 2>/dev/null || lcov --list coverage.info
+          fi
+
+      - name: Upload to Coveralls
+        uses: coverallsapp/github-action@v2
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+        with:
+          github-token: ${{ secrets.COVERALLS_REPO_TOKEN || secrets.GITHUB_TOKEN }}
+          file: coverage.info
+          format: lcov
+
