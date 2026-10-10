@@ -543,82 +543,10 @@ namespace ilqvya {
                 return std::forward<Dist>( dist )( engine );
             }
 
-            template<typename Key, class PairContainer>
-            ILQVYA_NODISCARD static auto get( Engine& engine, PairContainer& pair_container ) ->
-                typename std::enable_if<
-                    details::is_pair_container<PairContainer>::value &&
-                        details::is_iterator<decltype( std::begin( pair_container ) )>::value &&
-                        details::is_uniform_int<typename PairContainer::value_type::second_type>::value &&
-                        std::is_same<Key, details::weight>::value,
-                    decltype( std::begin( pair_container ) )>::type {
-                using WeightType = typename PairContainer::value_type::second_type;
-                using IteratorType = decltype( std::begin( pair_container ) );
-
-                WeightType total_weight = 0;
-                IteratorType last_nonzero_it = std::end( pair_container );
-                for ( IteratorType it = std::begin( pair_container ); it != std::end( pair_container ); ++it ) {
-                    if ( it->second < WeightType( 0 ) )
-                        throw std::invalid_argument( "Random::get: weights must be non-negative" );
-                    if ( it->second > WeightType( 0 ) ) {
-                        last_nonzero_it = it;
-                    }
-                    total_weight += it->second;
-                }
-                if ( total_weight == WeightType( 0 ) )
-                    return std::end( pair_container );
-
-                WeightType random_weight = get( engine, WeightType( 0 ), total_weight - 1 );
-                WeightType sum = 0;
-                for ( IteratorType it = std::begin( pair_container ); it != last_nonzero_it; ++it ) {
-                    sum += it->second;
-                    if ( sum > random_weight )
-                        return it;
-                }
-                return last_nonzero_it;
-            }
-
-            template<typename Key, class PairContainer>
-            ILQVYA_NODISCARD static auto get( Engine& engine, const PairContainer& pair_container ) ->
-                typename std::enable_if<
-                    details::is_pair_container<PairContainer>::value &&
-                        details::is_iterator<decltype( std::begin( pair_container ) )>::value &&
-                        details::is_uniform_int<typename PairContainer::value_type::second_type>::value &&
-                        std::is_same<Key, details::weight>::value,
-                    decltype( std::begin( pair_container ) )>::type {
-                using WeightType = typename PairContainer::value_type::second_type;
-                using IteratorType = decltype( std::begin( pair_container ) );
-
-                WeightType total_weight = 0;
-                IteratorType last_nonzero_it = std::end( pair_container );
-                for ( IteratorType it = std::begin( pair_container ); it != std::end( pair_container ); ++it ) {
-                    if ( it->second < WeightType( 0 ) )
-                        throw std::invalid_argument( "Random::get: weights must be non-negative" );
-                    if ( it->second > WeightType( 0 ) ) {
-                        last_nonzero_it = it;
-                    }
-                    total_weight += it->second;
-                }
-                if ( total_weight == WeightType( 0 ) )
-                    return std::end( pair_container );
-
-                WeightType random_weight = get( engine, WeightType( 0 ), total_weight - 1 );
-                WeightType sum = 0;
-                for ( IteratorType it = std::begin( pair_container ); it != last_nonzero_it; ++it ) {
-                    sum += it->second;
-                    if ( sum > random_weight )
-                        return it;
-                }
-                return last_nonzero_it;
-            }
-
-            template<typename Key, class PairContainer>
-            ILQVYA_NODISCARD static auto get( Engine& engine, PairContainer& pair_container ) ->
-                typename std::enable_if<
-                    details::is_pair_container<PairContainer>::value &&
-                        details::is_iterator<decltype( std::begin( pair_container ) )>::value &&
-                        details::is_uniform_real<typename PairContainer::value_type::second_type>::value &&
-                        std::is_same<Key, details::weight>::value,
-                    decltype( std::begin( pair_container ) )>::type {
+        private:
+            template<typename PairContainer>
+            ILQVYA_NODISCARD static auto sample_weighted_container( Engine& engine, PairContainer& pair_container ) ->
+                decltype( std::begin( pair_container ) ) {
                 using WeightType = typename PairContainer::value_type::second_type;
                 using IteratorType = decltype( std::begin( pair_container ) );
 
@@ -635,7 +563,9 @@ namespace ilqvya {
                 if ( total_weight <= WeightType( 0 ) )
                     return std::end( pair_container );
 
-                WeightType random_weight = get( engine, WeightType( 0 ), total_weight );
+                WeightType random_weight = details::is_uniform_int<WeightType>::value
+                                               ? get( engine, WeightType( 0 ), total_weight - 1 )
+                                               : get( engine, WeightType( 0 ), total_weight );
                 WeightType sum = 0;
                 for ( IteratorType it = std::begin( pair_container ); it != last_nonzero_it; ++it ) {
                     sum += it->second;
@@ -643,6 +573,19 @@ namespace ilqvya {
                         return it;
                 }
                 return last_nonzero_it;
+            }
+
+        public:
+            template<typename Key, class PairContainer>
+            ILQVYA_NODISCARD static auto get( Engine& engine, PairContainer& pair_container ) ->
+                typename std::enable_if<
+                    details::is_pair_container<PairContainer>::value &&
+                        details::is_iterator<decltype( std::begin( pair_container ) )>::value &&
+                        ( details::is_uniform_int<typename PairContainer::value_type::second_type>::value ||
+                          details::is_uniform_real<typename PairContainer::value_type::second_type>::value ) &&
+                        std::is_same<Key, details::weight>::value,
+                    decltype( std::begin( pair_container ) )>::type {
+                return sample_weighted_container( engine, pair_container );
             }
 
             template<typename Key, class PairContainer>
@@ -650,38 +593,23 @@ namespace ilqvya {
                 typename std::enable_if<
                     details::is_pair_container<PairContainer>::value &&
                         details::is_iterator<decltype( std::begin( pair_container ) )>::value &&
-                        details::is_uniform_real<typename PairContainer::value_type::second_type>::value &&
+                        ( details::is_uniform_int<typename PairContainer::value_type::second_type>::value ||
+                          details::is_uniform_real<typename PairContainer::value_type::second_type>::value ) &&
                         std::is_same<Key, details::weight>::value,
                     decltype( std::begin( pair_container ) )>::type {
-                using WeightType = typename PairContainer::value_type::second_type;
-                using IteratorType = decltype( std::begin( pair_container ) );
-
-                WeightType total_weight = 0;
-                IteratorType last_nonzero_it = std::end( pair_container );
-                for ( IteratorType it = std::begin( pair_container ); it != std::end( pair_container ); ++it ) {
-                    if ( it->second < WeightType( 0 ) )
-                        throw std::invalid_argument( "Random::get: weights must be non-negative" );
-                    if ( it->second > WeightType( 0 ) ) {
-                        last_nonzero_it = it;
-                    }
-                    total_weight += it->second;
-                }
-                if ( total_weight <= WeightType( 0 ) )
-                    return std::end( pair_container );
-
-                WeightType random_weight = get( engine, WeightType( 0 ), total_weight );
-                WeightType sum = 0;
-                for ( IteratorType it = std::begin( pair_container ); it != last_nonzero_it; ++it ) {
-                    sum += it->second;
-                    if ( sum > random_weight )
-                        return it;
-                }
-                return last_nonzero_it;
+                return sample_weighted_container( engine, pair_container );
             }
+
+            template<typename Key, class PairContainer>
+            static auto get( Engine&, PairContainer&& ) -> typename std::enable_if<
+                details::is_pair_container<typename std::remove_reference<PairContainer>::type>::value &&
+                    std::is_same<Key, details::weight>::value,
+                void>::type = delete;
 
             template<typename Key, class PairContainer>
             static auto get( Engine&, const PairContainer&& ) -> typename std::enable_if<
-                details::is_pair_container<PairContainer>::value && std::is_same<Key, details::weight>::value,
+                details::is_pair_container<typename std::remove_reference<PairContainer>::type>::value &&
+                    std::is_same<Key, details::weight>::value,
                 void>::type = delete;
 
             template<typename Target, typename Weight>
@@ -1135,7 +1063,8 @@ namespace ilqvya {
         ILQVYA_NODISCARD static auto get( PairContainer& pair_container ) -> typename std::enable_if<
             details::is_pair_container<PairContainer>::value &&
                 details::is_iterator<decltype( std::begin( pair_container ) )>::value &&
-                details::is_uniform_int<typename PairContainer::value_type::second_type>::value &&
+                ( details::is_uniform_int<typename PairContainer::value_type::second_type>::value ||
+                  details::is_uniform_real<typename PairContainer::value_type::second_type>::value ) &&
                 std::is_same<Key, details::weight>::value,
             decltype( std::begin( pair_container ) )>::type {
             return impl::template get<Key>( engine_instance( ), pair_container );
@@ -1145,35 +1074,23 @@ namespace ilqvya {
         ILQVYA_NODISCARD static auto get( const PairContainer& pair_container ) -> typename std::enable_if<
             details::is_pair_container<PairContainer>::value &&
                 details::is_iterator<decltype( std::begin( pair_container ) )>::value &&
-                details::is_uniform_int<typename PairContainer::value_type::second_type>::value &&
+                ( details::is_uniform_int<typename PairContainer::value_type::second_type>::value ||
+                  details::is_uniform_real<typename PairContainer::value_type::second_type>::value ) &&
                 std::is_same<Key, details::weight>::value,
             decltype( std::begin( pair_container ) )>::type {
             return impl::template get<Key>( engine_instance( ), pair_container );
         }
 
         template<typename Key, class PairContainer>
-        ILQVYA_NODISCARD static auto get( PairContainer& pair_container ) -> typename std::enable_if<
-            details::is_pair_container<PairContainer>::value &&
-                details::is_iterator<decltype( std::begin( pair_container ) )>::value &&
-                details::is_uniform_real<typename PairContainer::value_type::second_type>::value &&
+        static auto get( PairContainer&& ) -> typename std::enable_if<
+            details::is_pair_container<typename std::remove_reference<PairContainer>::type>::value &&
                 std::is_same<Key, details::weight>::value,
-            decltype( std::begin( pair_container ) )>::type {
-            return impl::template get<Key>( engine_instance( ), pair_container );
-        }
-
-        template<typename Key, class PairContainer>
-        ILQVYA_NODISCARD static auto get( const PairContainer& pair_container ) -> typename std::enable_if<
-            details::is_pair_container<PairContainer>::value &&
-                details::is_iterator<decltype( std::begin( pair_container ) )>::value &&
-                details::is_uniform_real<typename PairContainer::value_type::second_type>::value &&
-                std::is_same<Key, details::weight>::value,
-            decltype( std::begin( pair_container ) )>::type {
-            return impl::template get<Key>( engine_instance( ), pair_container );
-        }
+            void>::type = delete;
 
         template<typename Key, class PairContainer>
         static auto get( const PairContainer&& ) -> typename std::enable_if<
-            details::is_pair_container<PairContainer>::value && std::is_same<Key, details::weight>::value,
+            details::is_pair_container<typename std::remove_reference<PairContainer>::type>::value &&
+                std::is_same<Key, details::weight>::value,
             void>::type = delete;
 
         template<typename Target, typename Weight = double>
@@ -1537,7 +1454,8 @@ namespace ilqvya {
         ILQVYA_NODISCARD auto get( PairContainer& pair_container ) -> typename std::enable_if<
             details::is_pair_container<PairContainer>::value &&
                 details::is_iterator<decltype( std::begin( pair_container ) )>::value &&
-                details::is_uniform_int<typename PairContainer::value_type::second_type>::value &&
+                ( details::is_uniform_int<typename PairContainer::value_type::second_type>::value ||
+                  details::is_uniform_real<typename PairContainer::value_type::second_type>::value ) &&
                 std::is_same<Key, details::weight>::value,
             decltype( std::begin( pair_container ) )>::type {
             return impl::template get<Key>( m_engine, pair_container );
@@ -1547,35 +1465,23 @@ namespace ilqvya {
         ILQVYA_NODISCARD auto get( const PairContainer& pair_container ) -> typename std::enable_if<
             details::is_pair_container<PairContainer>::value &&
                 details::is_iterator<decltype( std::begin( pair_container ) )>::value &&
-                details::is_uniform_int<typename PairContainer::value_type::second_type>::value &&
+                ( details::is_uniform_int<typename PairContainer::value_type::second_type>::value ||
+                  details::is_uniform_real<typename PairContainer::value_type::second_type>::value ) &&
                 std::is_same<Key, details::weight>::value,
             decltype( std::begin( pair_container ) )>::type {
             return impl::template get<Key>( m_engine, pair_container );
         }
 
         template<typename Key, class PairContainer>
-        ILQVYA_NODISCARD auto get( PairContainer& pair_container ) -> typename std::enable_if<
-            details::is_pair_container<PairContainer>::value &&
-                details::is_iterator<decltype( std::begin( pair_container ) )>::value &&
-                details::is_uniform_real<typename PairContainer::value_type::second_type>::value &&
+        auto get( PairContainer&& ) -> typename std::enable_if<
+            details::is_pair_container<typename std::remove_reference<PairContainer>::type>::value &&
                 std::is_same<Key, details::weight>::value,
-            decltype( std::begin( pair_container ) )>::type {
-            return impl::template get<Key>( m_engine, pair_container );
-        }
-
-        template<typename Key, class PairContainer>
-        ILQVYA_NODISCARD auto get( const PairContainer& pair_container ) -> typename std::enable_if<
-            details::is_pair_container<PairContainer>::value &&
-                details::is_iterator<decltype( std::begin( pair_container ) )>::value &&
-                details::is_uniform_real<typename PairContainer::value_type::second_type>::value &&
-                std::is_same<Key, details::weight>::value,
-            decltype( std::begin( pair_container ) )>::type {
-            return impl::template get<Key>( m_engine, pair_container );
-        }
+            void>::type = delete;
 
         template<typename Key, class PairContainer>
         auto get( const PairContainer&& ) -> typename std::enable_if<
-            details::is_pair_container<PairContainer>::value && std::is_same<Key, details::weight>::value,
+            details::is_pair_container<typename std::remove_reference<PairContainer>::type>::value &&
+                std::is_same<Key, details::weight>::value,
             void>::type = delete;
 
         template<typename Target, typename Weight = double>
