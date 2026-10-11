@@ -15,12 +15,16 @@
   - [Random element from array](#random-element-from-array)
   - [Container of random values](#container-of-random-values)
   - [Weighted random values](#weighted-random-values)
+  - [Sample without replacement](#sample-without-replacement)
+  - [Enum random values (C++26 Reflection)](#enum-random-values-c26-reflection)
   - [Shuffle](#shuffle)
   - [Random string](#random-string)
+  - [Call operator (functor)](#call-operator-functor)
   - [Custom distribution](#custom-distribution)
   - [Custom Seeder](#custom-seeder)
   - [Thread local random](#thread-local-random)
   - [Local random](#local-random)
+  - [Stream operators](#stream-operators)
   - [engine](#engine)
   - [Get engine](#get-engine)
   - [Seeding](#seeding)
@@ -67,6 +71,8 @@ There are a few ways to work with random in C++:
     * *random* (or *random_thread_local*): static methods and [thread_local](http://en.cppreference.com/w/cpp/keyword/thread_local) internal state. Fully thread-safe default!
     * *random_static*: static methods and static internal state. Fast, but not thread-safe across concurrent threads.
     * *random_local*: non-static member methods and local member state. Can be created on the stack at local scope.
+  * **Compile-Time Safety**. Temporary rvalue containers and arrays passed to iterator-returning overloads are deleted (`= delete`) at compile time to prevent dangling iterators. String literals return by value without the null terminator, and empty array access is caught at compile time.
+  * **Zero-Allocation Sampling & Performance**. Features immediate return fast-paths for zero-gap ranges (`from == to`), container reservation (`reserve_if_supported`), and optimal sampling algorithms without replacement.
   * **Next-Gen Performance**. Uses `std::philox4x64` as the default engine in C++26 (when available), delivering fast counter-based random number generation with minimal 32-byte state and full 256-bit entropy seeding, while seamlessly falling back to `std::mt19937` in C++11–C++23.
 ## Supported compilers
 * GCC 4.9+ (and later)
@@ -229,31 +235,82 @@ auto vec = Random::get<MyContainer>(1, 9, 5); // decltype(vec) is std::MyContain
 
 ```
 ### Weighted random values
-* Inline weighted selection (returns chosen value directly):
+Selects a random element based on relative weights:
+
+* **Initializer list of weighted values**:
+  Returns the selected value directly based on weights using direct zero-allocation selection:
 ```cpp
-    // Variadic syntax
-    auto val = Random::get<int>({1, 3}, {4, 4}, {10, 5}); // returns chosen int based on weights 3, 4, 5
-    auto f   = Random::get<float>({1.1f, 1}, {1.2f, 2});
+    // Explicit return type with initializer list of {value, weight}
+    auto val = Random::get<int>( { { 1, 10 }, { 2, 20 }, { 3, 70 } } ); // 10%, 20%, 70% probability
+    auto str = Random::get<std::string>( { { "rare", 1.5 }, { "common", 98.5 } } );
 
-    // Initializer list syntax
-    auto str = Random::get<std::string>({ {"Apple", 10}, {"Banana", 20}, {"Orange", 30} });
+    // Explicit weighted_result type
+    using WR = Random_t::weighted_result<int, double>;
+    auto chosen = Random::get( { WR{ 10, 0.25 }, WR{ 20, 0.75 } } );
 ```
-* Containers of pairs or map-like containers (returns iterator):
+  * Supports both integer weights (`int`, `unsigned`, `size_t`) and floating-point weights (`float`, `double`).
+  * Throws `std::invalid_argument` if the list is empty or if any weight is negative.
+  * If all weights are 0, safely returns the first element.
+  * `weighted_result` provides `constexpr operator==` and `operator!=`.
+
+* **Variadic syntax** (convenient for 2 to 10 weighted items):
 ```cpp
-    std::unordered_map<std::string, unsigned long> nonzero_ulong_umap = {{"Orange", 1ul}, {"Apple", 2ul}, {"Banana", 3ul}};
-    std::unordered_map<std::string, unsigned> nonzero_uint_umap = {{"Orange", 1u}, {"Apple", 2u}, {"Banana", 3u}};
-    
-    std::map<std::string, float> nonzero_float_map = {{"Orange", 1.0f}, {"Apple", 2.0f}, {"Banana", 3.0f}};
-    std::map<std::string, double> nonzero_double_map = {{"Orange", 1.0}, {"Apple", 2.0}, {"Banana", 3.0}};
-
-    std::vector<std::pair<std::string, int>> nonzero_vec = {{"Orange", 1}, {"Apple", 2}, {"Banana", 3}};
-
-    Random::get<Random_t::weight>(nonzero_ulong_umap);
-    Random::get<Random_t::weight>(nonzero_uint_umap);
-    Random::get<Random_t::weight>(nonzero_float_map);
-    Random::get<Random_t::weight>(nonzero_double_map);
-    Random::get<Random_t::weight>(nonzero_vec);
+    auto val = Random::get<int>( { 1, 3 }, { 4, 4 }, { 10, 5 } ); // returns chosen int based on weights 3, 4, 5
+    auto f   = Random::get<float>( { 1.1f, 1 }, { 1.2f, 2 } );
 ```
+
+* **Containers of pairs or map-like containers** (returns iterator):
+```cpp
+    std::unordered_map<std::string, unsigned long> nonzero_ulong_umap = { { "Orange", 1ul }, { "Apple", 2ul }, { "Banana", 3ul } };
+    std::map<std::string, double> nonzero_double_map = { { "Orange", 1.0 }, { "Apple", 2.0 }, { "Banana", 3.0 } };
+    std::vector<std::pair<std::string, int>> nonzero_vec = { { "Orange", 1 }, { "Apple", 2 }, { "Banana", 3 } };
+
+    auto it1 = Random::get<Random_t::weight>( nonzero_ulong_umap );
+    auto it2 = Random::get<Random_t::weight>( nonzero_double_map );
+    auto it3 = Random::get<Random_t::weight>( nonzero_vec );
+```
+  * Returns mutable iterator for non-const containers, and const iterator for const containers.
+  * Passing temporary rvalue containers is disabled at compile time (`= delete`) to prevent dangling iterators.
+
+### Sample without replacement
+Samples $N$ unique elements from a population without replacement (guaranteed no duplicates from population). Available across all C++ standards (C++11 through C++26):
+
+* **Containers and Ranges** (returns container with sampled elements):
+```cpp
+std::vector<int> population = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+
+// Returns std::vector<int> containing 4 uniquely sampled elements
+auto sample_vec = Random::sample( population, 4 );
+
+// Specify destination container type (e.g. std::deque, std::set, std::unordered_set)
+auto sample_deq  = Random::sample<std::deque>( population, 3 );
+auto sample_set  = Random::sample<std::set>( population, 4 );
+auto sample_uset = Random::sample<std::unordered_set>( population, 4 );
+```
+
+* **Built-in Arrays**:
+```cpp
+int arr[] = { 10, 20, 30, 40, 50 };
+auto sampled = Random::sample( arr, 3 ); // std::vector<int> with 3 unique elements
+```
+
+* **String Literals and Random String Sampling**:
+```cpp
+// Samples unique characters excluding the null terminator '\0', returns std::string
+auto chars = Random::sample( "abcdefghij", 4 );
+
+// sample_string helper for character ranges or string literals
+std::string text = "ABCDEFGHIJ";
+auto sampled_str = Random::sample_string( text, 3 );
+```
+
+* **Iterator Ranges**:
+```cpp
+std::vector<int> out;
+Random::sample( population.begin( ), population.end( ), std::back_inserter( out ), 4 );
+```
+If `n <= 0`, returns an empty container or leaves output unmodified.
+
 ### Enum random values (C++26 Reflection)
 Returns a random enumerator from any `enum` or `enum class` (requires C++26 with reflection support, e.g. `-std=c++26 -freflection`):
 ```cpp
@@ -263,21 +320,31 @@ auto color = Random::get<Color>(); // Returns randomly chosen Color
 enum Status { Disconnected = 0, Connecting = 10, Connected = 100 };
 auto status = Random::get<Status>(); // Returns randomly chosen Status
 ```
+
 ### Shuffle
-Reorders the elements in a given range or container [ref](http://en.cppreference.com/w/cpp/algorithm/random_shuffle):
+Reorders the elements in a given range, container, or built-in array [ref](http://en.cppreference.com/w/cpp/algorithm/random_shuffle):
+* Iterator range:
 ```cpp
-std::array<int, 3> array{ {1, 2, 3} };
+std::vector<int> vec{ 1, 2, 3, 4, 5 };
+Random::shuffle( vec.begin( ), vec.end( ) );
 ```
-* Iterator range
+* Container:
 ```cpp
-Random::shuffle( array.begin( ), array.end( ) );
+Random::shuffle( vec );
 ```
-* Container
+* Built-in array:
 ```cpp
-Random::shuffle( array );
+int array[] = { 1, 2, 3, 4, 5 };
+Random::shuffle( array ); // supported for C-style arrays (rvalue arrays deleted for safety)
 ```
+
 ### Random string
 Generates a random `std::string` of specified length:
+* Default character range (all valid characters for `CharT`, defaults to `char`):
+```cpp
+auto s  = Random::get_string( 16 );          // 16 random characters
+auto ws = Random::get_string<wchar_t>( 16 ); // 16 random wide characters
+```
 * From a character range `[from, to]`:
 ```cpp
 auto token  = Random::get_string( 16, 'a', 'z' ); // 16 random lowercase letters
@@ -285,8 +352,18 @@ auto digits = Random::get_string( 6, '0', '9' );  // 6 random digits
 ```
 * From a custom charset (string literal, `std::string`, or container of characters):
 ```cpp
-auto hex = Random::get_string( 32, "0123456789abcdef" ); // 32 random hex characters
+auto hex = Random::get_string( 32, "0123456789abcdef" ); // 32 random hex characters (excludes '\0')
 auto key = Random::get_string( 16, std::string{ "ABCDEFGHJKLMNPQRSTUVWXYZ23456789" } );
+```
+Throws `std::invalid_argument` if charset container is empty. Empty string literals fail at compile time.
+
+### Call operator (functor)
+Random generator instances and static classes can be invoked directly using the function call operator `operator()`:
+```cpp
+auto num = Random( 1, 100 ); // same as Random::get( 1, 100 )
+
+ilqvya::random_local rng;
+auto val = rng( 1.0, 5.0 );  // same as rng.get( 1.0, 5.0 )
 ```
 ### Custom distribution
 Returns the result from operator() of a distribution using the internal engine:
@@ -354,12 +431,31 @@ Uses member method API with local member storage, created on the stack at local 
 using Random_t = ilqvya::random_local;
 
 int main( ) {
-  Random_t localRandom{ }; // Construct on the stack
+  Random_t localRandom{ }; // Construct on the stack (auto-seeded)
   
-  // access via dot operator
-  auto val = localRandom.get(-10, 10);
+  // Custom initialization:
+  Random_t seeded{ 42u };                 // Seeded with unsigned integer
+  std::seed_seq sseq{ 1, 2, 3, 4, 5 };
+  Random_t from_seq{ sseq };              // Seeded with std::seed_seq
+  std::mt19937 custom_eng{ 12345 };
+  Random_t from_eng{ custom_eng };        // Initialized from an existing engine
+
+  // Access via dot operator or call operator
+  auto val = localRandom.get( -10, 10 );
+  auto roll = localRandom( 1, 6 );
+
+  // Generators can be compared for identical engine state
+  if ( seeded == from_seq ) { /* ... */ }
   
 } // Destroy localRandom and free stack memory
+```
+### Stream operators
+In addition to `serialize` and `deserialize`, generators support standard stream insertion (`<<`) and extraction (`>>`) operators:
+```cpp
+std::stringstream ss;
+ss << Random; // Serializes internal engine state into stream
+
+ss >> Random; // Restores internal engine state from stream
 ```
 ### Seeding
 [ref](http://en.cppreference.com/w/cpp/numeric/random/mersenne_twister_engine/seed)
@@ -397,6 +493,7 @@ auto val = Random::get( );
 Returns a reference to the internal engine:
 ```cpp
 auto& engine = Random::engine( );
+const auto& const_engine = Random::engine( );
 ```
 ```cpp
 std::sample(itBeg, itEnd, std::back_inserter(out), 5, Random::engine( ));
@@ -417,10 +514,14 @@ Random::discard( 500 );
 ### Is equal
 [ref](http://en.cppreference.com/w/cpp/numeric/random/mersenne_twister_engine/operator_cmp)
 
-Compares the internal pseudo-random number engine with another engine:
+Compares the internal pseudo-random number engine with another engine or generator:
 ```cpp
 Random::engine_type otherEngine;
 bool isSame = Random::is_equal( otherEngine );
+
+ilqvya::random_local rng1, rng2;
+if ( rng1 == rng2 ) { /* ... */ }
+if ( rng1 != rng2 ) { /* ... */ }
 ```
 ### Serialize
 [ref](http://en.cppreference.com/w/cpp/numeric/random/mersenne_twister_engine/operator_ltltgtgt)
