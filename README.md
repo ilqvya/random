@@ -9,16 +9,21 @@
   - [Number range](#number-range)
   - [Common type number range](#common-type-number-range)
   - [Character range](#character-range)
-  - [Bool](#bool)
+  - [Bool & Coin Flip](#bool--coin-flip)
   - [Random value from std::initializer_list](#random-value-from-stdinitializer_list)
   - [Random iterator](#random-iterator)
   - [Random element from array](#random-element-from-array)
   - [Container of random values](#container-of-random-values)
+  - [Multi-roll and batch numbers (structured bindings)](#multi-roll-and-batch-numbers-structured-bindings)
+  - [In-place fill](#in-place-fill)
   - [Weighted random values](#weighted-random-values)
   - [Sample without replacement](#sample-without-replacement)
+  - [Choice with replacement](#choice-with-replacement)
   - [Enum random values (C++26 Reflection)](#enum-random-values-c26-reflection)
-  - [Shuffle](#shuffle)
+  - [Shuffle & std::span views](#shuffle--stdspan-views)
   - [Random string](#random-string)
+  - [Hex & UUID / GUID Generator](#hex--uuid--guid-generator)
+  - [Common Distributions](#common-distributions)
   - [Call operator (functor)](#call-operator-functor)
   - [Custom distribution](#custom-distribution)
   - [Custom Seeder](#custom-seeder)
@@ -174,16 +179,20 @@ auto val = Random::get(u'a', u'z'); // char16_t
 auto val = Random::get(U'a', U'z'); // char32_t
 auto val = Random::get<char32_t>(); // default limits
 ```
-### Bool
-Generates true with a probability in [0.0, 1.0].
+### Bool & Coin Flip
+Generates a random boolean with specified probability in [0.0, 1.0], or convenient Bernoulli aliases:
 ```cpp
 auto val = Random::get<bool>(0.7); // true with 70% probability
-```
-```cpp
-auto val = Random::get<bool>(); // true with 50% probability by default
-```
-```cpp
-auto val = Random::get<bool>(-1); // Throws std::invalid_argument (out of [0.0, 1.0] range)
+auto def = Random::get<bool>();    // true with 50% probability by default
+
+// Fast Bernoulli probability alias & coin flip:
+bool heads = Random::flip();               // 50% coin flip (alias for flip(0.5))
+bool crit  = Random::chance(0.15);         // true with 15% probability in [0.0, 1.0]
+bool lucky = Random::chance_pct(25.0);     // true with 25% percentage in [0.0, 100.0]
+
+// Out of range probabilities throw std::invalid_argument:
+// Random::chance(-0.1);
+// Random::chance_pct(101.0);
 ```
 ### Random value from std::initializer_list
 Returns a random value from values in a std::initializer_list.
@@ -241,6 +250,37 @@ class MyContainer
 
 auto vec = Random::get<MyContainer>(1, 9, 5); // decltype(vec) is std::MyContainer<int> with size = 5
 
+```
+### Multi-roll and batch numbers (structured bindings)
+Generate a fixed-size `std::array` of random numbers with compile-time size `N`, perfect for unpacking with C++17 structured bindings:
+```cpp
+// RGB color triple:
+auto [r, g, b] = Random::get<std::array, 3>(0, 255);
+
+// 3D coordinate:
+auto [x, y, z] = Random::get_array<3>(-1.0f, 1.0f);
+
+// Multi-roll dice:
+auto dice = Random::get_array<6>(1, 6); // std::array<int, 6>
+
+// Default limits:
+auto arr = Random::get_array<4, int>(); // std::array<int, 4> with default limits
+```
+
+### In-place fill
+Fill an existing container, iterator range, or built-in array in-place with random values, avoiding reallocations:
+```cpp
+// Container in-place fill:
+std::vector<int> buffer(1024);
+Random::fill(buffer, 0, 100);
+
+// Iterator range fill:
+Random::fill(buffer.begin(), buffer.begin() + 10, -5, 5);
+
+// Built-in C-style array fill:
+int raw[8];
+Random::fill(raw, 1, 6);
+Random::fill(raw); // default limits
 ```
 ### Weighted random values
 Selects a random element based on relative weights:
@@ -319,6 +359,30 @@ Random::sample( population.begin( ), population.end( ), std::back_inserter( out 
 ```
 If `n <= 0`, returns an empty container or leaves output unmodified.
 
+### Choice with replacement
+Selects $N$ random elements from a population with replacement (elements can be selected multiple times):
+```cpp
+std::vector<int> population = { 1, 2, 3, 4, 5 };
+
+// Returns std::vector<int> containing 10 elements chosen with replacement:
+auto chosen = Random::choice( population, 10 );
+
+// Specify destination container type:
+auto chosen_deq = Random::choice<std::deque>( population, 5 );
+
+// String literals and choice_string:
+auto seq = Random::choice( "ACGT", 16 ); // std::string of 16 DNA bases
+auto str = Random::choice_string( std::string{ "0123456789" }, 6 );
+
+// Built-in arrays:
+int arr[] = { 10, 20, 30 };
+auto choices = Random::choice( arr, 5 );
+
+// Iterator ranges:
+std::vector<int> out;
+Random::choice( population.begin(), population.end(), std::back_inserter( out ), 4 );
+```
+
 ### Enum random values (C++26 Reflection)
 Returns a random enumerator from any `enum` or `enum class` (requires C++26 with reflection support, e.g. `-std=c++26 -freflection`):
 ```cpp
@@ -329,16 +393,20 @@ enum Status { Disconnected = 0, Connecting = 10, Connected = 100 };
 auto status = Random::get<Status>(); // Returns randomly chosen Status
 ```
 
-### Shuffle
+### Shuffle & std::span views
 Reorders the elements in a given range, container, or built-in array [ref](http://en.cppreference.com/w/cpp/algorithm/random_shuffle):
 * Iterator range:
 ```cpp
 std::vector<int> vec{ 1, 2, 3, 4, 5 };
 Random::shuffle( vec.begin( ), vec.end( ) );
 ```
-* Container:
+* Container & C++20 `std::span` / range views:
 ```cpp
 Random::shuffle( vec );
+
+// C++20 std::span and subranges are supported directly:
+std::span<int> sp{ vec };
+Random::shuffle( sp );
 ```
 * Built-in array:
 ```cpp
@@ -364,6 +432,41 @@ auto hex = Random::get_string( 32, "0123456789abcdef" ); // 32 random hex charac
 auto key = Random::get_string( 16, std::string{ "ABCDEFGHJKLMNPQRSTUVWXYZ23456789" } );
 ```
 Throws `std::invalid_argument` if charset container is empty. Empty string literals fail at compile time.
+
+### Hex & UUID / GUID Generator
+Generate cryptographic-quality hexadecimal strings and UUIDs / GUIDs or MongoDB ObjectIDs:
+```cpp
+// Hex strings:
+auto hex32 = Random::get_hex(32);        // e.g. "a3f1c8..." (lowercase by default)
+auto hex16 = Random::get_hex(16, true);  // e.g. "A3F1C8..." (uppercase)
+
+// UUIDs (default is UUIDv4 - RFC 4122 random):
+std::string uuid4 = Random::get_uuid(); 
+// e.g. "123e4567-e89b-42d3-a456-426614174000"
+
+// Specific UUID versions via ilqvya::uuid_version:
+using ilqvya::uuid_version;
+auto v4  = Random::get_uuid(uuid_version::v4);               // RFC 4122 random
+auto v1  = Random::get_uuid(uuid_version::v1);               // Time-based (RFC 4122)
+auto v7  = Random::get_uuid(uuid_version::v7);               // Time-ordered Unix epoch (RFC 9562)
+auto nil = Random::get_uuid(uuid_version::nil);              // "00000000-0000-0000-0000-000000000000"
+auto max = Random::get_uuid(uuid_version::max);              // "ffffffff-ffff-ffff-ffff-ffffffffffff"
+auto oid = Random::get_uuid(uuid_version::mongo_object_id);  // 24 hex characters MongoDB ObjectID
+```
+
+### Common Distributions
+Direct helpers for non-uniform standard distributions:
+```cpp
+// Normal (Gaussian) distribution:
+auto norm = Random::normal(0.0, 1.0);       // mean = 0.0, stddev = 1.0 (default 0.0, 1.0)
+auto nval = Random::normal();               // defaults to mean 0.0, stddev 1.0
+
+// Exponential distribution:
+auto exp_val = Random::exponential(1.5);    // lambda rate = 1.5 (default 1.0)
+
+// Poisson distribution:
+auto p_val = Random::poisson(4.0);          // mean = 4.0 (default 1.0)
+```
 
 ### Call operator (functor)
 Random generator instances and static classes can be invoked directly using the function call operator `operator()`:

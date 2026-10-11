@@ -13,6 +13,7 @@ export namespace ilqvya {
 
     using ilqvya::default_engine;
     using ilqvya::seeder_default;
+    using ilqvya::uuid_version;
 
     using ilqvya::basic_random_base;
     using ilqvya::basic_random_static;

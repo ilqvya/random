@@ -2205,4 +2205,471 @@ TEST_CASE( "Random::sample" ) {
     REQUIRE( fl_neg.empty( ) );
 }
 
+TEST_CASE( "Bernoulli helpers: flip, chance, chance_pct" ) {
+    // 1. flip
+    bool got_true = false;
+    bool got_false = false;
+    for ( int i = 0; i < 200; ++i ) {
+        if ( Random.flip( ) )
+            got_true = true;
+        else
+            got_false = true;
+    }
+    REQUIRE( got_true );
+    REQUIRE( got_false );
+
+    // 2. chance
+    REQUIRE( Random.chance( 1.0 ) );
+    REQUIRE( !Random.chance( 0.0 ) );
+
+    bool chance_high = false;
+    try {
+        (void)Random.chance( 1.1 );
+    } catch ( const std::invalid_argument& ) {
+        chance_high = true;
+    }
+    REQUIRE( chance_high );
+
+    bool chance_low = false;
+    try {
+        (void)Random.chance( -0.1 );
+    } catch ( const std::invalid_argument& ) {
+        chance_low = true;
+    }
+    REQUIRE( chance_low );
+
+    // 3. chance_pct
+    REQUIRE( Random.chance_pct( 100.0 ) );
+    REQUIRE( !Random.chance_pct( 0.0 ) );
+
+    bool pct_high = false;
+    try {
+        (void)Random.chance_pct( 100.1 );
+    } catch ( const std::invalid_argument& ) {
+        pct_high = true;
+    }
+    REQUIRE( pct_high );
+
+    bool pct_low = false;
+    try {
+        (void)Random.chance_pct( -0.1 );
+    } catch ( const std::invalid_argument& ) {
+        pct_low = true;
+    }
+    REQUIRE( pct_low );
+
+    // 4. local instance test
+    ilqvya::random_local rl;
+    REQUIRE( rl.chance( 1.0 ) );
+    REQUIRE( !rl.chance( 0.0 ) );
+    REQUIRE( rl.chance_pct( 100.0 ) );
+    REQUIRE( !rl.chance_pct( 0.0 ) );
+    (void)rl.flip( );
+}
+
+TEST_CASE( "Non-uniform distributions: normal, exponential, poisson" ) {
+    // normal
+    double norm_default = Random.normal( );
+    (void)norm_default;
+    double norm_param = Random.normal( 5.0, 2.0 );
+    (void)norm_param;
+    float norm_float = Random.normal<float>( 0.0f, 1.0f );
+    (void)norm_float;
+
+    // exponential
+    double exp_default = Random.exponential( );
+    REQUIRE( exp_default >= 0.0 );
+    double exp_param = Random.exponential( 2.5 );
+    REQUIRE( exp_param >= 0.0 );
+    float exp_float = Random.exponential<float>( 1.5f );
+    REQUIRE( exp_float >= 0.0f );
+
+    // poisson
+    int pois_default = Random.poisson( );
+    REQUIRE( pois_default >= 0 );
+    int pois_param = Random.poisson( 4.0 );
+    REQUIRE( pois_param >= 0 );
+    long pois_long = Random.poisson<long>( 5.0 );
+    REQUIRE( pois_long >= 0 );
+
+    // local instance test
+    ilqvya::random_local rl;
+    (void)rl.normal( );
+    REQUIRE( rl.exponential( ) >= 0.0 );
+    REQUIRE( rl.poisson( ) >= 0 );
+}
+
+TEST_CASE( "Multi-roll and batch numbers: get_array and get<std::array, N>" ) {
+    // get_array with bounds
+    auto arr3 = Random.get_array<3>( 0, 255 );
+    static_assert( std::is_same<decltype( arr3 ), std::array<int, 3>>::value, "" );
+    REQUIRE( arr3.size( ) == 3 );
+    for ( int val : arr3 ) {
+        REQUIRE( ( val >= 0 && val <= 255 ) );
+    }
+
+    // get_array default
+    auto arr_def = Random.get_array<4>( );
+    REQUIRE( arr_def.size( ) == 4 );
+
+    // get_array common type
+    auto arr_common = Random.template get_array<3, Random_t::common>( 0u, 100ul );
+    static_assert( std::is_same<decltype( arr_common ), std::array<unsigned long, 3>>::value, "" );
+    REQUIRE( arr_common.size( ) == 3 );
+    for ( unsigned long val : arr_common ) {
+        REQUIRE( val <= 100ul );
+    }
+
+    // get<std::array, N> zero-arg
+    auto arr_zero = Random.template get<std::array, 5>( );
+    static_assert( std::is_same<decltype( arr_zero ), std::array<int, 5>>::value, "" );
+    REQUIRE( arr_zero.size( ) == 5 );
+
+    // get<std::array, N> with bounds
+    auto arr_bounds = Random.template get<std::array, 3>( 1, 6 );
+    REQUIRE( arr_bounds.size( ) == 3 );
+    for ( int val : arr_bounds ) {
+        REQUIRE( ( val >= 1 && val <= 6 ) );
+    }
+
+#if ILQVYA_CPLUSPLUS >= 201703L
+    // Structured bindings support
+    auto [r, g, b] = Random.get_array<3>( 0, 255 );
+    REQUIRE( ( r >= 0 && r <= 255 ) );
+    REQUIRE( ( g >= 0 && g <= 255 ) );
+    REQUIRE( ( b >= 0 && b <= 255 ) );
+
+    auto [x, y, z] = Random.template get<std::array, 3>( 10, 20 );
+    REQUIRE( ( x >= 10 && x <= 20 ) );
+    REQUIRE( ( y >= 10 && y <= 20 ) );
+    REQUIRE( ( z >= 10 && z <= 20 ) );
+#endif
+
+    // local instance test
+    ilqvya::random_local rl;
+    auto rl_arr = rl.get_array<3>( 1, 6 );
+    REQUIRE( rl_arr.size( ) == 3 );
+    auto rl_arr_def = rl.get_array<3>( );
+    REQUIRE( rl_arr_def.size( ) == 3 );
+    auto rl_arr_common = rl.get_array<3, ilqvya::random_local::common>( 0u, 10ul );
+    REQUIRE( rl_arr_common.size( ) == 3 );
+    auto rl_fixed_def = rl.get<std::array, 3>( );
+    REQUIRE( rl_fixed_def.size( ) == 3 );
+}
+
+TEST_CASE( "In-place fill: containers, iterators, built-in arrays" ) {
+    // 1. Container fill with bounds
+    std::vector<int> vec( 10, 0 );
+    Random.fill( vec, 1, 5 );
+    for ( int val : vec ) {
+        REQUIRE( ( val >= 1 && val <= 5 ) );
+    }
+
+    // 2. Container fill default limits
+    Random.fill( vec );
+    REQUIRE( vec.size( ) == 10 );
+
+    // 3. Container fill common
+    Random.template fill<Random_t::common>( vec, 0, 10l );
+    for ( int val : vec ) {
+        REQUIRE( ( val >= 0 && val <= 10 ) );
+    }
+
+    // 4. Iterator range fill with bounds
+    std::vector<int> vec2( 5, 0 );
+    Random.fill( vec2.begin( ), vec2.end( ), 10, 20 );
+    for ( int val : vec2 ) {
+        REQUIRE( ( val >= 10 && val <= 20 ) );
+    }
+
+    // 5. Iterator range fill default
+    Random.fill( vec2.begin( ), vec2.end( ) );
+    REQUIRE( vec2.size( ) == 5 );
+
+    // 6. Iterator range fill common
+    Random.template fill<Random_t::common>( vec2.begin( ), vec2.end( ), 0, 50l );
+    for ( int val : vec2 ) {
+        REQUIRE( ( val >= 0 && val <= 50 ) );
+    }
+
+    // 7. Built-in array fill with bounds
+    int arr[6] = { 0 };
+    Random.fill( arr, 100, 200 );
+    for ( int val : arr ) {
+        REQUIRE( ( val >= 100 && val <= 200 ) );
+    }
+
+    // 8. Built-in array fill default
+    Random.fill( arr );
+
+    // 9. Built-in array fill common
+    Random.template fill<Random_t::common>( arr, 0, 50l );
+    for ( int val : arr ) {
+        REQUIRE( ( val >= 0 && val <= 50 ) );
+    }
+
+    // 10. local instance test
+    ilqvya::random_local rl;
+    rl.fill( vec, 1, 3 );
+    for ( int val : vec ) {
+        REQUIRE( ( val >= 1 && val <= 3 ) );
+    }
+    rl.fill( vec );
+    rl.fill<ilqvya::random_local::common>( vec, 0, 10l );
+    rl.fill( vec.begin( ), vec.end( ), 1, 3 );
+    rl.fill( vec.begin( ), vec.end( ) );
+    rl.fill<ilqvya::random_local::common>( vec.begin( ), vec.end( ), 0, 10l );
+    rl.fill( arr, 1, 3 );
+    rl.fill( arr );
+    rl.fill<ilqvya::random_local::common>( arr, 0, 10l );
+}
+
+TEST_CASE( "Choice with replacement: container, array, string literal, iterators" ) {
+    std::vector<int> population = { 1, 2, 3 };
+
+    // 1. With replacement: can pick more than population size
+    auto chosen = Random.choice( population, 10 );
+    REQUIRE( chosen.size( ) == 10 );
+    for ( int val : chosen ) {
+        REQUIRE( ( val >= 1 && val <= 3 ) );
+    }
+
+    // 2. Choice with n = 0
+    auto chosen_zero = Random.choice( population, 0 );
+    REQUIRE( chosen_zero.empty( ) );
+
+    // 3. Custom container
+    auto chosen_deque = Random.template choice<std::deque>( population, 5 );
+    REQUIRE( chosen_deque.size( ) == 5 );
+    for ( int val : chosen_deque ) {
+        REQUIRE( ( val >= 1 && val <= 3 ) );
+    }
+
+    // 4. Empty population throws
+    std::vector<int> empty_pop;
+    bool caught_empty = false;
+    try {
+        (void)Random.choice( empty_pop, 5 );
+    } catch ( const std::invalid_argument& ) {
+        caught_empty = true;
+    }
+    REQUIRE( caught_empty );
+
+    // 5. Built-in array choice
+    const int arr[3] = { 10, 20, 30 };
+    auto chosen_arr = Random.choice( arr, 6 );
+    REQUIRE( chosen_arr.size( ) == 6 );
+    for ( int val : chosen_arr ) {
+        REQUIRE( ( val == 10 || val == 20 || val == 30 ) );
+    }
+    auto chosen_arr_zero = Random.choice( arr, 0 );
+    REQUIRE( chosen_arr_zero.empty( ) );
+
+    // 6. String literal choice
+    auto chosen_str = Random.choice( "xyz", 8 );
+    REQUIRE( chosen_str.size( ) == 8 );
+    for ( char c : chosen_str ) {
+        REQUIRE( ( c == 'x' || c == 'y' || c == 'z' ) );
+    }
+    auto chosen_str_zero = Random.choice( "xyz", 0 );
+    REQUIRE( chosen_str_zero.empty( ) );
+
+    // 7. choice_string on container and literal
+    std::string charset = "ABC";
+    auto cs = Random.choice_string( charset, 5 );
+    REQUIRE( cs.size( ) == 5 );
+    for ( char c : cs ) {
+        REQUIRE( charset.find( c ) != std::string::npos );
+    }
+    auto cs_lit = Random.choice_string( "EFG", 4 );
+    REQUIRE( cs_lit.size( ) == 4 );
+
+    // 8. Iterator overloads
+    std::vector<int> iter_out;
+    Random.choice( population.begin( ), population.end( ), std::back_inserter( iter_out ), 4 );
+    REQUIRE( iter_out.size( ) == 4 );
+
+    std::vector<int> iter_zero;
+    Random.choice( population.begin( ), population.end( ), std::back_inserter( iter_zero ), 0 );
+    REQUIRE( iter_zero.empty( ) );
+
+    std::vector<int> iter_neg;
+    Random.choice( population.begin( ), population.end( ), std::back_inserter( iter_neg ), -2 );
+    REQUIRE( iter_neg.empty( ) );
+
+    bool caught_iter_empty = false;
+    try {
+        Random.choice( empty_pop.begin( ), empty_pop.end( ), std::back_inserter( iter_out ), 2 );
+    } catch ( const std::invalid_argument& ) {
+        caught_iter_empty = true;
+    }
+    REQUIRE( caught_iter_empty );
+
+    // 9. local instance test
+    ilqvya::random_local rl;
+    auto rl_chosen = rl.choice( population, 4 );
+    REQUIRE( rl_chosen.size( ) == 4 );
+    auto rl_arr = rl.choice( arr, 3 );
+    REQUIRE( rl_arr.size( ) == 3 );
+    auto rl_lit = rl.choice( "abc", 2 );
+    REQUIRE( rl_lit.size( ) == 2 );
+    auto rl_cs = rl.choice_string( charset, 3 );
+    REQUIRE( rl_cs.size( ) == 3 );
+    auto rl_cs_lit = rl.choice_string( "abc", 2 );
+    REQUIRE( rl_cs_lit.size( ) == 2 );
+    std::vector<int> rl_iter_out;
+    rl.choice( population.begin( ), population.end( ), std::back_inserter( rl_iter_out ), 3 );
+    REQUIRE( rl_iter_out.size( ) == 3 );
+}
+
+TEST_CASE( "Hex and UUID / GUID generator: get_hex and get_uuid" ) {
+    // 1. get_hex
+    auto hex_empty = Random.get_hex( 0 );
+    REQUIRE( hex_empty.empty( ) );
+
+    auto hex_lower = Random.get_hex( 32 );
+    REQUIRE( hex_lower.size( ) == 32 );
+    for ( char c : hex_lower ) {
+        REQUIRE( ( ( c >= '0' && c <= '9' ) || ( c >= 'a' && c <= 'f' ) ) );
+    }
+
+    auto hex_upper = Random.get_hex( 32, true );
+    REQUIRE( hex_upper.size( ) == 32 );
+    for ( char c : hex_upper ) {
+        REQUIRE( ( ( c >= '0' && c <= '9' ) || ( c >= 'A' && c <= 'F' ) ) );
+    }
+
+    // 2. get_uuid default (v4)
+    auto uuid_v4 = Random.get_uuid( );
+    REQUIRE( uuid_v4.size( ) == 36 );
+    REQUIRE( uuid_v4[8] == '-' );
+    REQUIRE( uuid_v4[13] == '-' );
+    REQUIRE( uuid_v4[18] == '-' );
+    REQUIRE( uuid_v4[23] == '-' );
+    REQUIRE( uuid_v4[14] == '4' );
+    REQUIRE( ( uuid_v4[19] == '8' || uuid_v4[19] == '9' || uuid_v4[19] == 'a' || uuid_v4[19] == 'b' ) );
+
+    auto uuid_v4_explicit = Random.get_uuid( Random_t::uuid_version::v4 );
+    REQUIRE( uuid_v4_explicit.size( ) == 36 );
+    REQUIRE( uuid_v4_explicit[14] == '4' );
+
+    // 3. get_uuid v1
+    auto uuid_v1 = Random.get_uuid( Random_t::uuid_version::v1 );
+    REQUIRE( uuid_v1.size( ) == 36 );
+    REQUIRE( uuid_v1[14] == '1' );
+    REQUIRE( ( uuid_v1[19] == '8' || uuid_v1[19] == '9' || uuid_v1[19] == 'a' || uuid_v1[19] == 'b' ) );
+
+    // 4. get_uuid v7
+    auto uuid_v7 = Random.get_uuid( Random_t::uuid_version::v7 );
+    REQUIRE( uuid_v7.size( ) == 36 );
+    REQUIRE( uuid_v7[14] == '7' );
+    REQUIRE( ( uuid_v7[19] == '8' || uuid_v7[19] == '9' || uuid_v7[19] == 'a' || uuid_v7[19] == 'b' ) );
+
+    // 5. get_uuid nil
+    auto uuid_nil = Random.get_uuid( Random_t::uuid_version::nil );
+    REQUIRE( uuid_nil == "00000000-0000-0000-0000-000000000000" );
+
+    // 6. get_uuid max
+    auto uuid_max = Random.get_uuid( Random_t::uuid_version::max );
+    REQUIRE( uuid_max == "ffffffff-ffff-ffff-ffff-ffffffffffff" );
+
+    // 7. get_uuid mongo_object_id
+    auto mongo_id = Random.get_uuid( Random_t::uuid_version::mongo_object_id );
+    REQUIRE( mongo_id.size( ) == 24 );
+    for ( char c : mongo_id ) {
+        REQUIRE( ( ( c >= '0' && c <= '9' ) || ( c >= 'a' && c <= 'f' ) ) );
+    }
+
+    // 8. local instance test
+    ilqvya::random_local rl;
+    auto rl_hex = rl.get_hex( 16 );
+    REQUIRE( rl_hex.size( ) == 16 );
+    auto rl_uuid_def = rl.get_uuid( );
+    REQUIRE( rl_uuid_def.size( ) == 36 );
+    auto rl_uuid_v1 = rl.get_uuid( ilqvya::random_local::uuid_version::v1 );
+    REQUIRE( rl_uuid_v1.size( ) == 36 );
+    auto rl_uuid_v7 = rl.get_uuid( ilqvya::random_local::uuid_version::v7 );
+    REQUIRE( rl_uuid_v7.size( ) == 36 );
+    auto rl_uuid_nil = rl.get_uuid( ilqvya::random_local::uuid_version::nil );
+    REQUIRE( rl_uuid_nil == "00000000-0000-0000-0000-000000000000" );
+    auto rl_uuid_max = rl.get_uuid( ilqvya::random_local::uuid_version::max );
+    REQUIRE( rl_uuid_max == "ffffffff-ffff-ffff-ffff-ffffffffffff" );
+    auto rl_uuid_mongo = rl.get_uuid( ilqvya::random_local::uuid_version::mongo_object_id );
+    REQUIRE( rl_uuid_mongo.size( ) == 24 );
+}
+
+#if defined( __has_include )
+#    if __has_include( <span> ) && ILQVYA_CPLUSPLUS >= 202002L
+#        define ILQVYA_TEST_HAS_SPAN 1
+#    endif
+#endif
+
+TEST_CASE( "Span and view-like range support" ) {
+#if defined( ILQVYA_TEST_HAS_SPAN )
+    std::vector<int> vec = { 10, 20, 30, 40, 50 };
+    std::span<int> sp( vec );
+
+    // 1. Random.get on span
+    auto it = Random.get( sp );
+    REQUIRE( ( *it >= 10 && *it <= 50 ) );
+
+    // 2. Random.shuffle on span
+    Random.shuffle( sp );
+    REQUIRE( vec.size( ) == 5 );
+
+    // 3. Random.fill on span
+    Random.fill( sp, 1, 5 );
+    for ( int val : sp ) {
+        REQUIRE( ( val >= 1 && val <= 5 ) );
+    }
+
+    // 4. Random.sample on span
+    auto sampled = Random.sample( sp, 2 );
+    REQUIRE( sampled.size( ) == 2 );
+
+    // 5. Random.choice on span
+    auto chosen = Random.choice( sp, 6 );
+    REQUIRE( chosen.size( ) == 6 );
+
+    // 6. Const span
+    std::span<const int> sp_const( vec );
+    auto it_const = Random.get( sp_const );
+    REQUIRE( ( *it_const >= 1 && *it_const <= 5 ) );
+    auto sampled_const = Random.sample( sp_const, 3 );
+    REQUIRE( sampled_const.size( ) == 3 );
+    auto chosen_const = Random.choice( sp_const, 4 );
+    REQUIRE( chosen_const.size( ) == 4 );
+
+    // 7. Temporary / rvalue span
+    Random.shuffle( std::span<int>{ vec } );
+    Random.fill( std::span<int>{ vec }, 100, 200 );
+    for ( int val : vec ) {
+        REQUIRE( ( val >= 100 && val <= 200 ) );
+    }
+#else
+    // Custom non-owning view test for C++11/C++14/C++17
+    struct int_view {
+        int* data_ptr;
+        std::size_t sz;
+        int* begin( ) { return data_ptr; }
+        int* end( ) { return data_ptr + sz; }
+        const int* begin( ) const { return data_ptr; }
+        const int* end( ) const { return data_ptr + sz; }
+    };
+    int data[5] = { 1, 2, 3, 4, 5 };
+    int_view view{ data, 5 };
+    auto it = Random.get( view );
+    REQUIRE( ( *it >= 1 && *it <= 5 ) );
+    Random.shuffle( view );
+    Random.fill( view, 10, 20 );
+    for ( int i = 0; i < 5; ++i ) {
+        REQUIRE( ( data[i] >= 10 && data[i] <= 20 ) );
+    }
+    auto sampled = Random.sample( view, 2 );
+    REQUIRE( sampled.size( ) == 2 );
+    auto chosen = Random.choice( view, 7 );
+    REQUIRE( chosen.size( ) == 7 );
+#endif
+}
+
 

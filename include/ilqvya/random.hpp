@@ -65,6 +65,12 @@ SOFTWARE.
 #    include <string_view>
 #endif
 
+#if defined( __has_include )
+#    if __has_include( <span> ) && ILQVYA_CPLUSPLUS >= 202002L
+#        include <span>
+#    endif
+#endif
+
 #if defined( __has_cpp_attribute )
 #    if __has_cpp_attribute( nodiscard ) && ILQVYA_CPLUSPLUS >= 201703L
 #        define ILQVYA_NODISCARD [[nodiscard]]
@@ -315,6 +321,16 @@ namespace ilqvya {
     template<typename Value, typename Weight = double>
     using weighted_result = details::weighted_result<Value, Weight>;
 
+    /// UUID / GUID specification versions
+    enum class uuid_version {
+        v4,
+        v1,
+        v7,
+        nil,
+        max,
+        mongo_object_id
+    };
+
     /// Default seeder for 'random' classes
     struct seeder_default {
         seeder_default( ) : entropy_source( ), seed_seq( entropy_source.data.begin( ), entropy_source.data.end( ) ) {}
@@ -371,6 +387,7 @@ namespace ilqvya {
             using bool_dist_t = BoolDist;
             using common = details::common;
             using weight = details::weight;
+            using uuid_version = ilqvya::uuid_version;
 
             ILQVYA_NODISCARD static constexpr typename Engine::result_type( min )( ) noexcept {
                 return (Engine::min)( );
@@ -485,6 +502,39 @@ namespace ilqvya {
                 return BoolDist{ probability }( engine );
             }
 
+            ILQVYA_NODISCARD static bool flip( Engine& engine ) {
+                return get<bool>( engine, 0.5 );
+            }
+
+            ILQVYA_NODISCARD static bool chance( Engine& engine, const double probability ) {
+                return get<bool>( engine, probability );
+            }
+
+            ILQVYA_NODISCARD static bool chance_pct( Engine& engine, const double percentage ) {
+                if ( percentage < 0.0 || percentage > 100.0 )
+                    throw std::invalid_argument( "Random::chance_pct: percentage must be between 0.0 and 100.0" );
+                return get<bool>( engine, percentage / 100.0 );
+            }
+
+            template<typename RealType = double>
+            ILQVYA_NODISCARD static RealType normal( Engine& engine, RealType mean = RealType( 0 ),
+                                                     RealType stddev = RealType( 1 ) ) {
+                std::normal_distribution<RealType> dist( mean, stddev );
+                return dist( engine );
+            }
+
+            template<typename RealType = double>
+            ILQVYA_NODISCARD static RealType exponential( Engine& engine, RealType lambda = RealType( 1 ) ) {
+                std::exponential_distribution<RealType> dist( lambda );
+                return dist( engine );
+            }
+
+            template<typename IntType = int>
+            ILQVYA_NODISCARD static IntType poisson( Engine& engine, double mean = 1.0 ) {
+                std::poisson_distribution<IntType> dist( mean );
+                return dist( engine );
+            }
+
             template<typename T>
             ILQVYA_NODISCARD static T get( Engine& engine, std::initializer_list<T> init_list ) {
                 if ( 0u == init_list.size( ) )
@@ -572,6 +622,47 @@ namespace ilqvya {
                     container[i] = get<common>( engine, start, end );
                 return container;
             }
+
+            template<template<typename AA, std::size_t NN, typename...> class Container, std::size_t N, typename A = int>
+            ILQVYA_NODISCARD static typename std::enable_if<!details::has_insert<Container<A, N>>::value, Container<A, N>>::type
+            get( Engine& engine ) {
+                Container<A, N> container{ };
+                for ( std::size_t i = 0; i < N; ++i )
+                    container[i] = get<A>( engine );
+                return container;
+            } // LCOV_EXCL_LINE
+
+            template<std::size_t N, typename T>
+            ILQVYA_NODISCARD static std::array<T, N> get_array( Engine& engine, T from, T to ) {
+                std::array<T, N> arr{ };
+                for ( std::size_t i = 0; i < N; ++i ) {
+                    arr[i] = get( engine, from, to );
+                }
+                return arr;
+            } // LCOV_EXCL_LINE
+
+            template<std::size_t N, typename Key, typename A, typename B,
+                     typename C = typename std::common_type<A, B>::type>
+            ILQVYA_NODISCARD static typename std::enable_if<std::is_same<Key, common>::value &&
+                                                                details::is_valid_common_numbers<A, B>::value,
+                                                            std::array<C, N>>::type
+            get_array( Engine& engine, A from, B to ) {
+                std::array<C, N> arr{ };
+                for ( std::size_t i = 0; i < N; ++i ) {
+                    arr[i] = get<Key, A, B, C>( engine, from, to );
+                }
+                return arr;
+            } // LCOV_EXCL_LINE
+
+            template<std::size_t N, typename T = int>
+            ILQVYA_NODISCARD static typename std::enable_if<details::is_supported_number<T>::value, std::array<T, N>>::type
+            get_array( Engine& engine ) {
+                std::array<T, N> arr{ };
+                for ( std::size_t i = 0; i < N; ++i ) {
+                    arr[i] = get<T>( engine );
+                }
+                return arr;
+            } // LCOV_EXCL_LINE
 
             template<typename CharT, std::size_t N>
             ILQVYA_NODISCARD static typename std::enable_if<details::is_supported_character<CharT>::value,
@@ -756,14 +847,90 @@ namespace ilqvya {
             }
 #endif
 
+            template<typename ForwardIt, typename T>
+            static typename std::enable_if<details::is_iterator<ForwardIt>::value>::type
+            fill( Engine& engine, ForwardIt first, ForwardIt last, T from, T to ) {
+                using ValueType = typename std::iterator_traits<ForwardIt>::value_type;
+                for ( ; first != last; ++first ) {
+                    *first = static_cast<ValueType>( get( engine, from, to ) );
+                }
+            }
+
+            template<typename ForwardIt>
+            static typename std::enable_if<details::is_iterator<ForwardIt>::value>::type
+            fill( Engine& engine, ForwardIt first, ForwardIt last ) {
+                using ValueType = typename std::iterator_traits<ForwardIt>::value_type;
+                for ( ; first != last; ++first ) {
+                    *first = get<ValueType>( engine );
+                }
+            }
+
+            template<typename Key, typename ForwardIt, typename A, typename B>
+            static typename std::enable_if<std::is_same<Key, common>::value && details::is_iterator<ForwardIt>::value>::type
+            fill( Engine& engine, ForwardIt first, ForwardIt last, A from, B to ) {
+                using ValueType = typename std::iterator_traits<ForwardIt>::value_type;
+                for ( ; first != last; ++first ) {
+                    *first = static_cast<ValueType>( get<Key>( engine, from, to ) );
+                }
+            }
+
+            template<typename Container, typename T>
+            static typename std::enable_if<
+                !std::is_array<typename std::remove_reference<Container>::type>::value &&
+                details::is_iterator<decltype( std::begin( std::declval<Container&>( ) ) )>::value &&
+                !std::is_const<typename std::remove_reference<decltype( *std::begin( std::declval<Container&>( ) ) )>::type>::value>::type
+            fill( Engine& engine, Container&& container, T from, T to ) {
+                fill( engine, std::begin( container ), std::end( container ), from, to );
+            }
+
+            template<typename Container>
+            static typename std::enable_if<
+                !std::is_array<typename std::remove_reference<Container>::type>::value &&
+                details::is_iterator<decltype( std::begin( std::declval<Container&>( ) ) )>::value &&
+                !std::is_const<typename std::remove_reference<decltype( *std::begin( std::declval<Container&>( ) ) )>::type>::value>::type
+            fill( Engine& engine, Container&& container ) {
+                fill( engine, std::begin( container ), std::end( container ) );
+            }
+
+            template<typename Key, typename Container, typename A, typename B>
+            static typename std::enable_if<
+                std::is_same<Key, common>::value &&
+                !std::is_array<typename std::remove_reference<Container>::type>::value &&
+                details::is_iterator<decltype( std::begin( std::declval<Container&>( ) ) )>::value &&
+                !std::is_const<typename std::remove_reference<decltype( *std::begin( std::declval<Container&>( ) ) )>::type>::value>::type
+            fill( Engine& engine, Container&& container, A from, B to ) {
+                fill<Key>( engine, std::begin( container ), std::end( container ), from, to );
+            }
+
+            template<typename T, std::size_t N, typename U>
+            static typename std::enable_if<!std::is_const<T>::value>::type
+            fill( Engine& engine, T ( &array )[N], U from, U to ) {
+                fill( engine, std::begin( array ), std::end( array ), from, to );
+            }
+
+            template<typename T, std::size_t N>
+            static typename std::enable_if<!std::is_const<T>::value>::type
+            fill( Engine& engine, T ( &array )[N] ) {
+                fill( engine, std::begin( array ), std::end( array ) );
+            }
+
+            template<typename Key, typename T, std::size_t N, typename A, typename B>
+            static typename std::enable_if<std::is_same<Key, common>::value && !std::is_const<T>::value>::type
+            fill( Engine& engine, T ( &array )[N], A from, B to ) {
+                fill<Key>( engine, std::begin( array ), std::end( array ), from, to );
+            }
+
             template<typename RandomIt>
             static void shuffle( Engine& engine, RandomIt first, RandomIt last ) {
                 std::shuffle( first, last, engine );
             }
 
             template<typename Container>
-            static typename std::enable_if<!std::is_const<Container>::value>::type
-            shuffle( Engine& engine, Container& container ) {
+            static typename std::enable_if<
+                !std::is_array<typename std::remove_reference<Container>::type>::value &&
+                details::is_iterator<decltype( std::begin( std::declval<Container&>( ) ) )>::value &&
+                !std::is_const<typename std::remove_reference<decltype( *std::begin( std::declval<Container&>( ) ) )>::type>::value>::type
+            shuffle( Engine& engine, Container&& container ) {
                 shuffle( engine, std::begin( container ), std::end( container ) );
             }
 
@@ -920,6 +1087,201 @@ namespace ilqvya {
                 }
                 return result;
             } // LCOV_EXCL_LINE
+
+            template<typename PopulationIt, typename OutIt, typename Distance>
+            static OutIt choice( Engine& engine, PopulationIt first, PopulationIt last, OutIt out, Distance n ) {
+                if ( n <= 0 )
+                    return out;
+                const auto size = std::distance( first, last );
+                if ( 0 == size )
+                    throw std::invalid_argument( "Random::choice: population must not be empty" );
+                using diff_t = typename std::iterator_traits<PopulationIt>::difference_type;
+                for ( Distance i = 0; i < n; ++i ) {
+                    const diff_t idx = get<diff_t>( engine, 0, size - 1 );
+                    *out++ = *std::next( first, idx );
+                }
+                return out;
+            }
+
+            template<template<typename...> class Container = std::vector, typename Range>
+            ILQVYA_NODISCARD static auto choice( Engine& engine, const Range& range, std::size_t n ) ->
+                typename std::enable_if<
+                    details::is_iterator<decltype( std::begin( range ) )>::value,
+                    Container<typename std::iterator_traits<decltype( std::begin( range ) )>::value_type>>::type {
+                using ValueType = typename std::iterator_traits<decltype( std::begin( range ) )>::value_type;
+                Container<ValueType> result;
+                if ( n == 0 )
+                    return result;
+                if ( std::begin( range ) == std::end( range ) )
+                    throw std::invalid_argument( "Random::choice: population must not be empty" );
+                details::reserve_if_supported( result, n );
+                choice( engine, std::begin( range ), std::end( range ), details::make_inserter( result ), n );
+                return result;
+            } // LCOV_EXCL_LINE
+
+            template<template<typename...> class Container = std::vector, typename T, std::size_t N>
+            ILQVYA_NODISCARD static typename std::enable_if<!details::is_supported_character<T>::value,
+                                                            Container<typename std::remove_cv<T>::type>>::type
+            choice( Engine& engine, const T ( &array )[N], std::size_t n ) {
+                static_assert( N > 0, "Random::choice: built-in array must not be empty" );
+                Container<typename std::remove_cv<T>::type> result;
+                if ( n == 0 )
+                    return result;
+                details::reserve_if_supported( result, n );
+                choice( engine, array, array + N, details::make_inserter( result ), n );
+                return result;
+            } // LCOV_EXCL_LINE
+
+            template<typename CharT, std::size_t N>
+            ILQVYA_NODISCARD static typename std::enable_if<details::is_supported_character<CharT>::value,
+                                                            std::basic_string<CharT>>::type
+            choice( Engine& engine, const CharT ( &literal )[N], std::size_t n ) {
+                static_assert( N > 1, "Random::choice: string literal must not be empty" );
+                std::basic_string<CharT> result;
+                if ( n == 0 )
+                    return result;
+                result.reserve( n );
+                choice( engine, literal, literal + ( N - 1 ), std::back_inserter( result ), n );
+                return result;
+            } // LCOV_EXCL_LINE
+
+            template<typename Range>
+            ILQVYA_NODISCARD static auto choice_string( Engine& engine, const Range& range, std::size_t n ) ->
+                typename std::enable_if<
+                    details::is_iterator<decltype( std::begin( range ) )>::value &&
+                        details::is_supported_character<
+                            typename std::iterator_traits<decltype( std::begin( range ) )>::value_type>::value,
+                    std::basic_string<
+                        typename std::iterator_traits<decltype( std::begin( range ) )>::value_type>>::type {
+                return choice<std::basic_string>( engine, range, n );
+            }
+
+            template<typename CharT, std::size_t N>
+            ILQVYA_NODISCARD static typename std::enable_if<details::is_supported_character<CharT>::value,
+                                                            std::basic_string<CharT>>::type
+            choice_string( Engine& engine, const CharT ( &literal )[N], std::size_t n ) {
+                return choice( engine, literal, n );
+            }
+
+        private:
+            static std::string format_uuid_bytes( const std::uint8_t bytes[16] ) {
+                static const char hex_chars[] = "0123456789abcdef";
+                std::string s;
+                s.resize( 36 );
+                std::size_t out_idx = 0;
+                for ( std::size_t i = 0; i < 16; ++i ) {
+                    if ( i == 4 || i == 6 || i == 8 || i == 10 ) {
+                        s[out_idx++] = '-';
+                    }
+                    s[out_idx++] = hex_chars[( bytes[i] >> 4 ) & 0x0f];
+                    s[out_idx++] = hex_chars[bytes[i] & 0x0f];
+                }
+                return s;
+            } // LCOV_EXCL_LINE
+
+            static std::string format_mongo_id_bytes( const std::uint8_t bytes[12] ) {
+                static const char hex_chars[] = "0123456789abcdef";
+                std::string s;
+                s.resize( 24 );
+                for ( std::size_t i = 0; i < 12; ++i ) {
+                    s[i * 2]     = hex_chars[( bytes[i] >> 4 ) & 0x0f];
+                    s[i * 2 + 1] = hex_chars[bytes[i] & 0x0f];
+                }
+                return s;
+            } // LCOV_EXCL_LINE
+
+        public:
+            ILQVYA_NODISCARD static std::string get_hex( Engine& engine, std::size_t length, bool uppercase = false ) {
+                static const char lower_digits[] = "0123456789abcdef";
+                static const char upper_digits[] = "0123456789ABCDEF";
+                const char* digits = uppercase ? upper_digits : lower_digits;
+                std::string result;
+                result.reserve( length );
+                for ( std::size_t i = 0; i < length; ++i ) {
+                    result.push_back( digits[get<std::size_t>( engine, 0, 15 )] );
+                }
+                return result;
+            } // LCOV_EXCL_LINE
+
+            ILQVYA_NODISCARD static std::string get_uuid( Engine& engine, uuid_version version = uuid_version::v4 ) {
+                switch ( version ) {
+                    case uuid_version::nil:
+                        return "00000000-0000-0000-0000-000000000000";
+                    case uuid_version::max:
+                        return "ffffffff-ffff-ffff-ffff-ffffffffffff";
+                    case uuid_version::v4: {
+                        std::uint8_t bytes[16];
+                        for ( std::size_t i = 0; i < 16; ++i ) {
+                            bytes[i] = get<std::uint8_t>( engine );
+                        }
+                        bytes[6] = static_cast<std::uint8_t>( ( bytes[6] & 0x0f ) | 0x40 );
+                        bytes[8] = static_cast<std::uint8_t>( ( bytes[8] & 0x3f ) | 0x80 );
+                        return format_uuid_bytes( bytes );
+                    }
+                    case uuid_version::v7: {
+                        std::uint8_t bytes[16];
+                        const auto ms = static_cast<std::uint64_t>(
+                            std::chrono::duration_cast<std::chrono::milliseconds>(
+                                std::chrono::system_clock::now( ).time_since_epoch( ) )
+                                .count( ) );
+                        bytes[0] = static_cast<std::uint8_t>( ( ms >> 40 ) & 0xff );
+                        bytes[1] = static_cast<std::uint8_t>( ( ms >> 32 ) & 0xff );
+                        bytes[2] = static_cast<std::uint8_t>( ( ms >> 24 ) & 0xff );
+                        bytes[3] = static_cast<std::uint8_t>( ( ms >> 16 ) & 0xff );
+                        bytes[4] = static_cast<std::uint8_t>( ( ms >> 8 ) & 0xff );
+                        bytes[5] = static_cast<std::uint8_t>( ms & 0xff );
+                        for ( std::size_t i = 6; i < 16; ++i ) {
+                            bytes[i] = get<std::uint8_t>( engine );
+                        }
+                        bytes[6] = static_cast<std::uint8_t>( ( bytes[6] & 0x0f ) | 0x70 );
+                        bytes[8] = static_cast<std::uint8_t>( ( bytes[8] & 0x3f ) | 0x80 );
+                        return format_uuid_bytes( bytes );
+                    }
+                    case uuid_version::v1: {
+                        std::uint8_t bytes[16];
+                        const auto now_ns = static_cast<std::uint64_t>(
+                            std::chrono::duration_cast<std::chrono::nanoseconds>(
+                                std::chrono::system_clock::now( ).time_since_epoch( ) )
+                                .count( ) );
+                        const std::uint64_t intervals = ( now_ns / 100 ) + 0x01B21DD213814000ULL;
+                        const std::uint32_t time_low = static_cast<std::uint32_t>( intervals & 0xffffffff );
+                        const std::uint16_t time_mid = static_cast<std::uint16_t>( ( intervals >> 32 ) & 0xffff );
+                        const std::uint16_t time_hi = static_cast<std::uint16_t>( ( intervals >> 48 ) & 0x0fff );
+
+                        bytes[0] = static_cast<std::uint8_t>( ( time_low >> 24 ) & 0xff );
+                        bytes[1] = static_cast<std::uint8_t>( ( time_low >> 16 ) & 0xff );
+                        bytes[2] = static_cast<std::uint8_t>( ( time_low >> 8 ) & 0xff );
+                        bytes[3] = static_cast<std::uint8_t>( time_low & 0xff );
+                        bytes[4] = static_cast<std::uint8_t>( ( time_mid >> 8 ) & 0xff );
+                        bytes[5] = static_cast<std::uint8_t>( time_mid & 0xff );
+                        bytes[6] = static_cast<std::uint8_t>( ( ( time_hi >> 8 ) & 0x0f ) | 0x10 );
+                        bytes[7] = static_cast<std::uint8_t>( time_hi & 0xff );
+
+                        for ( std::size_t i = 8; i < 16; ++i ) {
+                            bytes[i] = get<std::uint8_t>( engine );
+                        }
+                        bytes[8] = static_cast<std::uint8_t>( ( bytes[8] & 0x3f ) | 0x80 );
+                        bytes[10] = static_cast<std::uint8_t>( bytes[10] | 0x01 );
+                        return format_uuid_bytes( bytes );
+                    }
+                    case uuid_version::mongo_object_id: {
+                        std::uint8_t bytes[12];
+                        const auto sec = static_cast<std::uint32_t>(
+                            std::chrono::duration_cast<std::chrono::seconds>(
+                                std::chrono::system_clock::now( ).time_since_epoch( ) )
+                                .count( ) );
+                        bytes[0] = static_cast<std::uint8_t>( ( sec >> 24 ) & 0xff );
+                        bytes[1] = static_cast<std::uint8_t>( ( sec >> 16 ) & 0xff );
+                        bytes[2] = static_cast<std::uint8_t>( ( sec >> 8 ) & 0xff );
+                        bytes[3] = static_cast<std::uint8_t>( sec & 0xff );
+                        for ( std::size_t i = 4; i < 12; ++i ) {
+                            bytes[i] = get<std::uint8_t>( engine );
+                        }
+                        return format_mongo_id_bytes( bytes );
+                    }
+                }
+                return ""; // LCOV_EXCL_LINE
+            } // LCOV_EXCL_LINE
         };
 
     } // namespace details
@@ -1011,6 +1373,7 @@ namespace ilqvya {
         using bool_dist_t = BoolDist;
         using common = details::common;
         using weight = details::weight;
+        using uuid_version = ilqvya::uuid_version;
         template<typename Value, typename Weight = double>
         using weighted_result = details::weighted_result<Value, Weight>;
 
@@ -1101,6 +1464,33 @@ namespace ilqvya {
             return impl::template get<T>( engine_instance( ), probability );
         }
 
+        ILQVYA_NODISCARD static bool flip( ) {
+            return impl::flip( engine_instance( ) );
+        }
+
+        ILQVYA_NODISCARD static bool chance( const double probability ) {
+            return impl::chance( engine_instance( ), probability );
+        }
+
+        ILQVYA_NODISCARD static bool chance_pct( const double percentage ) {
+            return impl::chance_pct( engine_instance( ), percentage );
+        }
+
+        template<typename RealType = double>
+        ILQVYA_NODISCARD static RealType normal( RealType mean = RealType( 0 ), RealType stddev = RealType( 1 ) ) {
+            return impl::template normal<RealType>( engine_instance( ), mean, stddev );
+        }
+
+        template<typename RealType = double>
+        ILQVYA_NODISCARD static RealType exponential( RealType lambda = RealType( 1 ) ) {
+            return impl::template exponential<RealType>( engine_instance( ), lambda );
+        }
+
+        template<typename IntType = int>
+        ILQVYA_NODISCARD static IntType poisson( double mean = 1.0 ) {
+            return impl::template poisson<IntType>( engine_instance( ), mean );
+        }
+
         template<typename T>
         ILQVYA_NODISCARD static T get( std::initializer_list<T> init_list ) {
             return impl::template get<T>( engine_instance( ), init_list );
@@ -1162,6 +1552,32 @@ namespace ilqvya {
                                     Container<C, N>>::type
             get( A start, B end ) {
             return impl::template get<Container, N, Key, A, B, C>( engine_instance( ), start, end );
+        }
+
+        template<template<typename AA, std::size_t NN, typename...> class Container, std::size_t N, typename A = int>
+        ILQVYA_NODISCARD static typename std::enable_if<!details::has_insert<Container<A, N>>::value, Container<A, N>>::type
+        get( ) {
+            return impl::template get<Container, N, A>( engine_instance( ) );
+        }
+
+        template<std::size_t N, typename T>
+        ILQVYA_NODISCARD static std::array<T, N> get_array( T from, T to ) {
+            return impl::template get_array<N, T>( engine_instance( ), from, to );
+        }
+
+        template<std::size_t N, typename Key, typename A, typename B,
+                 typename C = typename std::common_type<A, B>::type>
+        ILQVYA_NODISCARD static typename std::enable_if<std::is_same<Key, common>::value &&
+                                                            details::is_valid_common_numbers<A, B>::value,
+                                                        std::array<C, N>>::type
+        get_array( A from, B to ) {
+            return impl::template get_array<N, Key, A, B, C>( engine_instance( ), from, to );
+        }
+
+        template<std::size_t N, typename T = int>
+        ILQVYA_NODISCARD static typename std::enable_if<details::is_supported_number<T>::value, std::array<T, N>>::type
+        get_array( ) {
+            return impl::template get_array<N, T>( engine_instance( ) );
         }
 
         template<typename CharT, std::size_t N>
@@ -1245,15 +1661,82 @@ namespace ilqvya {
         }
 #endif
 
+        template<typename ForwardIt, typename T>
+        static typename std::enable_if<details::is_iterator<ForwardIt>::value>::type
+        fill( ForwardIt first, ForwardIt last, T from, T to ) {
+            impl::fill( engine_instance( ), first, last, from, to );
+        }
+
+        template<typename ForwardIt>
+        static typename std::enable_if<details::is_iterator<ForwardIt>::value>::type
+        fill( ForwardIt first, ForwardIt last ) {
+            impl::fill( engine_instance( ), first, last );
+        }
+
+        template<typename Key, typename ForwardIt, typename A, typename B>
+        static typename std::enable_if<std::is_same<Key, common>::value && details::is_iterator<ForwardIt>::value>::type
+        fill( ForwardIt first, ForwardIt last, A from, B to ) {
+            impl::template fill<Key>( engine_instance( ), first, last, from, to );
+        }
+
+        template<typename Container, typename T>
+        static typename std::enable_if<
+            !std::is_array<typename std::remove_reference<Container>::type>::value &&
+            details::is_iterator<decltype( std::begin( std::declval<Container&>( ) ) )>::value &&
+            !std::is_const<typename std::remove_reference<decltype( *std::begin( std::declval<Container&>( ) ) )>::type>::value>::type
+        fill( Container&& container, T from, T to ) {
+            impl::fill( engine_instance( ), std::forward<Container>( container ), from, to );
+        }
+
+        template<typename Container>
+        static typename std::enable_if<
+            !std::is_array<typename std::remove_reference<Container>::type>::value &&
+            details::is_iterator<decltype( std::begin( std::declval<Container&>( ) ) )>::value &&
+            !std::is_const<typename std::remove_reference<decltype( *std::begin( std::declval<Container&>( ) ) )>::type>::value>::type
+        fill( Container&& container ) {
+            impl::fill( engine_instance( ), std::forward<Container>( container ) );
+        }
+
+        template<typename Key, typename Container, typename A, typename B>
+        static typename std::enable_if<
+            std::is_same<Key, common>::value &&
+            !std::is_array<typename std::remove_reference<Container>::type>::value &&
+            details::is_iterator<decltype( std::begin( std::declval<Container&>( ) ) )>::value &&
+            !std::is_const<typename std::remove_reference<decltype( *std::begin( std::declval<Container&>( ) ) )>::type>::value>::type
+        fill( Container&& container, A from, B to ) {
+            impl::template fill<Key>( engine_instance( ), std::forward<Container>( container ), from, to );
+        }
+
+        template<typename T, std::size_t N, typename U>
+        static typename std::enable_if<!std::is_const<T>::value>::type
+        fill( T ( &array )[N], U from, U to ) {
+            impl::fill( engine_instance( ), array, from, to );
+        }
+
+        template<typename T, std::size_t N>
+        static typename std::enable_if<!std::is_const<T>::value>::type
+        fill( T ( &array )[N] ) {
+            impl::fill( engine_instance( ), array );
+        }
+
+        template<typename Key, typename T, std::size_t N, typename A, typename B>
+        static typename std::enable_if<std::is_same<Key, common>::value && !std::is_const<T>::value>::type
+        fill( T ( &array )[N], A from, B to ) {
+            impl::template fill<Key>( engine_instance( ), array, from, to );
+        }
+
         template<typename RandomIt>
         static void shuffle( RandomIt first, RandomIt last ) {
             impl::shuffle( engine_instance( ), first, last );
         }
 
         template<typename Container>
-        static typename std::enable_if<!std::is_const<Container>::value>::type
-        shuffle( Container& container ) {
-            impl::shuffle( engine_instance( ), container );
+        static typename std::enable_if<
+            !std::is_array<typename std::remove_reference<Container>::type>::value &&
+            details::is_iterator<decltype( std::begin( std::declval<Container&>( ) ) )>::value &&
+            !std::is_const<typename std::remove_reference<decltype( *std::begin( std::declval<Container&>( ) ) )>::type>::value>::type
+        shuffle( Container&& container ) {
+            impl::shuffle( engine_instance( ), std::forward<Container>( container ) );
         }
 
         template<typename T, std::size_t N>
@@ -1304,6 +1787,48 @@ namespace ilqvya {
             return impl::sample_string( engine_instance( ), literal, n );
         }
 
+        template<typename PopulationIt, typename OutIt, typename Distance>
+        static OutIt choice( PopulationIt first, PopulationIt last, OutIt out, Distance n ) {
+            return impl::choice( engine_instance( ), first, last, out, n );
+        }
+
+        template<template<typename...> class Container = std::vector, typename Range>
+        ILQVYA_NODISCARD static auto choice( const Range& range, std::size_t n ) -> typename std::enable_if<
+            details::is_iterator<decltype( std::begin( range ) )>::value,
+            Container<typename std::iterator_traits<decltype( std::begin( range ) )>::value_type>>::type {
+            return impl::template choice<Container>( engine_instance( ), range, n );
+        }
+
+        template<template<typename...> class Container = std::vector, typename T, std::size_t N>
+        ILQVYA_NODISCARD static typename std::enable_if<!details::is_supported_character<T>::value,
+                                                        Container<typename std::remove_cv<T>::type>>::type
+        choice( const T ( &array )[N], std::size_t n ) {
+            return impl::template choice<Container>( engine_instance( ), array, n );
+        }
+
+        template<typename CharT, std::size_t N>
+        ILQVYA_NODISCARD static typename std::enable_if<details::is_supported_character<CharT>::value,
+                                                        std::basic_string<CharT>>::type
+        choice( const CharT ( &literal )[N], std::size_t n ) {
+            return impl::choice( engine_instance( ), literal, n );
+        }
+
+        template<typename Range>
+        ILQVYA_NODISCARD static auto choice_string( const Range& range, std::size_t n ) -> typename std::enable_if<
+            details::is_iterator<decltype( std::begin( range ) )>::value &&
+                details::is_supported_character<
+                    typename std::iterator_traits<decltype( std::begin( range ) )>::value_type>::value,
+            std::basic_string<typename std::iterator_traits<decltype( std::begin( range ) )>::value_type>>::type {
+            return impl::choice_string( engine_instance( ), range, n );
+        }
+
+        template<typename CharT, std::size_t N>
+        ILQVYA_NODISCARD static typename std::enable_if<details::is_supported_character<CharT>::value,
+                                                        std::basic_string<CharT>>::type
+        choice_string( const CharT ( &literal )[N], std::size_t n ) {
+            return impl::choice_string( engine_instance( ), literal, n );
+        }
+
         template<typename CharT = char>
         ILQVYA_NODISCARD static typename std::enable_if<details::is_supported_character<CharT>::value,
                                                         std::basic_string<CharT>>::type
@@ -1325,6 +1850,14 @@ namespace ilqvya {
                                                         std::basic_string<CharT>>::type
         get_string( std::size_t length, const CharT ( &literal )[N] ) {
             return impl::get_string( engine_instance( ), length, literal );
+        }
+
+        ILQVYA_NODISCARD static std::string get_hex( std::size_t length, bool uppercase = false ) {
+            return impl::get_hex( engine_instance( ), length, uppercase );
+        }
+
+        ILQVYA_NODISCARD static std::string get_uuid( uuid_version version = uuid_version::v4 ) {
+            return impl::get_uuid( engine_instance( ), version );
         }
 
         template<typename... Args>
@@ -1355,6 +1888,7 @@ namespace ilqvya {
         using bool_dist_t = BoolDist;
         using common = details::common;
         using weight = details::weight;
+        using uuid_version = ilqvya::uuid_version;
         template<typename Value, typename Weight = double>
         using weighted_result = details::weighted_result<Value, Weight>;
 
@@ -1389,6 +1923,7 @@ namespace ilqvya {
         using bool_dist_t = BoolDist;
         using common = details::common;
         using weight = details::weight;
+        using uuid_version = ilqvya::uuid_version;
         template<typename Value, typename Weight = double>
         using weighted_result = details::weighted_result<Value, Weight>;
 
@@ -1424,6 +1959,7 @@ namespace ilqvya {
         using bool_dist_t = BoolDist;
         using common = details::common;
         using weight = details::weight;
+        using uuid_version = ilqvya::uuid_version;
         template<typename Value, typename Weight = double>
         using weighted_result = details::weighted_result<Value, Weight>;
 
@@ -1552,6 +2088,33 @@ namespace ilqvya {
             return impl::template get<T>( m_engine, probability );
         }
 
+        ILQVYA_NODISCARD bool flip( ) {
+            return impl::flip( m_engine );
+        }
+
+        ILQVYA_NODISCARD bool chance( const double probability ) {
+            return impl::chance( m_engine, probability );
+        }
+
+        ILQVYA_NODISCARD bool chance_pct( const double percentage ) {
+            return impl::chance_pct( m_engine, percentage );
+        }
+
+        template<typename RealType = double>
+        ILQVYA_NODISCARD RealType normal( RealType mean = RealType( 0 ), RealType stddev = RealType( 1 ) ) {
+            return impl::template normal<RealType>( m_engine, mean, stddev );
+        }
+
+        template<typename RealType = double>
+        ILQVYA_NODISCARD RealType exponential( RealType lambda = RealType( 1 ) ) {
+            return impl::template exponential<RealType>( m_engine, lambda );
+        }
+
+        template<typename IntType = int>
+        ILQVYA_NODISCARD IntType poisson( double mean = 1.0 ) {
+            return impl::template poisson<IntType>( m_engine, mean );
+        }
+
         template<typename T>
         ILQVYA_NODISCARD T get( std::initializer_list<T> init_list ) {
             return impl::template get<T>( m_engine, init_list );
@@ -1612,6 +2175,32 @@ namespace ilqvya {
                                     Container<C, N>>::type
             get( A start, B end ) {
             return impl::template get<Container, N, Key, A, B, C>( m_engine, start, end );
+        }
+
+        template<template<typename AA, std::size_t NN, typename...> class Container, std::size_t N, typename A = int>
+        ILQVYA_NODISCARD typename std::enable_if<!details::has_insert<Container<A, N>>::value, Container<A, N>>::type
+        get( ) {
+            return impl::template get<Container, N, A>( m_engine );
+        }
+
+        template<std::size_t N, typename T>
+        ILQVYA_NODISCARD std::array<T, N> get_array( T from, T to ) {
+            return impl::template get_array<N, T>( m_engine, from, to );
+        }
+
+        template<std::size_t N, typename Key, typename A, typename B,
+                 typename C = typename std::common_type<A, B>::type>
+        ILQVYA_NODISCARD typename std::enable_if<std::is_same<Key, common>::value &&
+                                                    details::is_valid_common_numbers<A, B>::value,
+                                                std::array<C, N>>::type
+        get_array( A from, B to ) {
+            return impl::template get_array<N, Key, A, B, C>( m_engine, from, to );
+        }
+
+        template<std::size_t N, typename T = int>
+        ILQVYA_NODISCARD typename std::enable_if<details::is_supported_number<T>::value, std::array<T, N>>::type
+        get_array( ) {
+            return impl::template get_array<N, T>( m_engine );
         }
 
         template<typename CharT, std::size_t N>
@@ -1694,15 +2283,82 @@ namespace ilqvya {
         }
 #endif
 
+        template<typename ForwardIt, typename T>
+        typename std::enable_if<details::is_iterator<ForwardIt>::value>::type
+        fill( ForwardIt first, ForwardIt last, T from, T to ) {
+            impl::fill( m_engine, first, last, from, to );
+        }
+
+        template<typename ForwardIt>
+        typename std::enable_if<details::is_iterator<ForwardIt>::value>::type
+        fill( ForwardIt first, ForwardIt last ) {
+            impl::fill( m_engine, first, last );
+        }
+
+        template<typename Key, typename ForwardIt, typename A, typename B>
+        typename std::enable_if<std::is_same<Key, common>::value && details::is_iterator<ForwardIt>::value>::type
+        fill( ForwardIt first, ForwardIt last, A from, B to ) {
+            impl::template fill<Key>( m_engine, first, last, from, to );
+        }
+
+        template<typename Container, typename T>
+        typename std::enable_if<
+            !std::is_array<typename std::remove_reference<Container>::type>::value &&
+            details::is_iterator<decltype( std::begin( std::declval<Container&>( ) ) )>::value &&
+            !std::is_const<typename std::remove_reference<decltype( *std::begin( std::declval<Container&>( ) ) )>::type>::value>::type
+        fill( Container&& container, T from, T to ) {
+            impl::fill( m_engine, std::forward<Container>( container ), from, to );
+        }
+
+        template<typename Container>
+        typename std::enable_if<
+            !std::is_array<typename std::remove_reference<Container>::type>::value &&
+            details::is_iterator<decltype( std::begin( std::declval<Container&>( ) ) )>::value &&
+            !std::is_const<typename std::remove_reference<decltype( *std::begin( std::declval<Container&>( ) ) )>::type>::value>::type
+        fill( Container&& container ) {
+            impl::fill( m_engine, std::forward<Container>( container ) );
+        }
+
+        template<typename Key, typename Container, typename A, typename B>
+        typename std::enable_if<
+            std::is_same<Key, common>::value &&
+            !std::is_array<typename std::remove_reference<Container>::type>::value &&
+            details::is_iterator<decltype( std::begin( std::declval<Container&>( ) ) )>::value &&
+            !std::is_const<typename std::remove_reference<decltype( *std::begin( std::declval<Container&>( ) ) )>::type>::value>::type
+        fill( Container&& container, A from, B to ) {
+            impl::template fill<Key>( m_engine, std::forward<Container>( container ), from, to );
+        }
+
+        template<typename T, std::size_t N, typename U>
+        typename std::enable_if<!std::is_const<T>::value>::type
+        fill( T ( &array )[N], U from, U to ) {
+            impl::fill( m_engine, array, from, to );
+        }
+
+        template<typename T, std::size_t N>
+        typename std::enable_if<!std::is_const<T>::value>::type
+        fill( T ( &array )[N] ) {
+            impl::fill( m_engine, array );
+        }
+
+        template<typename Key, typename T, std::size_t N, typename A, typename B>
+        typename std::enable_if<std::is_same<Key, common>::value && !std::is_const<T>::value>::type
+        fill( T ( &array )[N], A from, B to ) {
+            impl::template fill<Key>( m_engine, array, from, to );
+        }
+
         template<typename RandomIt>
         void shuffle( RandomIt first, RandomIt last ) {
             impl::shuffle( m_engine, first, last );
         }
 
         template<typename Container>
-        typename std::enable_if<!std::is_const<Container>::value>::type
-        shuffle( Container& container ) {
-            impl::shuffle( m_engine, container );
+        typename std::enable_if<
+            !std::is_array<typename std::remove_reference<Container>::type>::value &&
+            details::is_iterator<decltype( std::begin( std::declval<Container&>( ) ) )>::value &&
+            !std::is_const<typename std::remove_reference<decltype( *std::begin( std::declval<Container&>( ) ) )>::type>::value>::type
+        shuffle( Container&& container ) {
+            impl::shuffle( m_engine, std::forward<Container>( container ) );
         }
 
         template<typename T, std::size_t N>
@@ -1753,6 +2409,48 @@ namespace ilqvya {
             return impl::sample_string( m_engine, literal, n );
         }
 
+        template<typename PopulationIt, typename OutIt, typename Distance>
+        OutIt choice( PopulationIt first, PopulationIt last, OutIt out, Distance n ) {
+            return impl::choice( m_engine, first, last, out, n );
+        }
+
+        template<template<typename...> class Container = std::vector, typename Range>
+        ILQVYA_NODISCARD auto choice( const Range& range, std::size_t n ) -> typename std::enable_if<
+            details::is_iterator<decltype( std::begin( range ) )>::value,
+            Container<typename std::iterator_traits<decltype( std::begin( range ) )>::value_type>>::type {
+            return impl::template choice<Container>( m_engine, range, n );
+        }
+
+        template<template<typename...> class Container = std::vector, typename T, std::size_t N>
+        ILQVYA_NODISCARD typename std::enable_if<!details::is_supported_character<T>::value,
+                                                Container<typename std::remove_cv<T>::type>>::type
+        choice( const T ( &array )[N], std::size_t n ) {
+            return impl::template choice<Container>( m_engine, array, n );
+        }
+
+        template<typename CharT, std::size_t N>
+        ILQVYA_NODISCARD typename std::enable_if<details::is_supported_character<CharT>::value,
+                                                std::basic_string<CharT>>::type
+        choice( const CharT ( &literal )[N], std::size_t n ) {
+            return impl::choice( m_engine, literal, n );
+        }
+
+        template<typename Range>
+        ILQVYA_NODISCARD auto choice_string( const Range& range, std::size_t n ) -> typename std::enable_if<
+            details::is_iterator<decltype( std::begin( range ) )>::value &&
+                details::is_supported_character<
+                    typename std::iterator_traits<decltype( std::begin( range ) )>::value_type>::value,
+            std::basic_string<typename std::iterator_traits<decltype( std::begin( range ) )>::value_type>>::type {
+            return impl::choice_string( m_engine, range, n );
+        }
+
+        template<typename CharT, std::size_t N>
+        ILQVYA_NODISCARD typename std::enable_if<details::is_supported_character<CharT>::value,
+                                                std::basic_string<CharT>>::type
+        choice_string( const CharT ( &literal )[N], std::size_t n ) {
+            return impl::choice_string( m_engine, literal, n );
+        }
+
         template<typename CharT = char>
         ILQVYA_NODISCARD typename std::enable_if<details::is_supported_character<CharT>::value,
                                                 std::basic_string<CharT>>::type
@@ -1774,6 +2472,14 @@ namespace ilqvya {
                                                 std::basic_string<CharT>>::type
         get_string( std::size_t length, const CharT ( &literal )[N] ) {
             return impl::get_string( m_engine, length, literal );
+        }
+
+        ILQVYA_NODISCARD std::string get_hex( std::size_t length, bool uppercase = false ) {
+            return impl::get_hex( m_engine, length, uppercase );
+        }
+
+        ILQVYA_NODISCARD std::string get_uuid( uuid_version version = uuid_version::v4 ) {
+            return impl::get_uuid( m_engine, version );
         }
 
         template<typename... Args>
