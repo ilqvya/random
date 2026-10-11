@@ -2903,4 +2903,42 @@ TEST_CASE( "get_string printable default and Unicode validation" ) {
     }
 }
 
+TEST_CASE( "Concurrent get_uuid v7 monotonicity under multi-threading" ) {
+    const int thread_count = 8;
+    const int iterations_per_thread = 50;
+    std::vector<std::string> results[thread_count];
+    std::vector<std::thread> threads;
+
+    for ( std::size_t t = 0; t < thread_count; ++t ) {
+        threads.emplace_back( [t, &results] {
+            results[t].reserve( iterations_per_thread );
+            for ( std::size_t i = 0; i < iterations_per_thread; ++i ) {
+                results[t].push_back( Random.get_uuid( Random_t::uuid_version::v7 ) );
+            }
+        } );
+    }
+
+    for ( auto& th : threads ) {
+        th.join( );
+    }
+
+    for ( std::size_t t = 0; t < thread_count; ++t ) {
+        for ( std::size_t i = 1; i < iterations_per_thread; ++i ) {
+            REQUIRE( results[t][i] >= results[t][i - 1] );
+        }
+    }
+}
+
+TEST_CASE( "Real get handles small ranges and denorm_min without error" ) {
+    float denorm_min = ( std::numeric_limits<float>::denorm_min )( );
+    float r = Random.get( 0.0f, denorm_min );
+    REQUIRE( r >= 0.0f );
+    REQUIRE( r <= denorm_min );
+
+    double small_val = 1e-300;
+    double rd = Random.get( -small_val, small_val );
+    REQUIRE( rd >= -small_val );
+    REQUIRE( rd <= small_val );
+}
+
 

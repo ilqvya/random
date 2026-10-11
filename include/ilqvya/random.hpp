@@ -54,6 +54,7 @@ SOFTWARE.
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <mutex>
 #include <cmath>
 #include <atomic>
 
@@ -638,9 +639,12 @@ namespace ilqvya {
                     !std::is_lvalue_reference<Container>::value &&
                         details::is_iterator<decltype( std::begin( container ) )>::value,
                     typename std::iterator_traits<decltype( std::begin( container ) )>::value_type>::type {
-                if ( std::begin( container ) == std::end( container ) )
+                auto first = std::begin( container );
+                auto last  = std::end( container );
+                if ( first == last )
                     throw std::invalid_argument( "Random::get: container must not be empty" );
-                return *get( engine, std::begin( container ), std::end( container ) );
+                auto it = get( engine, first, last );
+                return std::move( *it );
             }
 
             template<template<typename...> class Container, typename A>
@@ -1336,18 +1340,28 @@ namespace ilqvya {
                         bytes[4] = static_cast<std::uint8_t>( ( ms >> 8 ) & 0xff );
                         bytes[5] = static_cast<std::uint8_t>( ms & 0xff );
 
-                        // RFC 9562 Monotonicity sequence counter for sub-millisecond collisions
-                        static std::atomic<std::uint64_t> last_v7_ms{ 0 };
-                        static std::atomic<std::uint16_t> last_v7_seq{ 0 };
+                        // RFC 9562 Monotonicity sequence counter for sub-millisecond collisions.
+                        // Packs 48 bits of timestamp ms with 16 bits of sequence state into a single atomic word
+                        // to guarantee atomic monotonicity and race-free updates across concurrent callers.
+                        static std::atomic<std::uint64_t> last_v7_state{ 0 };
+                        const std::uint16_t seed_seq = static_cast<std::uint16_t>( get<std::uint16_t>( engine, 0, 0x03ff ) );
+                        std::uint64_t current = last_v7_state.load( std::memory_order_relaxed );
                         std::uint16_t seq = 0;
-                        const std::uint64_t prev = last_v7_ms.load( std::memory_order_relaxed );
-                        if ( ms == prev ) {
-                            seq = static_cast<std::uint16_t>(
-                                ( last_v7_seq.fetch_add( 1, std::memory_order_relaxed ) + 1 ) & 0x0fff );
-                        } else {
-                            last_v7_ms.store( ms, std::memory_order_relaxed );
-                            seq = static_cast<std::uint16_t>( get<std::uint16_t>( engine, 0, 0x03ff ) );
-                            last_v7_seq.store( seq, std::memory_order_relaxed );
+                        while ( true ) {
+                            const std::uint64_t cur_ms = current >> 16;
+                            const std::uint16_t cur_seq = static_cast<std::uint16_t>( current & 0xffff );
+                            std::uint64_t next_state = 0;
+                            if ( ms > cur_ms ) {
+                                next_state = ( ms << 16 ) | static_cast<std::uint64_t>( seed_seq & 0x03ff );
+                            } else {
+                                next_state = ( cur_ms << 16 ) | static_cast<std::uint64_t>( ( cur_seq + 1 ) & 0x0fff );
+                            }
+                            if ( last_v7_state.compare_exchange_weak( current, next_state,
+                                                                      std::memory_order_relaxed,
+                                                                      std::memory_order_relaxed ) ) {
+                                seq = static_cast<std::uint16_t>( next_state & 0x0fff );
+                                break;
+                            }
                         }
 
                         bytes[6] = static_cast<std::uint8_t>( ( ( seq >> 8 ) & 0x0f ) | 0x70 );
