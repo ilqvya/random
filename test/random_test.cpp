@@ -2559,43 +2559,74 @@ TEST_CASE( "Hex and UUID / GUID generator: get_hex and get_uuid" ) {
     REQUIRE( uuid_v1[14] == '1' );
     REQUIRE( ( uuid_v1[19] == '8' || uuid_v1[19] == '9' || uuid_v1[19] == 'a' || uuid_v1[19] == 'b' ) );
 
-    // 4. get_uuid v7
+    // 4. get_uuid v2
+    auto uuid_v2 = Random.get_uuid( Random_t::uuid_version::v2 );
+    REQUIRE( uuid_v2.size( ) == 36 );
+    REQUIRE( uuid_v2[14] == '2' );
+    REQUIRE( ( uuid_v2[19] == '8' || uuid_v2[19] == '9' || uuid_v2[19] == 'a' || uuid_v2[19] == 'b' ) );
+
+    // 5. get_uuid v3
+    auto uuid_v3 = Random.get_uuid( Random_t::uuid_version::v3 );
+    REQUIRE( uuid_v3.size( ) == 36 );
+    REQUIRE( uuid_v3[14] == '3' );
+    REQUIRE( ( uuid_v3[19] == '8' || uuid_v3[19] == '9' || uuid_v3[19] == 'a' || uuid_v3[19] == 'b' ) );
+
+    // 6. get_uuid v5
+    auto uuid_v5 = Random.get_uuid( Random_t::uuid_version::v5 );
+    REQUIRE( uuid_v5.size( ) == 36 );
+    REQUIRE( uuid_v5[14] == '5' );
+    REQUIRE( ( uuid_v5[19] == '8' || uuid_v5[19] == '9' || uuid_v5[19] == 'a' || uuid_v5[19] == 'b' ) );
+
+    // 7. get_uuid v6
+    auto uuid_v6 = Random.get_uuid( Random_t::uuid_version::v6 );
+    REQUIRE( uuid_v6.size( ) == 36 );
+    REQUIRE( uuid_v6[14] == '6' );
+    REQUIRE( ( uuid_v6[19] == '8' || uuid_v6[19] == '9' || uuid_v6[19] == 'a' || uuid_v6[19] == 'b' ) );
+
+    // 8. get_uuid v7
     auto uuid_v7 = Random.get_uuid( Random_t::uuid_version::v7 );
     REQUIRE( uuid_v7.size( ) == 36 );
     REQUIRE( uuid_v7[14] == '7' );
     REQUIRE( ( uuid_v7[19] == '8' || uuid_v7[19] == '9' || uuid_v7[19] == 'a' || uuid_v7[19] == 'b' ) );
 
-    // 5. get_uuid nil
+    // 9. get_uuid v8
+    auto uuid_v8 = Random.get_uuid( Random_t::uuid_version::v8 );
+    REQUIRE( uuid_v8.size( ) == 36 );
+    REQUIRE( uuid_v8[14] == '8' );
+    REQUIRE( ( uuid_v8[19] == '8' || uuid_v8[19] == '9' || uuid_v8[19] == 'a' || uuid_v8[19] == 'b' ) );
+
+    // 10. get_uuid nil
     auto uuid_nil = Random.get_uuid( Random_t::uuid_version::nil );
     REQUIRE( uuid_nil == "00000000-0000-0000-0000-000000000000" );
 
-    // 6. get_uuid max
+    // 11. get_uuid max
     auto uuid_max = Random.get_uuid( Random_t::uuid_version::max );
     REQUIRE( uuid_max == "ffffffff-ffff-ffff-ffff-ffffffffffff" );
 
-    // 7. get_uuid mongo_object_id
+    // 12. get_uuid mongo_object_id
     auto mongo_id = Random.get_uuid( Random_t::uuid_version::mongo_object_id );
     REQUIRE( mongo_id.size( ) == 24 );
     for ( char c : mongo_id ) {
         REQUIRE( ( ( c >= '0' && c <= '9' ) || ( c >= 'a' && c <= 'f' ) ) );
     }
 
-    // 8. local instance test
+    // 13. local instance test across all versions
     ilqvya::random_local rl;
     auto rl_hex = rl.get_hex( 16 );
     REQUIRE( rl_hex.size( ) == 16 );
     auto rl_uuid_def = rl.get_uuid( );
     REQUIRE( rl_uuid_def.size( ) == 36 );
-    auto rl_uuid_v1 = rl.get_uuid( ilqvya::random_local::uuid_version::v1 );
-    REQUIRE( rl_uuid_v1.size( ) == 36 );
-    auto rl_uuid_v7 = rl.get_uuid( ilqvya::random_local::uuid_version::v7 );
-    REQUIRE( rl_uuid_v7.size( ) == 36 );
-    auto rl_uuid_nil = rl.get_uuid( ilqvya::random_local::uuid_version::nil );
-    REQUIRE( rl_uuid_nil == "00000000-0000-0000-0000-000000000000" );
-    auto rl_uuid_max = rl.get_uuid( ilqvya::random_local::uuid_version::max );
-    REQUIRE( rl_uuid_max == "ffffffff-ffff-ffff-ffff-ffffffffffff" );
-    auto rl_uuid_mongo = rl.get_uuid( ilqvya::random_local::uuid_version::mongo_object_id );
-    REQUIRE( rl_uuid_mongo.size( ) == 24 );
+    REQUIRE( rl.get_uuid( ilqvya::random_local::uuid_version::v1 ).size( ) == 36 );
+    REQUIRE( rl.get_uuid( ilqvya::random_local::uuid_version::v2 ).size( ) == 36 );
+    REQUIRE( rl.get_uuid( ilqvya::random_local::uuid_version::v3 ).size( ) == 36 );
+    REQUIRE( rl.get_uuid( ilqvya::random_local::uuid_version::v4 ).size( ) == 36 );
+    REQUIRE( rl.get_uuid( ilqvya::random_local::uuid_version::v5 ).size( ) == 36 );
+    REQUIRE( rl.get_uuid( ilqvya::random_local::uuid_version::v6 ).size( ) == 36 );
+    REQUIRE( rl.get_uuid( ilqvya::random_local::uuid_version::v7 ).size( ) == 36 );
+    REQUIRE( rl.get_uuid( ilqvya::random_local::uuid_version::v8 ).size( ) == 36 );
+    REQUIRE( rl.get_uuid( ilqvya::random_local::uuid_version::nil ) == "00000000-0000-0000-0000-000000000000" );
+    REQUIRE( rl.get_uuid( ilqvya::random_local::uuid_version::max ) == "ffffffff-ffff-ffff-ffff-ffffffffffff" );
+    REQUIRE( rl.get_uuid( ilqvya::random_local::uuid_version::mongo_object_id ).size( ) == 24 );
 }
 
 #if defined( __has_include )

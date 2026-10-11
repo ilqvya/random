@@ -321,11 +321,16 @@ namespace ilqvya {
     template<typename Value, typename Weight = double>
     using weighted_result = details::weighted_result<Value, Weight>;
 
-    /// UUID / GUID specification versions
+    /// UUID / GUID specification versions (RFC 4122, RFC 9562, DCE 1.1, MongoDB)
     enum class uuid_version {
         v4,
         v1,
+        v2,
+        v3,
+        v5,
+        v6,
         v7,
+        v8,
         nil,
         max,
         mongo_object_id
@@ -1262,6 +1267,86 @@ namespace ilqvya {
                         }
                         bytes[8] = static_cast<std::uint8_t>( ( bytes[8] & 0x3f ) | 0x80 );
                         bytes[10] = static_cast<std::uint8_t>( bytes[10] | 0x01 );
+                        return format_uuid_bytes( bytes );
+                    }
+                    case uuid_version::v2: {
+                        std::uint8_t bytes[16];
+                        const auto now_ns = static_cast<std::uint64_t>(
+                            std::chrono::duration_cast<std::chrono::nanoseconds>(
+                                std::chrono::system_clock::now( ).time_since_epoch( ) )
+                                .count( ) );
+                        const std::uint64_t intervals = ( now_ns / 100 ) + 0x01B21DD213814000ULL;
+                        const std::uint16_t time_mid = static_cast<std::uint16_t>( ( intervals >> 32 ) & 0xffff );
+                        const std::uint16_t time_hi = static_cast<std::uint16_t>( ( intervals >> 48 ) & 0x0fff );
+
+                        for ( std::size_t i = 0; i < 4; ++i ) {
+                            bytes[i] = get<std::uint8_t>( engine );
+                        }
+                        bytes[4] = static_cast<std::uint8_t>( ( time_mid >> 8 ) & 0xff );
+                        bytes[5] = static_cast<std::uint8_t>( time_mid & 0xff );
+                        bytes[6] = static_cast<std::uint8_t>( ( ( time_hi >> 8 ) & 0x0f ) | 0x20 );
+                        bytes[7] = static_cast<std::uint8_t>( time_hi & 0xff );
+
+                        bytes[8] = static_cast<std::uint8_t>( ( get<std::uint8_t>( engine ) & 0x3f ) | 0x80 );
+                        bytes[9] = get<std::uint8_t>( engine ); // local domain (e.g. Person = 0)
+                        for ( std::size_t i = 10; i < 16; ++i ) {
+                            bytes[i] = get<std::uint8_t>( engine );
+                        }
+                        bytes[10] = static_cast<std::uint8_t>( bytes[10] | 0x01 );
+                        return format_uuid_bytes( bytes );
+                    }
+                    case uuid_version::v3: {
+                        std::uint8_t bytes[16];
+                        for ( std::size_t i = 0; i < 16; ++i ) {
+                            bytes[i] = get<std::uint8_t>( engine );
+                        }
+                        bytes[6] = static_cast<std::uint8_t>( ( bytes[6] & 0x0f ) | 0x30 );
+                        bytes[8] = static_cast<std::uint8_t>( ( bytes[8] & 0x3f ) | 0x80 );
+                        return format_uuid_bytes( bytes );
+                    }
+                    case uuid_version::v5: {
+                        std::uint8_t bytes[16];
+                        for ( std::size_t i = 0; i < 16; ++i ) {
+                            bytes[i] = get<std::uint8_t>( engine );
+                        }
+                        bytes[6] = static_cast<std::uint8_t>( ( bytes[6] & 0x0f ) | 0x50 );
+                        bytes[8] = static_cast<std::uint8_t>( ( bytes[8] & 0x3f ) | 0x80 );
+                        return format_uuid_bytes( bytes );
+                    }
+                    case uuid_version::v6: {
+                        std::uint8_t bytes[16];
+                        const auto now_ns = static_cast<std::uint64_t>(
+                            std::chrono::duration_cast<std::chrono::nanoseconds>(
+                                std::chrono::system_clock::now( ).time_since_epoch( ) )
+                                .count( ) );
+                        const std::uint64_t intervals = ( now_ns / 100 ) + 0x01B21DD213814000ULL;
+                        const std::uint32_t time_high_32 = static_cast<std::uint32_t>( ( intervals >> 28 ) & 0xffffffff );
+                        const std::uint16_t time_mid_16 = static_cast<std::uint16_t>( ( intervals >> 12 ) & 0xffff );
+                        const std::uint16_t time_low_12 = static_cast<std::uint16_t>( intervals & 0x0fff );
+
+                        bytes[0] = static_cast<std::uint8_t>( ( time_high_32 >> 24 ) & 0xff );
+                        bytes[1] = static_cast<std::uint8_t>( ( time_high_32 >> 16 ) & 0xff );
+                        bytes[2] = static_cast<std::uint8_t>( ( time_high_32 >> 8 ) & 0xff );
+                        bytes[3] = static_cast<std::uint8_t>( time_high_32 & 0xff );
+                        bytes[4] = static_cast<std::uint8_t>( ( time_mid_16 >> 8 ) & 0xff );
+                        bytes[5] = static_cast<std::uint8_t>( time_mid_16 & 0xff );
+                        bytes[6] = static_cast<std::uint8_t>( ( ( time_low_12 >> 8 ) & 0x0f ) | 0x60 );
+                        bytes[7] = static_cast<std::uint8_t>( time_low_12 & 0xff );
+
+                        for ( std::size_t i = 8; i < 16; ++i ) {
+                            bytes[i] = get<std::uint8_t>( engine );
+                        }
+                        bytes[8] = static_cast<std::uint8_t>( ( bytes[8] & 0x3f ) | 0x80 );
+                        bytes[10] = static_cast<std::uint8_t>( bytes[10] | 0x01 );
+                        return format_uuid_bytes( bytes );
+                    }
+                    case uuid_version::v8: {
+                        std::uint8_t bytes[16];
+                        for ( std::size_t i = 0; i < 16; ++i ) {
+                            bytes[i] = get<std::uint8_t>( engine );
+                        }
+                        bytes[6] = static_cast<std::uint8_t>( ( bytes[6] & 0x0f ) | 0x80 );
+                        bytes[8] = static_cast<std::uint8_t>( ( bytes[8] & 0x3f ) | 0x80 );
                         return format_uuid_bytes( bytes );
                     }
                     case uuid_version::mongo_object_id: {

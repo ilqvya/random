@@ -444,11 +444,16 @@ auto hex16 = Random::get_hex(16, true);  // e.g. "A3F1C8..." (uppercase)
 std::string uuid4 = Random::get_uuid(); 
 // e.g. "123e4567-e89b-42d3-a456-426614174000"
 
-// Specific UUID versions via ilqvya::uuid_version:
+// Specific UUID versions via ilqvya::uuid_version (RFC 4122 / RFC 9562):
 using ilqvya::uuid_version;
-auto v4  = Random::get_uuid(uuid_version::v4);               // RFC 4122 random
-auto v1  = Random::get_uuid(uuid_version::v1);               // Time-based (RFC 4122)
-auto v7  = Random::get_uuid(uuid_version::v7);               // Time-ordered Unix epoch (RFC 9562)
+auto v4  = Random::get_uuid(uuid_version::v4);               // RFC 4122 random (default)
+auto v1  = Random::get_uuid(uuid_version::v1);               // Gregorian time-based (RFC 4122)
+auto v2  = Random::get_uuid(uuid_version::v2);               // DCE Security with local domain (DCE 1.1)
+auto v3  = Random::get_uuid(uuid_version::v3);               // MD5 name-based layout (RFC 4122)
+auto v5  = Random::get_uuid(uuid_version::v5);               // SHA-1 name-based layout (RFC 4122)
+auto v6  = Random::get_uuid(uuid_version::v6);               // Reordered Gregorian time-based (RFC 9562)
+auto v7  = Random::get_uuid(uuid_version::v7);               // Unix epoch millisecond time-ordered (RFC 9562)
+auto v8  = Random::get_uuid(uuid_version::v8);               // Custom / experimental format (RFC 9562)
 auto nil = Random::get_uuid(uuid_version::nil);              // "00000000-0000-0000-0000-000000000000"
 auto max = Random::get_uuid(uuid_version::max);              // "ffffffff-ffff-ffff-ffff-ffffffffffff"
 auto oid = Random::get_uuid(uuid_version::mongo_object_id);  // 24 hex characters MongoDB ObjectID
