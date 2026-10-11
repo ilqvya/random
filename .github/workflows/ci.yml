@@ -97,6 +97,26 @@ jobs:
       - name: Test
         run: ctest --test-dir build -C Release --output-on-failure
 
+  modules:
+    name: C++20 Modules (MSVC)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure CMake
+        run: >
+          cmake -B build
+          -DRandom_BuildModules=ON
+          -DRandom_BuildTests=ON
+          -DCMAKE_CXX_STANDARD=20
+          -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Test
+        run: ctest --test-dir build -C Release --output-on-failure
+
   coverage:
     name: Code Coverage
     runs-on: ubuntu-latest

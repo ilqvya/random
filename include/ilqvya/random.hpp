@@ -54,6 +54,8 @@ SOFTWARE.
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <cmath>
+#include <atomic>
 
 #if defined( _MSVC_LANG )
 #    define ILQVYA_CPLUSPLUS _MSVC_LANG
@@ -164,6 +166,12 @@ namespace ilqvya {
                 ;
         };
 
+        template<typename CharT>
+        struct default_char_range {
+            static constexpr CharT min_val( ) noexcept { return static_cast<CharT>( ' ' ); }
+            static constexpr CharT max_val( ) noexcept { return static_cast<CharT>( '~' ); }
+        };
+
         /// True if type T is iterator
         template<typename T>
         struct is_iterator {
@@ -262,6 +270,42 @@ namespace ilqvya {
             Container, void_t<typename Container::value_type::first_type, typename Container::value_type::second_type>>
             : public std::true_type {};
 
+        template<typename Target, typename Source, typename = void>
+        struct can_represent {
+            static bool check( Source val ) {
+                return static_cast<double>( val ) >= static_cast<double>( ( std::numeric_limits<Target>::lowest )( ) ) &&
+                       static_cast<double>( val ) <= static_cast<double>( ( std::numeric_limits<Target>::max )( ) );
+            }
+        };
+
+        template<typename Target, typename Source>
+        struct can_represent<Target, Source,
+                              typename std::enable_if<std::is_integral<Target>::value && std::is_integral<Source>::value>::type> {
+            static bool check( Source val ) noexcept {
+                if ( std::is_signed<Source>::value && !std::is_signed<Target>::value ) {
+                    if ( val < 0 )
+                        return false;
+                    using USource = typename std::make_unsigned<Source>::type;
+                    return static_cast<std::uintmax_t>( static_cast<USource>( val ) ) <=
+                           static_cast<std::uintmax_t>( ( std::numeric_limits<Target>::max )( ) );
+                }
+                if ( !std::is_signed<Source>::value && std::is_signed<Target>::value ) {
+                    return static_cast<std::uintmax_t>( val ) <=
+                           static_cast<std::uintmax_t>( ( std::numeric_limits<Target>::max )( ) );
+                }
+                if ( !std::is_signed<Source>::value && !std::is_signed<Target>::value ) {
+                    return static_cast<std::uintmax_t>( val ) >=
+                               static_cast<std::uintmax_t>( ( std::numeric_limits<Target>::lowest )( ) ) &&
+                           static_cast<std::uintmax_t>( val ) <=
+                               static_cast<std::uintmax_t>( ( std::numeric_limits<Target>::max )( ) );
+                }
+                return static_cast<std::intmax_t>( val ) >=
+                           static_cast<std::intmax_t>( ( std::numeric_limits<Target>::lowest )( ) ) &&
+                       static_cast<std::intmax_t>( val ) <=
+                           static_cast<std::intmax_t>( ( std::numeric_limits<Target>::max )( ) );
+            }
+        };
+
         template<typename Value, typename Weight = double>
         struct weighted_result {
             Value value;
@@ -321,19 +365,15 @@ namespace ilqvya {
     template<typename Value, typename Weight = double>
     using weighted_result = details::weighted_result<Value, Weight>;
 
-    /// UUID / GUID specification versions (RFC 4122, RFC 9562, DCE 1.1, MongoDB)
+    /// UUID / GUID specification versions (RFC 4122, RFC 9562, MongoDB)
     enum class uuid_version {
-        v4,
-        v1,
-        v2,
-        v3,
-        v5,
-        v6,
-        v7,
-        v8,
-        nil,
-        max,
-        mongo_object_id
+        nil = 0,
+        v1 = 1,
+        v4 = 4,
+        v6 = 6,
+        v7 = 7,
+        max = 15,
+        mongo_object_id = 12
     };
 
     /// Default seeder for 'random' classes
@@ -456,6 +496,11 @@ namespace ilqvya {
             template<typename T>
             ILQVYA_NODISCARD static typename std::enable_if<details::is_uniform_real<T>::value, T>::type
             get( Engine& engine, T from = T( 0 ), T to = T( 1 ) ) {
+                if ( std::isnan( from ) || std::isnan( to ) || !std::isfinite( from ) || !std::isfinite( to ) )
+                    throw std::invalid_argument( "Random::get: range bounds must be finite numbers" );
+                const T diff = ( from < to ) ? ( to - from ) : ( from - to );
+                if ( !std::isfinite( diff ) )
+                    throw std::overflow_error( "Random::get: range width exceeds representable floating-point range" );
                 if ( from == to )
                     return from;
                 if ( from < to )
@@ -502,7 +547,7 @@ namespace ilqvya {
             template<typename T>
             ILQVYA_NODISCARD static typename std::enable_if<std::is_same<T, bool>::value, bool>::type
             get( Engine& engine, const double probability = 0.5 ) {
-                if ( probability < 0.0 || probability > 1.0 )
+                if ( std::isnan( probability ) || probability < 0.0 || probability > 1.0 )
                     throw std::invalid_argument( "Random::get<bool>: probability must be between 0.0 and 1.0" );
                 return BoolDist{ probability }( engine );
             }
@@ -516,27 +561,40 @@ namespace ilqvya {
             }
 
             ILQVYA_NODISCARD static bool chance_pct( Engine& engine, const double percentage ) {
-                if ( percentage < 0.0 || percentage > 100.0 )
+                if ( std::isnan( percentage ) || percentage < 0.0 || percentage > 100.0 )
                     throw std::invalid_argument( "Random::chance_pct: percentage must be between 0.0 and 100.0" );
                 return get<bool>( engine, percentage / 100.0 );
             }
 
-            template<typename RealType = double>
-            ILQVYA_NODISCARD static RealType normal( Engine& engine, RealType mean = RealType( 0 ),
-                                                     RealType stddev = RealType( 1 ) ) {
-                std::normal_distribution<RealType> dist( mean, stddev );
+            template<typename RealType = double, typename Mean = RealType, typename Stddev = RealType,
+                     typename EffectiveReal = typename std::conditional<details::is_uniform_real<RealType>::value, RealType, double>::type>
+            ILQVYA_NODISCARD static EffectiveReal normal( Engine& engine, Mean mean = Mean( 0 ),
+                                                          Stddev stddev = Stddev( 1 ) ) {
+                const auto m = static_cast<EffectiveReal>( mean );
+                const auto s = static_cast<EffectiveReal>( stddev );
+                if ( std::isnan( m ) || std::isnan( s ) || s <= EffectiveReal( 0 ) )
+                    throw std::invalid_argument( "Random::normal: stddev must be greater than 0" );
+                std::normal_distribution<EffectiveReal> dist( m, s );
                 return dist( engine );
             }
 
-            template<typename RealType = double>
-            ILQVYA_NODISCARD static RealType exponential( Engine& engine, RealType lambda = RealType( 1 ) ) {
-                std::exponential_distribution<RealType> dist( lambda );
+            template<typename RealType = double, typename Lambda = RealType,
+                     typename EffectiveReal = typename std::conditional<details::is_uniform_real<RealType>::value, RealType, double>::type>
+            ILQVYA_NODISCARD static EffectiveReal exponential( Engine& engine, Lambda lambda = Lambda( 1 ) ) {
+                const auto l = static_cast<EffectiveReal>( lambda );
+                if ( std::isnan( l ) || l <= EffectiveReal( 0 ) )
+                    throw std::invalid_argument( "Random::exponential: lambda must be greater than 0" );
+                std::exponential_distribution<EffectiveReal> dist( l );
                 return dist( engine );
             }
 
-            template<typename IntType = int>
-            ILQVYA_NODISCARD static IntType poisson( Engine& engine, double mean = 1.0 ) {
-                std::poisson_distribution<IntType> dist( mean );
+            template<typename IntType = int, typename Mean = double>
+            ILQVYA_NODISCARD static typename std::enable_if<std::is_integral<IntType>::value, IntType>::type
+            poisson( Engine& engine, Mean mean = Mean( 1 ) ) {
+                const auto m = static_cast<double>( mean );
+                if ( std::isnan( m ) || m <= 0.0 )
+                    throw std::invalid_argument( "Random::poisson: mean must be greater than 0" );
+                std::poisson_distribution<IntType> dist( m );
                 return dist( engine );
             }
 
@@ -712,10 +770,18 @@ namespace ilqvya {
                 WeightType total_weight = 0;
                 IteratorType last_nonzero_it = std::end( pair_container );
                 for ( IteratorType it = std::begin( pair_container ); it != std::end( pair_container ); ++it ) {
+                    if ( details::is_uniform_real<WeightType>::value ) {
+                        if ( std::isnan( it->second ) || !std::isfinite( it->second ) )
+                            throw std::invalid_argument( "Random::get: weights must be finite numbers" );
+                    }
                     if ( it->second < WeightType( 0 ) )
                         throw std::invalid_argument( "Random::get: weights must be non-negative" );
                     if ( it->second > WeightType( 0 ) ) {
                         last_nonzero_it = it;
+                    }
+                    if ( details::is_uniform_int<WeightType>::value ) {
+                        if ( ( std::numeric_limits<WeightType>::max )( ) - total_weight < it->second )
+                            throw std::overflow_error( "Random::get: total weight exceeds maximum integer value" );
                     }
                     total_weight += it->second;
                 }
@@ -784,6 +850,8 @@ namespace ilqvya {
                     if ( item.weight > Weight( 0 ) ) {
                         last_nonzero = &item;
                     }
+                    if ( ( std::numeric_limits<Weight>::max )( ) - total_weight < item.weight )
+                        throw std::overflow_error( "Random::get: total weight exceeds maximum integer value" );
                     total_weight += item.weight;
                 }
                 if ( total_weight == Weight( 0 ) ) {
@@ -812,6 +880,8 @@ namespace ilqvya {
                 Weight total_weight = 0;
                 const details::weighted_result<Target, Weight>* last_nonzero = nullptr;
                 for ( const auto& item : list ) {
+                    if ( std::isnan( item.weight ) || !std::isfinite( item.weight ) )
+                        throw std::invalid_argument( "Random::get: weights must be finite numbers" );
                     if ( item.weight < Weight( 0 ) )
                         throw std::invalid_argument( "Random::get: weights must be non-negative" );
                     if ( item.weight > Weight( 0 ) ) {
@@ -856,8 +926,14 @@ namespace ilqvya {
             static typename std::enable_if<details::is_iterator<ForwardIt>::value>::type
             fill( Engine& engine, ForwardIt first, ForwardIt last, T from, T to ) {
                 using ValueType = typename std::iterator_traits<ForwardIt>::value_type;
+                if ( !details::can_represent<ValueType, T>::check( from ) ||
+                     !details::can_represent<ValueType, T>::check( to ) ) {
+                    throw std::out_of_range( "Random::fill: range bounds exceed container element type limits" );
+                }
+                const auto v_from = static_cast<ValueType>( from );
+                const auto v_to   = static_cast<ValueType>( to );
                 for ( ; first != last; ++first ) {
-                    *first = static_cast<ValueType>( get( engine, from, to ) );
+                    *first = get<ValueType>( engine, v_from, v_to );
                 }
             }
 
@@ -874,8 +950,14 @@ namespace ilqvya {
             static typename std::enable_if<std::is_same<Key, common>::value && details::is_iterator<ForwardIt>::value>::type
             fill( Engine& engine, ForwardIt first, ForwardIt last, A from, B to ) {
                 using ValueType = typename std::iterator_traits<ForwardIt>::value_type;
+                if ( !details::can_represent<ValueType, A>::check( from ) ||
+                     !details::can_represent<ValueType, B>::check( to ) ) {
+                    throw std::out_of_range( "Random::fill: range bounds exceed container element type limits" );
+                }
+                const auto v_from = static_cast<ValueType>( from );
+                const auto v_to   = static_cast<ValueType>( to );
                 for ( ; first != last; ++first ) {
-                    *first = static_cast<ValueType>( get<Key>( engine, from, to ) );
+                    *first = get<ValueType>( engine, v_from, v_to );
                 }
             }
 
@@ -964,8 +1046,10 @@ namespace ilqvya {
                     Container<typename std::iterator_traits<decltype( std::begin( range ) )>::value_type>>::type {
                 using ValueType = typename std::iterator_traits<decltype( std::begin( range ) )>::value_type;
                 Container<ValueType> result;
-                details::reserve_if_supported( result, n );
-                sample( engine, std::begin( range ), std::end( range ), details::make_inserter( result ), n );
+                const std::size_t pop_size = static_cast<std::size_t>( std::distance( std::begin( range ), std::end( range ) ) );
+                const std::size_t actual_n = ( std::min )( n, pop_size );
+                details::reserve_if_supported( result, actual_n );
+                sample( engine, std::begin( range ), std::end( range ), details::make_inserter( result ), actual_n );
                 return result;
             } // LCOV_EXCL_LINE
 
@@ -1015,7 +1099,7 @@ namespace ilqvya {
         private:
             template<typename PopulationIt, typename SampleIt, typename Distance>
             static SampleIt sample_impl( Engine& engine, PopulationIt first, PopulationIt last,
-                                        std::random_access_iterator_tag, SampleIt out, Distance n ) {
+                                         std::forward_iterator_tag, SampleIt out, Distance n ) {
                 using dist_t = typename std::iterator_traits<PopulationIt>::difference_type;
                 dist_t unsampled_sz = std::distance( first, last );
                 dist_t needed = ( std::min )( static_cast<dist_t>( n ), unsampled_sz );
@@ -1031,7 +1115,7 @@ namespace ilqvya {
 
             template<typename PopulationIt, typename SampleIt, typename Distance>
             static SampleIt sample_impl( Engine& engine, PopulationIt first, PopulationIt last,
-                                        std::input_iterator_tag, SampleIt out, Distance n ) {
+                                         std::input_iterator_tag, SampleIt out, Distance n ) {
                 using ValueType = typename std::iterator_traits<PopulationIt>::value_type;
                 const std::size_t un = static_cast<std::size_t>( n );
                 std::vector<ValueType> reservoir;
@@ -1055,12 +1139,28 @@ namespace ilqvya {
             template<typename CharT = char>
             ILQVYA_NODISCARD static typename std::enable_if<details::is_supported_character<CharT>::value,
                                                             std::basic_string<CharT>>::type
-            get_string( Engine& engine, std::size_t length, CharT from = ( std::numeric_limits<CharT>::min )( ),
-                        CharT to = ( std::numeric_limits<CharT>::max )( ) ) {
+            get_string( Engine& engine, std::size_t length,
+                        CharT from = details::default_char_range<CharT>::min_val( ),
+                        CharT to = details::default_char_range<CharT>::max_val( ) ) {
+                if ( from > to )
+                    std::swap( from, to );
+                if ( std::is_same<CharT, char32_t>::value && static_cast<std::uint32_t>( to ) > 0x10FFFF )
+                    throw std::invalid_argument( "Random::get_string: 'to' exceeds maximum Unicode code point (0x10FFFF)" );
+                if ( ( std::is_same<CharT, char16_t>::value || std::is_same<CharT, char32_t>::value ) &&
+                     static_cast<std::uint32_t>( from ) >= 0xD800 && static_cast<std::uint32_t>( to ) <= 0xDFFF ) {
+                    throw std::invalid_argument( "Random::get_string: specified range contains only Unicode surrogate code points" );
+                }
                 std::basic_string<CharT> result;
                 result.reserve( length );
-                for ( std::size_t i = 0; i < length; ++i )
-                    result.push_back( get<CharT>( engine, from, to ) );
+                for ( std::size_t i = 0; i < length; ++i ) {
+                    CharT ch = get<CharT>( engine, from, to );
+                    if ( std::is_same<CharT, char16_t>::value || std::is_same<CharT, char32_t>::value ) {
+                        while ( static_cast<std::uint32_t>( ch ) >= 0xD800 && static_cast<std::uint32_t>( ch ) <= 0xDFFF ) {
+                            ch = get<CharT>( engine, from, to );
+                        }
+                    }
+                    result.push_back( ch );
+                }
                 return result;
             } // LCOV_EXCL_LINE
 
@@ -1235,10 +1335,27 @@ namespace ilqvya {
                         bytes[3] = static_cast<std::uint8_t>( ( ms >> 16 ) & 0xff );
                         bytes[4] = static_cast<std::uint8_t>( ( ms >> 8 ) & 0xff );
                         bytes[5] = static_cast<std::uint8_t>( ms & 0xff );
-                        for ( std::size_t i = 6; i < 16; ++i ) {
+
+                        // RFC 9562 Monotonicity sequence counter for sub-millisecond collisions
+                        static std::atomic<std::uint64_t> last_v7_ms{ 0 };
+                        static std::atomic<std::uint16_t> last_v7_seq{ 0 };
+                        std::uint16_t seq = 0;
+                        const std::uint64_t prev = last_v7_ms.load( std::memory_order_relaxed );
+                        if ( ms == prev ) {
+                            seq = static_cast<std::uint16_t>(
+                                ( last_v7_seq.fetch_add( 1, std::memory_order_relaxed ) + 1 ) & 0x0fff );
+                        } else {
+                            last_v7_ms.store( ms, std::memory_order_relaxed );
+                            seq = static_cast<std::uint16_t>( get<std::uint16_t>( engine, 0, 0x03ff ) );
+                            last_v7_seq.store( seq, std::memory_order_relaxed );
+                        }
+
+                        bytes[6] = static_cast<std::uint8_t>( ( ( seq >> 8 ) & 0x0f ) | 0x70 );
+                        bytes[7] = static_cast<std::uint8_t>( seq & 0xff );
+
+                        for ( std::size_t i = 8; i < 16; ++i ) {
                             bytes[i] = get<std::uint8_t>( engine );
                         }
-                        bytes[6] = static_cast<std::uint8_t>( ( bytes[6] & 0x0f ) | 0x70 );
                         bytes[8] = static_cast<std::uint8_t>( ( bytes[8] & 0x3f ) | 0x80 );
                         return format_uuid_bytes( bytes );
                     }
@@ -1269,50 +1386,6 @@ namespace ilqvya {
                         bytes[10] = static_cast<std::uint8_t>( bytes[10] | 0x01 );
                         return format_uuid_bytes( bytes );
                     }
-                    case uuid_version::v2: {
-                        std::uint8_t bytes[16];
-                        const auto now_ns = static_cast<std::uint64_t>(
-                            std::chrono::duration_cast<std::chrono::nanoseconds>(
-                                std::chrono::system_clock::now( ).time_since_epoch( ) )
-                                .count( ) );
-                        const std::uint64_t intervals = ( now_ns / 100 ) + 0x01B21DD213814000ULL;
-                        const std::uint16_t time_mid = static_cast<std::uint16_t>( ( intervals >> 32 ) & 0xffff );
-                        const std::uint16_t time_hi = static_cast<std::uint16_t>( ( intervals >> 48 ) & 0x0fff );
-
-                        for ( std::size_t i = 0; i < 4; ++i ) {
-                            bytes[i] = get<std::uint8_t>( engine );
-                        }
-                        bytes[4] = static_cast<std::uint8_t>( ( time_mid >> 8 ) & 0xff );
-                        bytes[5] = static_cast<std::uint8_t>( time_mid & 0xff );
-                        bytes[6] = static_cast<std::uint8_t>( ( ( time_hi >> 8 ) & 0x0f ) | 0x20 );
-                        bytes[7] = static_cast<std::uint8_t>( time_hi & 0xff );
-
-                        bytes[8] = static_cast<std::uint8_t>( ( get<std::uint8_t>( engine ) & 0x3f ) | 0x80 );
-                        bytes[9] = get<std::uint8_t>( engine ); // local domain (e.g. Person = 0)
-                        for ( std::size_t i = 10; i < 16; ++i ) {
-                            bytes[i] = get<std::uint8_t>( engine );
-                        }
-                        bytes[10] = static_cast<std::uint8_t>( bytes[10] | 0x01 );
-                        return format_uuid_bytes( bytes );
-                    }
-                    case uuid_version::v3: {
-                        std::uint8_t bytes[16];
-                        for ( std::size_t i = 0; i < 16; ++i ) {
-                            bytes[i] = get<std::uint8_t>( engine );
-                        }
-                        bytes[6] = static_cast<std::uint8_t>( ( bytes[6] & 0x0f ) | 0x30 );
-                        bytes[8] = static_cast<std::uint8_t>( ( bytes[8] & 0x3f ) | 0x80 );
-                        return format_uuid_bytes( bytes );
-                    }
-                    case uuid_version::v5: {
-                        std::uint8_t bytes[16];
-                        for ( std::size_t i = 0; i < 16; ++i ) {
-                            bytes[i] = get<std::uint8_t>( engine );
-                        }
-                        bytes[6] = static_cast<std::uint8_t>( ( bytes[6] & 0x0f ) | 0x50 );
-                        bytes[8] = static_cast<std::uint8_t>( ( bytes[8] & 0x3f ) | 0x80 );
-                        return format_uuid_bytes( bytes );
-                    }
                     case uuid_version::v6: {
                         std::uint8_t bytes[16];
                         const auto now_ns = static_cast<std::uint64_t>(
@@ -1340,15 +1413,6 @@ namespace ilqvya {
                         bytes[10] = static_cast<std::uint8_t>( bytes[10] | 0x01 );
                         return format_uuid_bytes( bytes );
                     }
-                    case uuid_version::v8: {
-                        std::uint8_t bytes[16];
-                        for ( std::size_t i = 0; i < 16; ++i ) {
-                            bytes[i] = get<std::uint8_t>( engine );
-                        }
-                        bytes[6] = static_cast<std::uint8_t>( ( bytes[6] & 0x0f ) | 0x80 );
-                        bytes[8] = static_cast<std::uint8_t>( ( bytes[8] & 0x3f ) | 0x80 );
-                        return format_uuid_bytes( bytes );
-                    }
                     case uuid_version::mongo_object_id: {
                         std::uint8_t bytes[12];
                         const auto sec = static_cast<std::uint32_t>(
@@ -1359,11 +1423,33 @@ namespace ilqvya {
                         bytes[1] = static_cast<std::uint8_t>( ( sec >> 16 ) & 0xff );
                         bytes[2] = static_cast<std::uint8_t>( ( sec >> 8 ) & 0xff );
                         bytes[3] = static_cast<std::uint8_t>( sec & 0xff );
-                        for ( std::size_t i = 4; i < 12; ++i ) {
-                            bytes[i] = get<std::uint8_t>( engine );
-                        }
+
+                        static const std::array<std::uint8_t, 5> process_random = [&engine]( ) {
+                            std::array<std::uint8_t, 5> rnd;
+                            for ( std::size_t i = 0; i < 5; ++i ) {
+                                rnd[i] = get<std::uint8_t>( engine );
+                            }
+                            return rnd;
+                        }( );
+                        bytes[4] = process_random[0];
+                        bytes[5] = process_random[1];
+                        bytes[6] = process_random[2];
+                        bytes[7] = process_random[3];
+                        bytes[8] = process_random[4];
+
+                        static std::atomic<std::uint32_t> mongo_counter{
+                            static_cast<std::uint32_t>( ( static_cast<std::uint32_t>( get<std::uint8_t>( engine ) ) << 16 ) |
+                                                        ( static_cast<std::uint32_t>( get<std::uint8_t>( engine ) ) << 8 ) |
+                                                        static_cast<std::uint32_t>( get<std::uint8_t>( engine ) ) ) };
+                        const std::uint32_t c = mongo_counter.fetch_add( 1, std::memory_order_relaxed ) & 0x00ffffff;
+                        bytes[9]  = static_cast<std::uint8_t>( ( c >> 16 ) & 0xff );
+                        bytes[10] = static_cast<std::uint8_t>( ( c >> 8 ) & 0xff );
+                        bytes[11] = static_cast<std::uint8_t>( c & 0xff );
+
                         return format_mongo_id_bytes( bytes );
                     }
+                    default:
+                        throw std::invalid_argument( "Random::get_uuid: unsupported uuid version" );
                 }
                 return ""; // LCOV_EXCL_LINE
             } // LCOV_EXCL_LINE
@@ -1561,19 +1647,22 @@ namespace ilqvya {
             return impl::chance_pct( engine_instance( ), percentage );
         }
 
-        template<typename RealType = double>
-        ILQVYA_NODISCARD static RealType normal( RealType mean = RealType( 0 ), RealType stddev = RealType( 1 ) ) {
-            return impl::template normal<RealType>( engine_instance( ), mean, stddev );
+        template<typename RealType = double, typename Mean = RealType, typename Stddev = RealType,
+                 typename EffectiveReal = typename std::conditional<details::is_uniform_real<RealType>::value, RealType, double>::type>
+        ILQVYA_NODISCARD static EffectiveReal normal( Mean mean = Mean( 0 ), Stddev stddev = Stddev( 1 ) ) {
+            return impl::template normal<RealType, Mean, Stddev>( engine_instance( ), mean, stddev );
         }
 
-        template<typename RealType = double>
-        ILQVYA_NODISCARD static RealType exponential( RealType lambda = RealType( 1 ) ) {
-            return impl::template exponential<RealType>( engine_instance( ), lambda );
+        template<typename RealType = double, typename Lambda = RealType,
+                 typename EffectiveReal = typename std::conditional<details::is_uniform_real<RealType>::value, RealType, double>::type>
+        ILQVYA_NODISCARD static EffectiveReal exponential( Lambda lambda = Lambda( 1 ) ) {
+            return impl::template exponential<RealType, Lambda>( engine_instance( ), lambda );
         }
 
-        template<typename IntType = int>
-        ILQVYA_NODISCARD static IntType poisson( double mean = 1.0 ) {
-            return impl::template poisson<IntType>( engine_instance( ), mean );
+        template<typename IntType = int, typename Mean = double>
+        ILQVYA_NODISCARD static typename std::enable_if<std::is_integral<IntType>::value, IntType>::type
+        poisson( Mean mean = Mean( 1 ) ) {
+            return impl::template poisson<IntType, Mean>( engine_instance( ), mean );
         }
 
         template<typename T>
@@ -1917,8 +2006,8 @@ namespace ilqvya {
         template<typename CharT = char>
         ILQVYA_NODISCARD static typename std::enable_if<details::is_supported_character<CharT>::value,
                                                         std::basic_string<CharT>>::type
-        get_string( std::size_t length, CharT from = ( std::numeric_limits<CharT>::min )( ),
-                    CharT to = ( std::numeric_limits<CharT>::max )( ) ) {
+        get_string( std::size_t length, CharT from = details::default_char_range<CharT>::min_val( ),
+                    CharT to = details::default_char_range<CharT>::max_val( ) ) {
             return impl::template get_string<CharT>( engine_instance( ), length, from, to );
         }
 
@@ -1951,7 +2040,7 @@ namespace ilqvya {
         }
 
     private:
-        static Engine& engine_instance( ) noexcept { return Derived::engine( ); }
+        static Engine& engine_instance( ) { return Derived::engine( ); }
     };
 
     /**
@@ -1979,11 +2068,11 @@ namespace ilqvya {
 
         basic_random_static( ) = default;
 
-        ILQVYA_NODISCARD static Engine get_engine( ) noexcept { return engine_instance( ); }
-        static Engine& engine( ) noexcept { return engine_instance( ); }
+        ILQVYA_NODISCARD static Engine get_engine( ) { return engine_instance( ); }
+        static Engine& engine( ) { return engine_instance( ); }
 
     private:
-        static Engine& engine_instance( ) noexcept {
+        static Engine& engine_instance( ) {
             static Engine engine{ Seeder{ }( ) };
             return engine;
         }
@@ -2014,11 +2103,11 @@ namespace ilqvya {
 
         basic_random_thread_local( ) = default;
 
-        ILQVYA_NODISCARD static Engine get_engine( ) noexcept { return engine_instance( ); }
-        static Engine& engine( ) noexcept { return engine_instance( ); }
+        ILQVYA_NODISCARD static Engine get_engine( ) { return engine_instance( ); }
+        static Engine& engine( ) { return engine_instance( ); }
 
     private:
-        static Engine& engine_instance( ) noexcept {
+        static Engine& engine_instance( ) {
             thread_local Engine engine{ Seeder{ }( ) };
             return engine;
         }
@@ -2185,19 +2274,22 @@ namespace ilqvya {
             return impl::chance_pct( m_engine, percentage );
         }
 
-        template<typename RealType = double>
-        ILQVYA_NODISCARD RealType normal( RealType mean = RealType( 0 ), RealType stddev = RealType( 1 ) ) {
-            return impl::template normal<RealType>( m_engine, mean, stddev );
+        template<typename RealType = double, typename Mean = RealType, typename Stddev = RealType,
+                 typename EffectiveReal = typename std::conditional<details::is_uniform_real<RealType>::value, RealType, double>::type>
+        ILQVYA_NODISCARD EffectiveReal normal( Mean mean = Mean( 0 ), Stddev stddev = Stddev( 1 ) ) {
+            return impl::template normal<RealType, Mean, Stddev>( m_engine, mean, stddev );
         }
 
-        template<typename RealType = double>
-        ILQVYA_NODISCARD RealType exponential( RealType lambda = RealType( 1 ) ) {
-            return impl::template exponential<RealType>( m_engine, lambda );
+        template<typename RealType = double, typename Lambda = RealType,
+                 typename EffectiveReal = typename std::conditional<details::is_uniform_real<RealType>::value, RealType, double>::type>
+        ILQVYA_NODISCARD EffectiveReal exponential( Lambda lambda = Lambda( 1 ) ) {
+            return impl::template exponential<RealType, Lambda>( m_engine, lambda );
         }
 
-        template<typename IntType = int>
-        ILQVYA_NODISCARD IntType poisson( double mean = 1.0 ) {
-            return impl::template poisson<IntType>( m_engine, mean );
+        template<typename IntType = int, typename Mean = double>
+        ILQVYA_NODISCARD typename std::enable_if<std::is_integral<IntType>::value, IntType>::type
+        poisson( Mean mean = Mean( 1 ) ) {
+            return impl::template poisson<IntType, Mean>( m_engine, mean );
         }
 
         template<typename T>
@@ -2539,8 +2631,8 @@ namespace ilqvya {
         template<typename CharT = char>
         ILQVYA_NODISCARD typename std::enable_if<details::is_supported_character<CharT>::value,
                                                 std::basic_string<CharT>>::type
-        get_string( std::size_t length, CharT from = ( std::numeric_limits<CharT>::min )( ),
-                    CharT to = ( std::numeric_limits<CharT>::max )( ) ) {
+        get_string( std::size_t length, CharT from = details::default_char_range<CharT>::min_val( ),
+                    CharT to = details::default_char_range<CharT>::max_val( ) ) {
             return impl::template get_string<CharT>( m_engine, length, from, to );
         }
 

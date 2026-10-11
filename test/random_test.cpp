@@ -1891,9 +1891,6 @@ TEST_CASE( "noexcept specifications for observers, discard, seed, comparisons an
 
     static_assert( noexcept( Random_t::min( ) ), "Random::min must be noexcept" );
     static_assert( noexcept( Random_t::max( ) ), "Random::max must be noexcept" );
-    static_assert( noexcept( Random.get_engine( ) ), "Random::get_engine must be noexcept" );
-    static_assert( noexcept( Random.engine( ) ), "Random::engine must be noexcept" );
-
     // weighted_result
     Random_t::weighted_result<int, double> wr{ 42, 1.0 };
     static_assert( noexcept( Random_t::weighted_result<int, double>{ 42, 1.0 } ),
@@ -1903,6 +1900,12 @@ TEST_CASE( "noexcept specifications for observers, discard, seed, comparisons an
 }
 
 namespace {
+    struct throwing_test_seeder {
+        std::seed_seq& operator( )( ) {
+            throw std::runtime_error( "seeding failure" );
+        }
+    };
+
     struct nothrow_mock_engine {
         using result_type = unsigned int;
         static constexpr result_type min( ) noexcept { return 0; }
@@ -1921,6 +1924,17 @@ namespace {
     };
 } // namespace
 
+TEST_CASE( "Seeding exception propagates without terminating process" ) {
+    using throwing_static = ilqvya::basic_random_static<std::mt19937, throwing_test_seeder>;
+    bool caught = false;
+    try {
+        (void)throwing_static::get( 1, 10 );
+    } catch ( const std::runtime_error& ) {
+        caught = true;
+    }
+    REQUIRE( caught );
+}
+
 TEST_CASE( "conditional noexcept with nothrow engine" ) {
     using nothrow_local = ilqvya::basic_random_local<nothrow_mock_engine>;
     nothrow_mock_engine nt_eng;
@@ -1935,12 +1949,6 @@ TEST_CASE( "conditional noexcept with nothrow engine" ) {
     static_assert( noexcept( nt_rl.is_equal( nt_rl ) ), "nothrow_local::is_equal(nothrow_local) must be noexcept" );
     static_assert( noexcept( nt_rl == nt_rl ), "nothrow_local operator== must be noexcept" );
     static_assert( noexcept( nt_rl != nt_rl ), "nothrow_local operator!= must be noexcept" );
-
-    using nothrow_static = ilqvya::basic_random_static<nothrow_mock_engine>;
-    static_assert( noexcept( nothrow_static::discard( 10 ) ), "nothrow_static::discard must be noexcept" );
-    static_assert( noexcept( nothrow_static::seed( 12345u ) ), "nothrow_static::seed must be noexcept" );
-    static_assert( noexcept( nothrow_static::get( ) ), "nothrow_static::get() must be noexcept" );
-    static_assert( noexcept( nothrow_static::is_equal( nt_eng ) ), "nothrow_static::is_equal must be noexcept" );
 }
 
 TEST_CASE( "sampling from const containers and string views" ) {
@@ -2559,71 +2567,62 @@ TEST_CASE( "Hex and UUID / GUID generator: get_hex and get_uuid" ) {
     REQUIRE( uuid_v1[14] == '1' );
     REQUIRE( ( uuid_v1[19] == '8' || uuid_v1[19] == '9' || uuid_v1[19] == 'a' || uuid_v1[19] == 'b' ) );
 
-    // 4. get_uuid v2
-    auto uuid_v2 = Random.get_uuid( Random_t::uuid_version::v2 );
-    REQUIRE( uuid_v2.size( ) == 36 );
-    REQUIRE( uuid_v2[14] == '2' );
-    REQUIRE( ( uuid_v2[19] == '8' || uuid_v2[19] == '9' || uuid_v2[19] == 'a' || uuid_v2[19] == 'b' ) );
-
-    // 5. get_uuid v3
-    auto uuid_v3 = Random.get_uuid( Random_t::uuid_version::v3 );
-    REQUIRE( uuid_v3.size( ) == 36 );
-    REQUIRE( uuid_v3[14] == '3' );
-    REQUIRE( ( uuid_v3[19] == '8' || uuid_v3[19] == '9' || uuid_v3[19] == 'a' || uuid_v3[19] == 'b' ) );
-
-    // 6. get_uuid v5
-    auto uuid_v5 = Random.get_uuid( Random_t::uuid_version::v5 );
-    REQUIRE( uuid_v5.size( ) == 36 );
-    REQUIRE( uuid_v5[14] == '5' );
-    REQUIRE( ( uuid_v5[19] == '8' || uuid_v5[19] == '9' || uuid_v5[19] == 'a' || uuid_v5[19] == 'b' ) );
-
-    // 7. get_uuid v6
+    // 4. get_uuid v6
     auto uuid_v6 = Random.get_uuid( Random_t::uuid_version::v6 );
     REQUIRE( uuid_v6.size( ) == 36 );
     REQUIRE( uuid_v6[14] == '6' );
     REQUIRE( ( uuid_v6[19] == '8' || uuid_v6[19] == '9' || uuid_v6[19] == 'a' || uuid_v6[19] == 'b' ) );
 
-    // 8. get_uuid v7
+    // 5. get_uuid v7 (monotonic ordering)
     auto uuid_v7 = Random.get_uuid( Random_t::uuid_version::v7 );
     REQUIRE( uuid_v7.size( ) == 36 );
     REQUIRE( uuid_v7[14] == '7' );
     REQUIRE( ( uuid_v7[19] == '8' || uuid_v7[19] == '9' || uuid_v7[19] == 'a' || uuid_v7[19] == 'b' ) );
 
-    // 9. get_uuid v8
-    auto uuid_v8 = Random.get_uuid( Random_t::uuid_version::v8 );
-    REQUIRE( uuid_v8.size( ) == 36 );
-    REQUIRE( uuid_v8[14] == '8' );
-    REQUIRE( ( uuid_v8[19] == '8' || uuid_v8[19] == '9' || uuid_v8[19] == 'a' || uuid_v8[19] == 'b' ) );
+    std::string prev_v7 = uuid_v7;
+    for ( int i = 0; i < 20; ++i ) {
+        std::string next_v7 = Random.get_uuid( Random_t::uuid_version::v7 );
+        REQUIRE( next_v7 >= prev_v7 );
+        prev_v7 = next_v7;
+    }
 
-    // 10. get_uuid nil
+    // 6. get_uuid nil
     auto uuid_nil = Random.get_uuid( Random_t::uuid_version::nil );
     REQUIRE( uuid_nil == "00000000-0000-0000-0000-000000000000" );
 
-    // 11. get_uuid max
+    // 7. get_uuid max
     auto uuid_max = Random.get_uuid( Random_t::uuid_version::max );
     REQUIRE( uuid_max == "ffffffff-ffff-ffff-ffff-ffffffffffff" );
 
-    // 12. get_uuid mongo_object_id
-    auto mongo_id = Random.get_uuid( Random_t::uuid_version::mongo_object_id );
-    REQUIRE( mongo_id.size( ) == 24 );
-    for ( char c : mongo_id ) {
+    // 8. get_uuid mongo_object_id (24 hex characters, incrementing counter)
+    auto mongo_id1 = Random.get_uuid( Random_t::uuid_version::mongo_object_id );
+    auto mongo_id2 = Random.get_uuid( Random_t::uuid_version::mongo_object_id );
+    REQUIRE( mongo_id1.size( ) == 24 );
+    REQUIRE( mongo_id2.size( ) == 24 );
+    REQUIRE( mongo_id1 != mongo_id2 );
+    for ( char c : mongo_id1 ) {
         REQUIRE( ( ( c >= '0' && c <= '9' ) || ( c >= 'a' && c <= 'f' ) ) );
     }
 
-    // 13. local instance test across all versions
+    // 9. invalid uuid version throws invalid_argument
+    bool caught_invalid_uuid = false;
+    try {
+        (void)Random.get_uuid( static_cast<Random_t::uuid_version>( 999 ) );
+    } catch ( const std::invalid_argument& ) {
+        caught_invalid_uuid = true;
+    }
+    REQUIRE( caught_invalid_uuid );
+
+    // 10. local instance test across all versions
     ilqvya::random_local rl;
     auto rl_hex = rl.get_hex( 16 );
     REQUIRE( rl_hex.size( ) == 16 );
     auto rl_uuid_def = rl.get_uuid( );
     REQUIRE( rl_uuid_def.size( ) == 36 );
     REQUIRE( rl.get_uuid( ilqvya::random_local::uuid_version::v1 ).size( ) == 36 );
-    REQUIRE( rl.get_uuid( ilqvya::random_local::uuid_version::v2 ).size( ) == 36 );
-    REQUIRE( rl.get_uuid( ilqvya::random_local::uuid_version::v3 ).size( ) == 36 );
     REQUIRE( rl.get_uuid( ilqvya::random_local::uuid_version::v4 ).size( ) == 36 );
-    REQUIRE( rl.get_uuid( ilqvya::random_local::uuid_version::v5 ).size( ) == 36 );
     REQUIRE( rl.get_uuid( ilqvya::random_local::uuid_version::v6 ).size( ) == 36 );
     REQUIRE( rl.get_uuid( ilqvya::random_local::uuid_version::v7 ).size( ) == 36 );
-    REQUIRE( rl.get_uuid( ilqvya::random_local::uuid_version::v8 ).size( ) == 36 );
     REQUIRE( rl.get_uuid( ilqvya::random_local::uuid_version::nil ) == "00000000-0000-0000-0000-000000000000" );
     REQUIRE( rl.get_uuid( ilqvya::random_local::uuid_version::max ) == "ffffffff-ffff-ffff-ffff-ffffffffffff" );
     REQUIRE( rl.get_uuid( ilqvya::random_local::uuid_version::mongo_object_id ).size( ) == 24 );
@@ -2701,6 +2700,207 @@ TEST_CASE( "Span and view-like range support" ) {
     auto chosen = Random.choice( view, 7 );
     REQUIRE( chosen.size( ) == 7 );
 #endif
+}
+
+TEST_CASE( "NaN probabilities throw invalid_argument" ) {
+    double nan_val = std::numeric_limits<double>::quiet_NaN( );
+    bool caught_bool = false;
+    try {
+        (void)Random.get<bool>( nan_val );
+    } catch ( const std::invalid_argument& ) {
+        caught_bool = true;
+    }
+    REQUIRE( caught_bool );
+
+    bool caught_chance = false;
+    try {
+        (void)Random.chance( nan_val );
+    } catch ( const std::invalid_argument& ) {
+        caught_chance = true;
+    }
+    REQUIRE( caught_chance );
+
+    bool caught_chance_pct = false;
+    try {
+        (void)Random.chance_pct( nan_val );
+    } catch ( const std::invalid_argument& ) {
+        caught_chance_pct = true;
+    }
+    REQUIRE( caught_chance_pct );
+}
+
+TEST_CASE( "Distribution argument validations and flexible types" ) {
+    // normal validation
+    bool caught_normal_stddev = false;
+    try {
+        (void)Random.normal( 0.0, -1.0 );
+    } catch ( const std::invalid_argument& ) {
+        caught_normal_stddev = true;
+    }
+    REQUIRE( caught_normal_stddev );
+
+    bool caught_normal_nan = false;
+    try {
+        (void)Random.normal( std::numeric_limits<double>::quiet_NaN( ), 1.0 );
+    } catch ( const std::invalid_argument& ) {
+        caught_normal_nan = true;
+    }
+    REQUIRE( caught_normal_nan );
+
+    // normal with int arguments compiles and executes
+    double n_int = Random.normal( 0, 1 );
+    (void)n_int;
+
+    // exponential validation
+    bool caught_exp_zero = false;
+    try {
+        (void)Random.exponential( 0.0 );
+    } catch ( const std::invalid_argument& ) {
+        caught_exp_zero = true;
+    }
+    REQUIRE( caught_exp_zero );
+
+    // exponential with int argument compiles and executes
+    double exp_int = Random.exponential( 2 );
+    REQUIRE( exp_int >= 0.0 );
+
+    // poisson validation
+    bool caught_pois_neg = false;
+    try {
+        (void)Random.poisson( -0.5 );
+    } catch ( const std::invalid_argument& ) {
+        caught_pois_neg = true;
+    }
+    REQUIRE( caught_pois_neg );
+
+    // poisson with int mean compiles and executes
+    int pois_int = Random.poisson( 5 );
+    REQUIRE( pois_int >= 0 );
+}
+
+TEST_CASE( "Real get bounds validation and width overflow" ) {
+    double max_dbl = ( std::numeric_limits<double>::max )( );
+    bool caught_overflow = false;
+    try {
+        (void)Random.get( -max_dbl, max_dbl );
+    } catch ( const std::overflow_error& ) {
+        caught_overflow = true;
+    }
+    REQUIRE( caught_overflow );
+
+    bool caught_nan = false;
+    try {
+        (void)Random.get( std::numeric_limits<double>::quiet_NaN( ), 1.0 );
+    } catch ( const std::invalid_argument& ) {
+        caught_nan = true;
+    }
+    REQUIRE( caught_nan );
+}
+
+TEST_CASE( "Weighted sampling overflow and NaN checks" ) {
+    int max_int = ( std::numeric_limits<int>::max )( );
+    std::vector<std::pair<std::string, int>> overflow_pairs = { { "A", max_int }, { "B", 10 } };
+    bool caught_overflow = false;
+    try {
+        (void)Random.get<Random_t::weight>( overflow_pairs );
+    } catch ( const std::overflow_error& ) {
+        caught_overflow = true;
+    }
+    REQUIRE( caught_overflow );
+
+    std::vector<std::pair<std::string, double>> nan_pairs = { { "A", std::numeric_limits<double>::quiet_NaN( ) } };
+    bool caught_nan = false;
+    try {
+        (void)Random.get<Random_t::weight>( nan_pairs );
+    } catch ( const std::invalid_argument& ) {
+        caught_nan = true;
+    }
+    REQUIRE( caught_nan );
+
+    bool caught_list_nan = false;
+    try {
+        (void)Random.get( { Random_t::weighted_result<int, double>{ 1, std::numeric_limits<double>::quiet_NaN( ) } } );
+    } catch ( const std::invalid_argument& ) {
+        caught_list_nan = true;
+    }
+    REQUIRE( caught_list_nan );
+
+    bool caught_list_overflow = false;
+    try {
+        (void)Random.get( { Random_t::weighted_result<int, int>{ 1, max_int }, Random_t::weighted_result<int, int>{ 2, 5 } } );
+    } catch ( const std::overflow_error& ) {
+        caught_list_overflow = true;
+    }
+    REQUIRE( caught_list_overflow );
+}
+
+TEST_CASE( "Sample with very large n caps to population size" ) {
+    std::vector<int> pop = { 1, 2, 3, 4, 5 };
+    auto result = Random.sample( pop, ( std::numeric_limits<std::size_t>::max )( ) );
+    auto zero_sample = Random.sample( pop, 0 );
+    REQUIRE( zero_sample.empty( ) );
+    REQUIRE( result.size( ) == 5 );
+}
+
+TEST_CASE( "Fill bounds safety and validation" ) {
+    std::vector<std::uint8_t> u8_vec( 5 );
+    bool caught_out_of_range = false;
+    try {
+        Random.fill( u8_vec, 0, 1000 );
+    } catch ( const std::out_of_range& ) {
+        caught_out_of_range = true;
+    }
+    REQUIRE( caught_out_of_range );
+
+    bool caught_common_out = false;
+    try {
+        Random.fill<Random_t::common>( u8_vec, 0, 1000 );
+    } catch ( const std::out_of_range& ) {
+        caught_common_out = true;
+    }
+    REQUIRE( caught_common_out );
+
+    Random.fill( u8_vec, 10, 20 );
+    for ( auto val : u8_vec ) {
+        REQUIRE( ( val >= 10 && val <= 20 ) );
+    }
+}
+
+TEST_CASE( "get_string printable default and Unicode validation" ) {
+    auto str = Random.get_string( 100 );
+    REQUIRE( str.size( ) == 100 );
+    for ( char c : str ) {
+        REQUIRE( ( c >= ' ' && c <= '~' ) );
+        REQUIRE( c != '\0' );
+    }
+
+    auto s_inv2 = Random.get_string( 10, 'z', 'a' );
+    REQUIRE( s_inv2.size( ) == 10 );
+    for ( char c : s_inv2 ) {
+        REQUIRE( ( c >= 'a' && c <= 'z' ) );
+    }
+
+    bool caught_u32_limit = false;
+    try {
+        (void)Random.get_string<char32_t>( 10, char32_t( 0 ), char32_t( 0x110000 ) );
+    } catch ( const std::invalid_argument& ) {
+        caught_u32_limit = true;
+    }
+    REQUIRE( caught_u32_limit );
+
+    bool caught_surrogate = false;
+    try {
+        (void)Random.get_string<char16_t>( 10, char16_t( 0xD800 ), char16_t( 0xDFFF ) );
+    } catch ( const std::invalid_argument& ) {
+        caught_surrogate = true;
+    }
+    REQUIRE( caught_surrogate );
+
+    auto s_reroll = Random.get_string<char16_t>( 100, char16_t( 0xD7F0 ), char16_t( 0xE010 ) );
+    REQUIRE( s_reroll.size( ) == 100 );
+    for ( char16_t c : s_reroll ) {
+        REQUIRE( !( static_cast<std::uint32_t>( c ) >= 0xD800 && static_cast<std::uint32_t>( c ) <= 0xDFFF ) );
+    }
 }
 
 

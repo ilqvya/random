@@ -416,10 +416,10 @@ Random::shuffle( array ); // supported for C-style arrays (rvalue arrays deleted
 
 ### Random string
 Generates a random `std::string` of specified length:
-* Default character range (all valid characters for `CharT`, defaults to `char`):
+* Default character range (printable characters `' '` to `'~'`, avoiding embedded null bytes and non-printable control characters):
 ```cpp
-auto s  = Random::get_string( 16 );          // 16 random characters
-auto ws = Random::get_string<wchar_t>( 16 ); // 16 random wide characters
+auto s  = Random::get_string( 16 );          // 16 random printable ASCII characters
+auto ws = Random::get_string<wchar_t>( 16 ); // 16 random printable wide characters
 ```
 * From a character range `[from, to]`:
 ```cpp
@@ -431,10 +431,14 @@ auto digits = Random::get_string( 6, '0', '9' );  // 6 random digits
 auto hex = Random::get_string( 32, "0123456789abcdef" ); // 32 random hex characters (excludes '\0')
 auto key = Random::get_string( 16, std::string{ "ABCDEFGHJKLMNPQRSTUVWXYZ23456789" } );
 ```
-Throws `std::invalid_argument` if charset container is empty. Empty string literals fail at compile time.
+Throws `std::invalid_argument` if charset container is empty or range is invalid. Empty string literals fail at compile time.
 
 ### Hex & UUID / GUID Generator
-Generate cryptographic-quality hexadecimal strings and UUIDs / GUIDs or MongoDB ObjectIDs:
+Generate hexadecimal strings and standard UUIDs / GUIDs or MongoDB ObjectIDs:
+
+> [!WARNING]
+> **Not Cryptographically Secure:** Generated values (strings, hex tokens, UUIDs) are driven by pseudo-random engines (`std::mt19937` or `std::philox4x64`) and are **not** cryptographically secure (not a CSPRNG). mt19937 state is predictable from past output. Do not use them for cryptographic secrets, session IDs, authentication tokens, or password reset links.
+
 ```cpp
 // Hex strings:
 auto hex32 = Random::get_hex(32);        // e.g. "a3f1c8..." (lowercase by default)
@@ -444,19 +448,15 @@ auto hex16 = Random::get_hex(16, true);  // e.g. "A3F1C8..." (uppercase)
 std::string uuid4 = Random::get_uuid(); 
 // e.g. "123e4567-e89b-42d3-a456-426614174000"
 
-// Specific UUID versions via ilqvya::uuid_version (RFC 4122 / RFC 9562):
+// Specific UUID versions via ilqvya::uuid_version (RFC 4122 / RFC 9562 / MongoDB):
 using ilqvya::uuid_version;
 auto v4  = Random::get_uuid(uuid_version::v4);               // RFC 4122 random (default)
 auto v1  = Random::get_uuid(uuid_version::v1);               // Gregorian time-based (RFC 4122)
-auto v2  = Random::get_uuid(uuid_version::v2);               // DCE Security with local domain (DCE 1.1)
-auto v3  = Random::get_uuid(uuid_version::v3);               // MD5 name-based layout (RFC 4122)
-auto v5  = Random::get_uuid(uuid_version::v5);               // SHA-1 name-based layout (RFC 4122)
 auto v6  = Random::get_uuid(uuid_version::v6);               // Reordered Gregorian time-based (RFC 9562)
-auto v7  = Random::get_uuid(uuid_version::v7);               // Unix epoch millisecond time-ordered (RFC 9562)
-auto v8  = Random::get_uuid(uuid_version::v8);               // Custom / experimental format (RFC 9562)
+auto v7  = Random::get_uuid(uuid_version::v7);               // Unix epoch millisecond time-ordered (RFC 9562, monotonic)
 auto nil = Random::get_uuid(uuid_version::nil);              // "00000000-0000-0000-0000-000000000000"
 auto max = Random::get_uuid(uuid_version::max);              // "ffffffff-ffff-ffff-ffff-ffffffffffff"
-auto oid = Random::get_uuid(uuid_version::mongo_object_id);  // 24 hex characters MongoDB ObjectID
+auto oid = Random::get_uuid(uuid_version::mongo_object_id);  // 24 hex characters MongoDB ObjectID (timestamp + process random + counter)
 ```
 
 ### Common Distributions
