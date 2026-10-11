@@ -1821,6 +1821,11 @@ namespace ilqvya {
      */
     using random_local = basic_random_local<default_engine>;
 
+    /**
+     * \brief Convenient alias matching README and common usage
+     */
+    using Random = random;
+
 } // namespace ilqvya
 
 /// Backward compatibility namespace alias

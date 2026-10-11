@@ -105,15 +105,28 @@ target_link_libraries(${TARGET} ilqvya::random)
 ```
 #### Manually
 The single required source file, [`random.hpp`](https://github.com/ilqvya/random/blob/master/include/ilqvya/random.hpp), is located in the [`include/ilqvya`](https://github.com/ilqvya/random/tree/master/include/ilqvya) directory.
-#### Then
-All you need to do is add
+#### Usage
+* **Header-only (C++11 through C++26)**:
+Add the header to your source file:
 ```cpp
 #include "ilqvya/random.hpp"
 
 // default thread-local random alias (thread-safe, auto-seeded)
-using Random = ilqvya::random;
+using Random = ilqvya::random; // or use ilqvya::random directly
 ```
-to files where you want to use the random class. That's it! Ensure C++11 or newer is enabled in your compiler settings (e.g., `-std=c++11` for GCC and Clang).
+
+* **C++20 Module (`import ilqvya.random;`)**:
+If your toolchain supports C++20 modules, you can import the module directly:
+```cpp
+import ilqvya.random;
+
+int main() {
+    auto dice = ilqvya::random::get(1, 6);
+    auto token = ilqvya::random::get_string(16);
+}
+```
+In CMake, enable module support via `-DRandom_BuildModules=ON` (requires CMake 3.28+ and Ninja or Visual Studio generator) and link `ilqvya::random_module`.
+Ensure C++11 or newer is enabled in your compiler settings (e.g., `-std=c++11` for GCC and Clang).
 ## Five-minute tutorial
 ### Number range
 Returns a pseudo-random number in a [first; second] range.

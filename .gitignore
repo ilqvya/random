@@ -7,9 +7,10 @@
 *.o
 *.obj
 
-# Precompiled Headers
+# Precompiled Headers and Modules
 *.gch
 *.pch
+gcm.cache/
 
 # Compiled Dynamic libraries
 *.so
