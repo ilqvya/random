@@ -73,6 +73,7 @@ There are a few ways to work with random in C++:
     * *random_local*: non-static member methods and local member state. Can be created on the stack at local scope.
   * **Compile-Time Safety**. Temporary rvalue containers and arrays passed to iterator-returning overloads are deleted (`= delete`) at compile time to prevent dangling iterators. String literals return by value without the null terminator, and empty array access is caught at compile time.
   * **Zero-Allocation Sampling & Performance**. Features immediate return fast-paths for zero-gap ranges (`from == to`), container reservation (`reserve_if_supported`), and optimal sampling algorithms without replacement.
+  * **C++20 Modules Support**. Can be consumed either as a single header file (`ilqvya/random.hpp`) for C++11–C++26 or imported as a native C++20 module (`import ilqvya.random;`) for zero macro leakage, clean encapsulation, and faster compilation times.
   * **Next-Gen Performance**. Uses `std::philox4x64` as the default engine in C++26 (when available), delivering fast counter-based random number generation with minimal 32-byte state and full 256-bit entropy seeding, while seamlessly falling back to `std::mt19937` in C++11–C++23.
 ## Supported compilers
 * GCC 4.9+ (and later)
@@ -80,39 +81,29 @@ There are a few ways to work with random in C++:
 * Microsoft Visual C++ 2015+ (and later)
 ## Integration
 #### CMake
-* As subproject
-```cmake
-add_subdirectory(random) # path to the 'random' library root
-... # create target
-target_link_libraries(${TARGET} ilqvya::random)
-```
-* As external project
-
-First, build and install the project:
-```cmd
-cd "path_to_root_of_the_library"
-mkdir build
-cd build
-cmake ..
-cmake --build . --target install --config Release
-ctest -C Release
-```
-Then, find the package via CMake:
+* **Header-only** (as subproject or external package):
 ```cmake
 find_package(ilqvya_random REQUIRED)
-... # create target
 target_link_libraries(${TARGET} ilqvya::random)
 ```
+
+* **C++20 Module** (`import ilqvya.random;`):
+Enable `-DRandom_BuildModules=ON` during CMake configuration (requires CMake 3.28+ and Ninja or Visual Studio generator):
+```cmake
+find_package(ilqvya_random REQUIRED)
+target_link_libraries(${TARGET} ilqvya::random_module)
+```
+
 #### Manually
-The single required source file, [`random.hpp`](https://github.com/ilqvya/random/blob/master/include/ilqvya/random.hpp), is located in the [`include/ilqvya`](https://github.com/ilqvya/random/tree/master/include/ilqvya) directory.
+The single required source file, [`random.hpp`](https://github.com/ilqvya/random/blob/master/include/ilqvya/random.hpp), is located in the [`include/ilqvya`](https://github.com/ilqvya/random/tree/master/include/ilqvya) directory. The module interface [`ilqvya_random.cppm`](https://github.com/ilqvya/random/blob/master/src/ilqvya_random.cppm) is in `src/`.
 #### Usage
 * **Header-only (C++11 through C++26)**:
 Add the header to your source file:
 ```cpp
 #include "ilqvya/random.hpp"
 
-// default thread-local random alias (thread-safe, auto-seeded)
-using Random = ilqvya::random; // or use ilqvya::random directly
+// Both ilqvya::random and ilqvya::Random work directly
+auto val = ilqvya::Random::get(1, 6);
 ```
 
 * **C++20 Module (`import ilqvya.random;`)**:
@@ -123,11 +114,15 @@ import ilqvya.random;
 int main() {
     auto dice = ilqvya::random::get(1, 6);
     auto token = ilqvya::random::get_string(16);
+    auto sampled = ilqvya::random::sample(population, 3);
 }
 ```
-In CMake, enable module support via `-DRandom_BuildModules=ON` (requires CMake 3.28+ and Ninja or Visual Studio generator) and link `ilqvya::random_module`.
-Ensure C++11 or newer is enabled in your compiler settings (e.g., `-std=c++11` for GCC and Clang).
+Ensure C++11 or newer is enabled in your compiler settings (e.g., `-std=c++11` for GCC and Clang, or `-std=c++20` when using modules).
 ## Five-minute tutorial
+
+> [!NOTE]
+> All tutorial examples below work identically with either `#include <ilqvya/random.hpp>` or C++20 `import ilqvya.random;`. Both `ilqvya::Random` and `ilqvya::random` are available out of the box in both modes!
+
 ### Number range
 Returns a pseudo-random number in a [first; second] range.
 ```cpp
@@ -440,6 +435,8 @@ std::thread second{ [ ] { Random::get( ); } };
 Uses member method API with local member storage, created on the stack at local scope:
 ```cpp
 #include "ilqvya/random.hpp"
+// Or when using C++20 modules:
+// import ilqvya.random;
 
 using Random_t = ilqvya::random_local;
 
