@@ -4,7 +4,7 @@ find_package(Threads REQUIRED)
 
 if(COVERAGE_ENABLED)
 	message(STATUS "COVERAGE ENABLED")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage -fprofile-update=atomic")
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
 endif()
 

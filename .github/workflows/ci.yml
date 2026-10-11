@@ -144,12 +144,12 @@ jobs:
 
       - name: Generate Coverage Report
         run: |
-          lcov --capture --directory build --output-file coverage.raw --ignore-errors mismatch,unused,inconsistent 2>/dev/null || lcov --capture --directory build --output-file coverage.raw || true
+          lcov --capture --directory build --output-file coverage.raw --ignore-errors mismatch,unused,inconsistent,negative 2>/dev/null || lcov --capture --directory build --output-file coverage.raw || true
           if [ -f coverage.raw ]; then
             # Strip all system headers (/usr/*), test files, and build files
-            lcov --remove coverage.raw '/usr/*' '*/test/*' '*/tests/*' '*/build/*' --output-file coverage.info --ignore-errors mismatch,unused,inconsistent 2>/dev/null || true
+            lcov --remove coverage.raw '/usr/*' '*/test/*' '*/tests/*' '*/build/*' --output-file coverage.info --ignore-errors mismatch,unused,inconsistent,negative 2>/dev/null || true
           fi
-          lcov --list coverage.info --ignore-errors mismatch,unused,inconsistent 2>/dev/null || true
+          lcov --list coverage.info --ignore-errors mismatch,unused,inconsistent,negative 2>/dev/null || true
           echo "=== UNCOVERED LINES IN COVERAGE.INFO ==="
           grep ',0$' coverage.info || true
           awk -F: '/SF:/{file=$2} /DA:[0-9]+,0/{split($0,a,":"); split(a[2],b,","); print file " line " b[1]}' coverage.info || true
