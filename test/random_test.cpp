@@ -2911,9 +2911,10 @@ TEST_CASE( "Concurrent get_uuid v7 monotonicity under multi-threading" ) {
 
     for ( std::size_t t = 0; t < thread_count; ++t ) {
         threads.emplace_back( [t, &results]( std::size_t count ) {
+            Random_t local_rnd;
             results[t].reserve( count );
             for ( std::size_t i = 0; i < count; ++i ) {
-                results[t].push_back( Random.get_uuid( Random_t::uuid_version::v7 ) );
+                results[t].push_back( local_rnd.get_uuid( Random_t::uuid_version::v7 ) );
             }
         }, iterations_per_thread );
     }

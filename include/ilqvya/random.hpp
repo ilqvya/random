@@ -1333,12 +1333,6 @@ namespace ilqvya {
                             std::chrono::duration_cast<std::chrono::milliseconds>(
                                 std::chrono::system_clock::now( ).time_since_epoch( ) )
                                 .count( ) );
-                        bytes[0] = static_cast<std::uint8_t>( ( ms >> 40 ) & 0xff );
-                        bytes[1] = static_cast<std::uint8_t>( ( ms >> 32 ) & 0xff );
-                        bytes[2] = static_cast<std::uint8_t>( ( ms >> 24 ) & 0xff );
-                        bytes[3] = static_cast<std::uint8_t>( ( ms >> 16 ) & 0xff );
-                        bytes[4] = static_cast<std::uint8_t>( ( ms >> 8 ) & 0xff );
-                        bytes[5] = static_cast<std::uint8_t>( ms & 0xff );
 
                         // RFC 9562 Monotonicity sequence counter for sub-millisecond collisions.
                         // Packs 48 bits of timestamp ms with 16 bits of sequence state into a single atomic word
@@ -1346,26 +1340,43 @@ namespace ilqvya {
                         static std::atomic<std::uint64_t> last_v7_state{ 0 };
                         const std::uint16_t seed_seq = static_cast<std::uint16_t>( get<std::uint16_t>( engine, 0, 0x03ff ) );
                         std::uint64_t current = last_v7_state.load( std::memory_order_relaxed );
-                        std::uint16_t seq = 0;
+                        std::uint64_t final_ms = 0;
+                        std::uint16_t final_seq = 0;
                         while ( true ) {
                             const std::uint64_t cur_ms = current >> 16;
                             const std::uint16_t cur_seq = static_cast<std::uint16_t>( current & 0xffff );
-                            std::uint64_t next_state = 0;
+                            std::uint64_t next_ms = ms;
+                            std::uint16_t next_seq = 0;
                             if ( ms > cur_ms ) {
-                                next_state = ( ms << 16 ) | static_cast<std::uint64_t>( seed_seq & 0x03ff );
+                                next_ms = ms;
+                                next_seq = static_cast<std::uint16_t>( seed_seq & 0x03ff );
                             } else {
-                                next_state = ( cur_ms << 16 ) | static_cast<std::uint64_t>( ( cur_seq + 1 ) & 0x0fff );
+                                if ( cur_seq >= 0x0fff ) {
+                                    next_ms = cur_ms + 1;
+                                    next_seq = 0;
+                                } else {
+                                    next_ms = cur_ms;
+                                    next_seq = static_cast<std::uint16_t>( cur_seq + 1 );
+                                }
                             }
+                            const std::uint64_t next_state = ( next_ms << 16 ) | static_cast<std::uint64_t>( next_seq & 0x0fff );
                             if ( last_v7_state.compare_exchange_weak( current, next_state,
                                                                       std::memory_order_relaxed,
                                                                       std::memory_order_relaxed ) ) {
-                                seq = static_cast<std::uint16_t>( next_state & 0x0fff );
+                                final_ms = next_ms;
+                                final_seq = next_seq;
                                 break;
                             }
                         }
 
-                        bytes[6] = static_cast<std::uint8_t>( ( ( seq >> 8 ) & 0x0f ) | 0x70 );
-                        bytes[7] = static_cast<std::uint8_t>( seq & 0xff );
+                        bytes[0] = static_cast<std::uint8_t>( ( final_ms >> 40 ) & 0xff );
+                        bytes[1] = static_cast<std::uint8_t>( ( final_ms >> 32 ) & 0xff );
+                        bytes[2] = static_cast<std::uint8_t>( ( final_ms >> 24 ) & 0xff );
+                        bytes[3] = static_cast<std::uint8_t>( ( final_ms >> 16 ) & 0xff );
+                        bytes[4] = static_cast<std::uint8_t>( ( final_ms >> 8 ) & 0xff );
+                        bytes[5] = static_cast<std::uint8_t>( final_ms & 0xff );
+                        bytes[6] = static_cast<std::uint8_t>( ( ( final_seq >> 8 ) & 0x0f ) | 0x70 );
+                        bytes[7] = static_cast<std::uint8_t>( final_seq & 0xff );
 
                         for ( std::size_t i = 8; i < 16; ++i ) {
                             bytes[i] = get<std::uint8_t>( engine );
