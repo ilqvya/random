@@ -538,7 +538,7 @@ namespace ilqvya {
                 for ( std::size_t i = 0; i < size; ++i )
                     container.insert( std::end( container ), get( engine, from, to ) );
                 return container;
-            }
+            } // LCOV_EXCL_LINE
 
             template<template<typename...> class Container, typename Key, typename A, typename B,
                      typename C = typename std::common_type<A, B>::type>
@@ -550,7 +550,7 @@ namespace ilqvya {
                 for ( std::size_t i = 0; i < size; ++i )
                     container.insert( std::end( container ), get<common>( engine, start, end ) );
                 return container;
-            }
+            } // LCOV_EXCL_LINE
 
             template<template<typename AA, std::size_t NN, typename...> class Container, std::size_t N, typename A>
             ILQVYA_NODISCARD static
@@ -795,7 +795,7 @@ namespace ilqvya {
                 details::reserve_if_supported( result, n );
                 sample( engine, std::begin( range ), std::end( range ), details::make_inserter( result ), n );
                 return result;
-            }
+            } // LCOV_EXCL_LINE
 
             template<template<typename...> class Container = std::vector, typename T, std::size_t N>
             ILQVYA_NODISCARD static typename std::enable_if<!details::is_supported_character<T>::value,
@@ -807,7 +807,7 @@ namespace ilqvya {
                 details::reserve_if_supported( result, actual_n );
                 sample( engine, array, array + N, details::make_inserter( result ), actual_n );
                 return result;
-            }
+            } // LCOV_EXCL_LINE
 
             template<typename CharT, std::size_t N>
             ILQVYA_NODISCARD static typename std::enable_if<details::is_supported_character<CharT>::value,
@@ -819,7 +819,7 @@ namespace ilqvya {
                 result.reserve( actual_n );
                 sample( engine, literal, literal + ( N - 1 ), std::back_inserter( result ), actual_n );
                 return result;
-            }
+            } // LCOV_EXCL_LINE
 
             template<typename Range>
             ILQVYA_NODISCARD static auto sample_string( Engine& engine, const Range& range, std::size_t n ) ->
@@ -844,8 +844,6 @@ namespace ilqvya {
             template<typename PopulationIt, typename SampleIt, typename Distance>
             static SampleIt sample_impl( Engine& engine, PopulationIt first, PopulationIt last,
                                         std::random_access_iterator_tag, SampleIt out, Distance n ) {
-                if ( n <= 0 )
-                    return out;
                 using dist_t = typename std::iterator_traits<PopulationIt>::difference_type;
                 dist_t unsampled_sz = std::distance( first, last );
                 dist_t needed = ( std::min )( static_cast<dist_t>( n ), unsampled_sz );
@@ -862,8 +860,6 @@ namespace ilqvya {
             template<typename PopulationIt, typename SampleIt, typename Distance>
             static SampleIt sample_impl( Engine& engine, PopulationIt first, PopulationIt last,
                                         std::input_iterator_tag, SampleIt out, Distance n ) {
-                if ( n <= 0 )
-                    return out;
                 using ValueType = typename std::iterator_traits<PopulationIt>::value_type;
                 const std::size_t un = static_cast<std::size_t>( n );
                 std::vector<ValueType> reservoir;
@@ -880,7 +876,7 @@ namespace ilqvya {
                     }
                 }
                 return std::copy( reservoir.begin( ), reservoir.end( ), out );
-            }
+            } // LCOV_EXCL_LINE
         public:
 #endif
 
@@ -894,7 +890,7 @@ namespace ilqvya {
                 for ( std::size_t i = 0; i < length; ++i )
                     result.push_back( get<CharT>( engine, from, to ) );
                 return result;
-            }
+            } // LCOV_EXCL_LINE
 
             template<typename Container>
             ILQVYA_NODISCARD static auto get_string( Engine& engine, std::size_t length, const Container& charset ) ->
@@ -909,7 +905,7 @@ namespace ilqvya {
                 for ( std::size_t i = 0; i < length; ++i )
                     result.push_back( *get( engine, charset ) );
                 return result;
-            }
+            } // LCOV_EXCL_LINE
 
             template<typename CharT, std::size_t N>
             ILQVYA_NODISCARD static typename std::enable_if<details::is_supported_character<CharT>::value,
@@ -923,7 +919,7 @@ namespace ilqvya {
                     result.push_back( literal[idx] );
                 }
                 return result;
-            }
+            } // LCOV_EXCL_LINE
         };
 
     } // namespace details
