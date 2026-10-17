@@ -86,10 +86,24 @@ There are a few ways to work with random in C++:
 * Microsoft Visual C++ 2015+ (and later)
 ## Integration
 #### CMake
-* **Header-only** (as subproject or external package):
+* **FetchContent** (recommended for CMake 3.11+):
+```cmake
+include(FetchContent)
+FetchContent_Declare(
+    random
+    GIT_REPOSITORY https://github.com/ilqvya/random.git
+    GIT_TAG        v2.0.0
+)
+FetchContent_MakeAvailable(random)
+
+target_link_libraries(${TARGET} random::random) # or ilqvya::random
+```
+> Unit tests (`Random_BuildTests`) and install rules (`Random_Install`) are automatically disabled when included via `FetchContent` or `add_subdirectory`.
+
+* **External package** (installed via CMake / package manager):
 ```cmake
 find_package(ilqvya_random REQUIRED)
-target_link_libraries(${TARGET} ilqvya::random)
+target_link_libraries(${TARGET} random::random) # or ilqvya::random
 ```
 
 * **C++20 Module** (`import ilqvya.random;`):

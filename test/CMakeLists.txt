@@ -50,3 +50,8 @@ endfunction(add_main_test)
 add_main_test("random_static_test" "RANDOM_STATIC")
 add_main_test("random_thread_local_test" "RANDOM_THREAD_LOCAL")
 add_main_test("random_local_test" "RANDOM_LOCAL")
+
+add_executable(random_alias_test "random_alias_test.cpp")
+set_up_warnings(random_alias_test)
+target_link_libraries(random_alias_test Threads::Threads random::random)
+add_test(NAME random_alias_test COMMAND random_alias_test)

@@ -3,9 +3,23 @@ cmake_minimum_required(VERSION 3.10)
 # define the project
 project(ilqvya_random VERSION 2.0.0 LANGUAGES CXX)
 
-include(GNUInstallDirs)
+if(NOT DEFINED PROJECT_IS_TOP_LEVEL)
+    string(COMPARE EQUAL "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}" PROJECT_IS_TOP_LEVEL)
+endif()
 
-option(Random_BuildTests "Build the unit tests" ON)
+# Build tests option (default ON if top-level, OFF if consumed as subproject / FetchContent)
+if(DEFINED random_BUILD_TESTS AND NOT DEFINED Random_BuildTests)
+    set(Random_BuildTests ${random_BUILD_TESTS})
+endif()
+option(Random_BuildTests "Build the unit tests" ${PROJECT_IS_TOP_LEVEL})
+
+# Install option (default ON if top-level, OFF if consumed as subproject / FetchContent)
+if(DEFINED random_INSTALL AND NOT DEFINED Random_Install)
+    set(Random_Install ${random_INSTALL})
+endif()
+option(Random_Install "Install the library and CMake config files" ${PROJECT_IS_TOP_LEVEL})
+
+include(GNUInstallDirs)
 
 # define project variables
 set(ILQVYA_RANDOM_TARGET_NAME "random")
@@ -22,6 +36,7 @@ add_library(ilqvya::random ALIAS ${ILQVYA_RANDOM_TARGET_NAME})
 add_library(ilqvya_random ALIAS ${ILQVYA_RANDOM_TARGET_NAME})
 add_library(effolkronium::random ALIAS ${ILQVYA_RANDOM_TARGET_NAME})
 add_library(effolkronium_random ALIAS ${ILQVYA_RANDOM_TARGET_NAME})
+add_library(random::random ALIAS ${ILQVYA_RANDOM_TARGET_NAME})
 
 target_compile_features(${ILQVYA_RANDOM_TARGET_NAME} INTERFACE cxx_std_11)
 
@@ -29,24 +44,26 @@ target_include_directories(${ILQVYA_RANDOM_TARGET_NAME} INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:${ILQVYA_RANDOM_INCLUDE_DESTINATION}>)
 
-if(Random_BuildTests AND (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME))
+if(Random_BuildTests)
     enable_testing()
     add_subdirectory(test)
 endif()
 
-# generate a config and config version file for the package
-include(CMakePackageConfigHelpers)
-configure_package_config_file("cmake/config.cmake.in"
-                              "${CMAKE_CURRENT_BINARY_DIR}/${ILQVYA_RANDOM_CONFIG_FILENAME}"
-                              INSTALL_DESTINATION ${ILQVYA_RANDOM_CONFIG_DESTINATION}
-                              PATH_VARS ILQVYA_RANDOM_INCLUDE_DESTINATION)
-write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/${ILQVYA_RANDOM_CONFIGVERSION_FILENAME}"
-                                 COMPATIBILITY SameMajorVersion)
-    
-# export the library target in build directory
-export(TARGETS ${ILQVYA_RANDOM_TARGET_NAME}
-       NAMESPACE ilqvya::
-       FILE "${CMAKE_CURRENT_BINARY_DIR}/${ILQVYA_RANDOM_TARGETS_FILENAME}")
+if(Random_Install)
+    # generate a config and config version file for the package
+    include(CMakePackageConfigHelpers)
+    configure_package_config_file("cmake/config.cmake.in"
+                                  "${CMAKE_CURRENT_BINARY_DIR}/${ILQVYA_RANDOM_CONFIG_FILENAME}"
+                                  INSTALL_DESTINATION ${ILQVYA_RANDOM_CONFIG_DESTINATION}
+                                  PATH_VARS ILQVYA_RANDOM_INCLUDE_DESTINATION)
+    write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/${ILQVYA_RANDOM_CONFIGVERSION_FILENAME}"
+                                     COMPATIBILITY SameMajorVersion)
+        
+    # export the library target in build directory
+    export(TARGETS ${ILQVYA_RANDOM_TARGET_NAME}
+           NAMESPACE ilqvya::
+           FILE "${CMAKE_CURRENT_BINARY_DIR}/${ILQVYA_RANDOM_TARGETS_FILENAME}")
+endif()
 
 option(Random_BuildModules "Build C++20 module target (requires CMake 3.28+ and Ninja or Visual Studio generator)" OFF)
 
@@ -69,25 +86,27 @@ if(Random_BuildModules)
     add_library(ilqvya::random_module ALIAS ilqvya_random_module)
 endif()
 
-# install library target and config files
-install(TARGETS ${ILQVYA_RANDOM_TARGET_NAME}
-        EXPORT ${ILQVYA_RANDOM_PACKAGE_NAME})
-if(Random_BuildModules)
-    install(TARGETS ilqvya_random_module
-            EXPORT ${ILQVYA_RANDOM_PACKAGE_NAME}
-            FILE_SET CXX_MODULES DESTINATION "${ILQVYA_RANDOM_INCLUDE_DESTINATION}/ilqvya")
+if(Random_Install)
+    # install library target and config files
+    install(TARGETS ${ILQVYA_RANDOM_TARGET_NAME}
+            EXPORT ${ILQVYA_RANDOM_PACKAGE_NAME})
+    if(Random_BuildModules)
+        install(TARGETS ilqvya_random_module
+                EXPORT ${ILQVYA_RANDOM_PACKAGE_NAME}
+                FILE_SET CXX_MODULES DESTINATION "${ILQVYA_RANDOM_INCLUDE_DESTINATION}/ilqvya")
+    endif()
+    install(FILES "src/ilqvya_random.cppm"
+            DESTINATION "${ILQVYA_RANDOM_INCLUDE_DESTINATION}/ilqvya")
+    install(DIRECTORY "include/ilqvya"
+            DESTINATION ${ILQVYA_RANDOM_INCLUDE_DESTINATION})
+    install(DIRECTORY "include/effolkronium"
+            DESTINATION ${ILQVYA_RANDOM_INCLUDE_DESTINATION})
+    install(EXPORT ${ILQVYA_RANDOM_PACKAGE_NAME}
+            NAMESPACE ilqvya::
+            FILE ${ILQVYA_RANDOM_TARGETS_FILENAME}
+            DESTINATION ${ILQVYA_RANDOM_CONFIG_DESTINATION})
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${ILQVYA_RANDOM_CONFIG_FILENAME}"
+                  "${CMAKE_CURRENT_BINARY_DIR}/${ILQVYA_RANDOM_CONFIGVERSION_FILENAME}"
+            DESTINATION ${ILQVYA_RANDOM_CONFIG_DESTINATION})
 endif()
-install(FILES "src/ilqvya_random.cppm"
-        DESTINATION "${ILQVYA_RANDOM_INCLUDE_DESTINATION}/ilqvya")
-install(DIRECTORY "include/ilqvya"
-        DESTINATION ${ILQVYA_RANDOM_INCLUDE_DESTINATION})
-install(DIRECTORY "include/effolkronium"
-        DESTINATION ${ILQVYA_RANDOM_INCLUDE_DESTINATION})
-install(EXPORT ${ILQVYA_RANDOM_PACKAGE_NAME}
-        NAMESPACE ilqvya::
-        FILE ${ILQVYA_RANDOM_TARGETS_FILENAME}
-        DESTINATION ${ILQVYA_RANDOM_CONFIG_DESTINATION})
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${ILQVYA_RANDOM_CONFIG_FILENAME}"
-              "${CMAKE_CURRENT_BINARY_DIR}/${ILQVYA_RANDOM_CONFIGVERSION_FILENAME}"
-        DESTINATION ${ILQVYA_RANDOM_CONFIG_DESTINATION})
 
