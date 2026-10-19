@@ -27,17 +27,17 @@
 #endif
 
 #ifdef RANDOM_LOCAL
-auto Random = ilqvya::random_local{ };
+static auto Random = ilqvya::random_local{ };
 using Random_t = ilqvya::random_local;
 #endif
 
 #ifdef RANDOM_STATIC
-auto Random = ilqvya::random_static{ };
+static auto Random = ilqvya::random_static{ };
 using Random_t = ilqvya::random_static;
 #endif
 
 #ifdef RANDOM_THREAD_LOCAL
-auto Random = ilqvya::random_thread_local{ };
+static auto Random = ilqvya::random_thread_local{ };
 using Random_t = ilqvya::random_thread_local;
 #endif
 

@@ -36,6 +36,10 @@ struct TestRegistrar {
     TestRegistrar(const char* name, const char*, void (*func)()) {
         register_test(name, func);
     }
+    TestRegistrar(const TestRegistrar&) = delete;
+    TestRegistrar& operator=(const TestRegistrar&) = delete;
+    TestRegistrar(TestRegistrar&&) = delete;
+    TestRegistrar& operator=(TestRegistrar&&) = delete;
 };
 
 struct TestFailureException : std::exception {
@@ -98,6 +102,11 @@ struct SectionGuard {
     ~SectionGuard() {
         get_current_section() = prev_section;
     }
+
+    SectionGuard(const SectionGuard&) = delete;
+    SectionGuard& operator=(const SectionGuard&) = delete;
+    SectionGuard(SectionGuard&&) = delete;
+    SectionGuard& operator=(SectionGuard&&) = delete;
 
     explicit operator bool() const noexcept {
         return true;

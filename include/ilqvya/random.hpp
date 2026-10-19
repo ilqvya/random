@@ -274,8 +274,11 @@ namespace ilqvya {
         template<typename Target, typename Source, typename = void>
         struct can_represent {
             static bool check( Source val ) {
-                return static_cast<double>( val ) >= static_cast<double>( ( std::numeric_limits<Target>::lowest )( ) ) &&
-                       static_cast<double>( val ) <= static_cast<double>( ( std::numeric_limits<Target>::max )( ) );
+                using CommonReal = typename std::conditional<
+                    std::is_same<Target, long double>::value || std::is_same<Source, long double>::value,
+                    long double, double>::type;
+                return static_cast<CommonReal>( val ) >= static_cast<CommonReal>( ( std::numeric_limits<Target>::lowest )( ) ) &&
+                       static_cast<CommonReal>( val ) <= static_cast<CommonReal>( ( std::numeric_limits<Target>::max )( ) );
             }
         };
 
@@ -295,10 +298,8 @@ namespace ilqvya {
                            static_cast<std::uintmax_t>( ( std::numeric_limits<Target>::max )( ) );
                 }
                 if ( !std::is_signed<Source>::value && !std::is_signed<Target>::value ) {
-                    return static_cast<std::uintmax_t>( val ) >=
-                               static_cast<std::uintmax_t>( ( std::numeric_limits<Target>::lowest )( ) ) &&
-                           static_cast<std::uintmax_t>( val ) <=
-                               static_cast<std::uintmax_t>( ( std::numeric_limits<Target>::max )( ) );
+                    return static_cast<std::uintmax_t>( val ) <=
+                           static_cast<std::uintmax_t>( ( std::numeric_limits<Target>::max )( ) );
                 }
                 return static_cast<std::intmax_t>( val ) >=
                            static_cast<std::intmax_t>( ( std::numeric_limits<Target>::lowest )( ) ) &&
@@ -309,8 +310,8 @@ namespace ilqvya {
 
         template<typename Value, typename Weight = double>
         struct weighted_result {
-            Value value;
-            Weight weight;
+            Value value{ };
+            Weight weight{ };
 
             constexpr weighted_result( ) = default;
             constexpr weighted_result( Value val, Weight w ) noexcept(
@@ -389,8 +390,8 @@ namespace ilqvya {
         // and thread ID in case random_device is deterministic or on concurrent threads.
         // Queries clock and thread ID once and distributes both 32-bit halves across the words.
         struct seed_data {
-            std::array<std::uint32_t, 8> data;
-            seed_data( ) {
+            std::array<std::uint32_t, 8> data{ };
+            seed_data( ) : data{ } {
                 std::random_device rd;
                 const auto now = static_cast<std::uint64_t>(
                     std::chrono::high_resolution_clock::now( ).time_since_epoch( ).count( ) );
@@ -497,7 +498,7 @@ namespace ilqvya {
             template<typename T>
             ILQVYA_NODISCARD static typename std::enable_if<details::is_uniform_real<T>::value, T>::type
             get( Engine& engine, T from = T( 0 ), T to = T( 1 ) ) {
-                if ( std::isnan( from ) || std::isnan( to ) || !std::isfinite( from ) || !std::isfinite( to ) )
+                if ( !std::isfinite( from ) || !std::isfinite( to ) )
                     throw std::invalid_argument( "Random::get: range bounds must be finite numbers" );
                 const T diff = ( from < to ) ? ( to - from ) : ( from - to );
                 if ( !std::isfinite( diff ) )
@@ -573,7 +574,7 @@ namespace ilqvya {
                                                           Stddev stddev = Stddev( 1 ) ) {
                 const auto m = static_cast<EffectiveReal>( mean );
                 const auto s = static_cast<EffectiveReal>( stddev );
-                if ( std::isnan( m ) || std::isnan( s ) || s <= EffectiveReal( 0 ) )
+                if ( !std::isfinite( m ) || !std::isfinite( s ) || s <= EffectiveReal( 0 ) )
                     throw std::invalid_argument( "Random::normal: stddev must be greater than 0" );
                 std::normal_distribution<EffectiveReal> dist( m, s );
                 return dist( engine );
@@ -583,7 +584,7 @@ namespace ilqvya {
                      typename EffectiveReal = typename std::conditional<details::is_uniform_real<RealType>::value, RealType, double>::type>
             ILQVYA_NODISCARD static EffectiveReal exponential( Engine& engine, Lambda lambda = Lambda( 1 ) ) {
                 const auto l = static_cast<EffectiveReal>( lambda );
-                if ( std::isnan( l ) || l <= EffectiveReal( 0 ) )
+                if ( !std::isfinite( l ) || l <= EffectiveReal( 0 ) )
                     throw std::invalid_argument( "Random::exponential: lambda must be greater than 0" );
                 std::exponential_distribution<EffectiveReal> dist( l );
                 return dist( engine );
@@ -593,7 +594,7 @@ namespace ilqvya {
             ILQVYA_NODISCARD static typename std::enable_if<std::is_integral<IntType>::value, IntType>::type
             poisson( Engine& engine, Mean mean = Mean( 1 ) ) {
                 const auto m = static_cast<double>( mean );
-                if ( std::isnan( m ) || m <= 0.0 )
+                if ( !std::isfinite( m ) || m <= 0.0 )
                     throw std::invalid_argument( "Random::poisson: mean must be greater than 0" );
                 std::poisson_distribution<IntType> dist( m );
                 return dist( engine );
@@ -766,7 +767,8 @@ namespace ilqvya {
 
         private:
             template<typename PairContainer>
-            ILQVYA_NODISCARD static auto sample_weighted_container( Engine& engine, PairContainer& pair_container ) ->
+            ILQVYA_NODISCARD static auto sample_weighted_container_impl( Engine& engine, PairContainer& pair_container,
+                                                                         std::true_type ) ->
                 decltype( std::begin( pair_container ) ) {
                 using WeightType = typename PairContainer::value_type::second_type;
                 using IteratorType = decltype( std::begin( pair_container ) );
@@ -774,27 +776,19 @@ namespace ilqvya {
                 WeightType total_weight = 0;
                 IteratorType last_nonzero_it = std::end( pair_container );
                 for ( IteratorType it = std::begin( pair_container ); it != std::end( pair_container ); ++it ) {
-                    if ( details::is_uniform_real<WeightType>::value ) {
-                        if ( std::isnan( it->second ) || !std::isfinite( it->second ) )
-                            throw std::invalid_argument( "Random::get: weights must be finite numbers" );
-                    }
-                    if ( it->second < WeightType( 0 ) )
+                    if ( std::is_signed<WeightType>::value && it->second < WeightType( 0 ) )
                         throw std::invalid_argument( "Random::get: weights must be non-negative" );
                     if ( it->second > WeightType( 0 ) ) {
                         last_nonzero_it = it;
                     }
-                    if ( details::is_uniform_int<WeightType>::value ) {
-                        if ( ( std::numeric_limits<WeightType>::max )( ) - total_weight < it->second )
-                            throw std::overflow_error( "Random::get: total weight exceeds maximum integer value" );
-                    }
+                    if ( ( std::numeric_limits<WeightType>::max )( ) - total_weight < it->second )
+                        throw std::overflow_error( "Random::get: total weight exceeds maximum integer value" );
                     total_weight += it->second;
                 }
-                if ( total_weight <= WeightType( 0 ) )
+                if ( total_weight == WeightType( 0 ) )
                     return std::end( pair_container );
 
-                WeightType random_weight = details::is_uniform_int<WeightType>::value
-                                               ? get( engine, WeightType( 0 ), total_weight - 1 )
-                                               : get( engine, WeightType( 0 ), total_weight );
+                WeightType random_weight = get( engine, WeightType( 0 ), total_weight - 1 );
                 WeightType sum = 0;
                 for ( IteratorType it = std::begin( pair_container ); it != last_nonzero_it; ++it ) {
                     sum += it->second;
@@ -802,6 +796,47 @@ namespace ilqvya {
                         return it;
                 }
                 return last_nonzero_it;
+            }
+
+            template<typename PairContainer>
+            ILQVYA_NODISCARD static auto sample_weighted_container_impl( Engine& engine, PairContainer& pair_container,
+                                                                         std::false_type ) ->
+                decltype( std::begin( pair_container ) ) {
+                using WeightType = typename PairContainer::value_type::second_type;
+                using IteratorType = decltype( std::begin( pair_container ) );
+
+                WeightType total_weight = 0;
+                IteratorType last_nonzero_it = std::end( pair_container );
+                for ( IteratorType it = std::begin( pair_container ); it != std::end( pair_container ); ++it ) {
+                    if ( !std::isfinite( it->second ) )
+                        throw std::invalid_argument( "Random::get: weights must be finite numbers" );
+                    if ( it->second < WeightType( 0 ) )
+                        throw std::invalid_argument( "Random::get: weights must be non-negative" );
+                    if ( it->second > WeightType( 0 ) ) {
+                        last_nonzero_it = it;
+                    }
+                    total_weight += it->second;
+                }
+                if ( total_weight <= WeightType( 0 ) )
+                    return std::end( pair_container );
+
+                WeightType random_weight = get( engine, WeightType( 0 ), total_weight );
+                WeightType sum = 0;
+                for ( IteratorType it = std::begin( pair_container ); it != last_nonzero_it; ++it ) {
+                    sum += it->second;
+                    if ( sum > random_weight )
+                        return it;
+                }
+                return last_nonzero_it;
+            }
+
+            template<typename PairContainer>
+            ILQVYA_NODISCARD static auto sample_weighted_container( Engine& engine, PairContainer& pair_container ) ->
+                decltype( std::begin( pair_container ) ) {
+                using WeightType = typename PairContainer::value_type::second_type;
+                return sample_weighted_container_impl(
+                    engine, pair_container,
+                    std::integral_constant<bool, details::is_uniform_int<WeightType>::value>( ) );
             }
 
         public:
@@ -849,7 +884,7 @@ namespace ilqvya {
                 Weight total_weight = 0;
                 const details::weighted_result<Target, Weight>* last_nonzero = nullptr;
                 for ( const auto& item : list ) {
-                    if ( item.weight < Weight( 0 ) )
+                    if ( std::is_signed<Weight>::value && item.weight < Weight( 0 ) )
                         throw std::invalid_argument( "Random::get: weights must be non-negative" );
                     if ( item.weight > Weight( 0 ) ) {
                         last_nonzero = &item;
@@ -884,7 +919,7 @@ namespace ilqvya {
                 Weight total_weight = 0;
                 const details::weighted_result<Target, Weight>* last_nonzero = nullptr;
                 for ( const auto& item : list ) {
-                    if ( std::isnan( item.weight ) || !std::isfinite( item.weight ) )
+                    if ( !std::isfinite( item.weight ) )
                         throw std::invalid_argument( "Random::get: weights must be finite numbers" );
                     if ( item.weight < Weight( 0 ) )
                         throw std::invalid_argument( "Random::get: weights must be non-negative" );
@@ -1033,7 +1068,7 @@ namespace ilqvya {
 
             template<typename PopulationIt, typename SampleIt, typename Distance>
             static SampleIt sample( Engine& engine, PopulationIt first, PopulationIt last, SampleIt out, Distance n ) {
-                if ( n <= 0 )
+                if ( n == 0 || ( std::is_signed<Distance>::value && n < 0 ) )
                     return out;
 #if ILQVYA_CPLUSPLUS >= 201703L
                 return std::sample( first, last, out, n, engine );
@@ -1148,10 +1183,12 @@ namespace ilqvya {
                         CharT to = details::default_char_range<CharT>::max_val( ) ) {
                 if ( from > to )
                     std::swap( from, to );
-                if ( std::is_same<CharT, char32_t>::value && static_cast<std::uint32_t>( to ) > 0x10FFFF )
+                using UChar = typename std::make_unsigned<CharT>::type;
+                if ( std::is_same<CharT, char32_t>::value && static_cast<std::uint32_t>( static_cast<UChar>( to ) ) > 0x10FFFF )
                     throw std::invalid_argument( "Random::get_string: 'to' exceeds maximum Unicode code point (0x10FFFF)" );
                 if ( ( std::is_same<CharT, char16_t>::value || std::is_same<CharT, char32_t>::value ) &&
-                     static_cast<std::uint32_t>( from ) >= 0xD800 && static_cast<std::uint32_t>( to ) <= 0xDFFF ) {
+                     static_cast<std::uint32_t>( static_cast<UChar>( from ) ) >= 0xD800 &&
+                     static_cast<std::uint32_t>( static_cast<UChar>( to ) ) <= 0xDFFF ) {
                     throw std::invalid_argument( "Random::get_string: specified range contains only Unicode surrogate code points" );
                 }
                 std::basic_string<CharT> result;
@@ -1159,7 +1196,8 @@ namespace ilqvya {
                 for ( std::size_t i = 0; i < length; ++i ) {
                     CharT ch = get<CharT>( engine, from, to );
                     if ( std::is_same<CharT, char16_t>::value || std::is_same<CharT, char32_t>::value ) {
-                        while ( static_cast<std::uint32_t>( ch ) >= 0xD800 && static_cast<std::uint32_t>( ch ) <= 0xDFFF ) {
+                        while ( static_cast<std::uint32_t>( static_cast<UChar>( ch ) ) >= 0xD800 &&
+                                static_cast<std::uint32_t>( static_cast<UChar>( ch ) ) <= 0xDFFF ) {
                             ch = get<CharT>( engine, from, to );
                         }
                     }
@@ -1199,7 +1237,7 @@ namespace ilqvya {
 
             template<typename PopulationIt, typename OutIt, typename Distance>
             static OutIt choice( Engine& engine, PopulationIt first, PopulationIt last, OutIt out, Distance n ) {
-                if ( n <= 0 )
+                if ( n == 0 || ( std::is_signed<Distance>::value && n < 0 ) )
                     return out;
                 const auto size = std::distance( first, last );
                 if ( 0 == size )
@@ -1273,7 +1311,7 @@ namespace ilqvya {
             }
 
         private:
-            static std::string format_uuid_bytes( const std::uint8_t bytes[16] ) {
+            static std::string format_uuid_bytes( const std::uint8_t ( &bytes )[16] ) {
                 static const char hex_chars[] = "0123456789abcdef";
                 std::string s;
                 s.resize( 36 );
@@ -1288,7 +1326,7 @@ namespace ilqvya {
                 return s;
             } // LCOV_EXCL_LINE
 
-            static std::string format_mongo_id_bytes( const std::uint8_t bytes[12] ) {
+            static std::string format_mongo_id_bytes( const std::uint8_t ( &bytes )[12] ) {
                 static const char hex_chars[] = "0123456789abcdef";
                 std::string s;
                 s.resize( 24 );
@@ -1319,7 +1357,7 @@ namespace ilqvya {
                     case uuid_version::max:
                         return "ffffffff-ffff-ffff-ffff-ffffffffffff";
                     case uuid_version::v4: {
-                        std::uint8_t bytes[16];
+                        std::uint8_t bytes[16]{ };
                         for ( std::size_t i = 0; i < 16; ++i ) {
                             bytes[i] = get<std::uint8_t>( engine );
                         }
@@ -1328,7 +1366,7 @@ namespace ilqvya {
                         return format_uuid_bytes( bytes );
                     }
                     case uuid_version::v7: {
-                        std::uint8_t bytes[16];
+                        std::uint8_t bytes[16]{ };
                         const auto ms = static_cast<std::uint64_t>(
                             std::chrono::duration_cast<std::chrono::milliseconds>(
                                 std::chrono::system_clock::now( ).time_since_epoch( ) )
@@ -1385,7 +1423,7 @@ namespace ilqvya {
                         return format_uuid_bytes( bytes );
                     }
                     case uuid_version::v1: {
-                        std::uint8_t bytes[16];
+                        std::uint8_t bytes[16]{ };
                         const auto now_ns = static_cast<std::uint64_t>(
                             std::chrono::duration_cast<std::chrono::nanoseconds>(
                                 std::chrono::system_clock::now( ).time_since_epoch( ) )
@@ -1412,7 +1450,7 @@ namespace ilqvya {
                         return format_uuid_bytes( bytes );
                     }
                     case uuid_version::v6: {
-                        std::uint8_t bytes[16];
+                        std::uint8_t bytes[16]{ };
                         const auto now_ns = static_cast<std::uint64_t>(
                             std::chrono::duration_cast<std::chrono::nanoseconds>(
                                 std::chrono::system_clock::now( ).time_since_epoch( ) )
@@ -1439,7 +1477,7 @@ namespace ilqvya {
                         return format_uuid_bytes( bytes );
                     }
                     case uuid_version::mongo_object_id: {
-                        std::uint8_t bytes[12];
+                        std::uint8_t bytes[12]{ };
                         const auto sec = static_cast<std::uint32_t>(
                             std::chrono::duration_cast<std::chrono::seconds>(
                                 std::chrono::system_clock::now( ).time_since_epoch( ) )
@@ -1450,7 +1488,7 @@ namespace ilqvya {
                         bytes[3] = static_cast<std::uint8_t>( sec & 0xff );
 
                         static const std::array<std::uint8_t, 5> process_random = [&engine]( ) {
-                            std::array<std::uint8_t, 5> rnd;
+                            std::array<std::uint8_t, 5> rnd{ };
                             for ( std::size_t i = 0; i < 5; ++i ) {
                                 rnd[i] = get<std::uint8_t>( engine );
                             }
@@ -1462,10 +1500,12 @@ namespace ilqvya {
                         bytes[7] = process_random[3];
                         bytes[8] = process_random[4];
 
-                        static std::atomic<std::uint32_t> mongo_counter{
-                            static_cast<std::uint32_t>( ( static_cast<std::uint32_t>( get<std::uint8_t>( engine ) ) << 16 ) |
-                                                        ( static_cast<std::uint32_t>( get<std::uint8_t>( engine ) ) << 8 ) |
-                                                        static_cast<std::uint32_t>( get<std::uint8_t>( engine ) ) ) };
+                        static std::atomic<std::uint32_t> mongo_counter{ [&engine]( ) {
+                            const auto b0 = static_cast<std::uint32_t>( get<std::uint8_t>( engine ) );
+                            const auto b1 = static_cast<std::uint32_t>( get<std::uint8_t>( engine ) );
+                            const auto b2 = static_cast<std::uint32_t>( get<std::uint8_t>( engine ) );
+                            return ( b0 << 16 ) | ( b1 << 8 ) | b2;
+                        }( ) };
                         const std::uint32_t c = mongo_counter.fetch_add( 1, std::memory_order_relaxed ) & 0x00ffffff;
                         bytes[9]  = static_cast<std::uint8_t>( ( c >> 16 ) & 0xff );
                         bytes[10] = static_cast<std::uint8_t>( ( c >> 8 ) & 0xff );
@@ -1476,7 +1516,6 @@ namespace ilqvya {
                     default:
                         throw std::invalid_argument( "Random::get_uuid: unsupported uuid version" );
                 }
-                return ""; // LCOV_EXCL_LINE
             } // LCOV_EXCL_LINE
         };
 
