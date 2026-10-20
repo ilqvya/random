@@ -173,6 +173,64 @@ namespace ilqvya {
             static constexpr CharT max_val( ) noexcept { return static_cast<CharT>( '~' ); }
         };
 
+        template<typename T>
+        constexpr typename std::enable_if<std::is_signed<T>::value, bool>::type is_negative( T val ) noexcept {
+            return val < T( 0 );
+        }
+
+        template<typename T>
+        constexpr typename std::enable_if<!std::is_signed<T>::value, bool>::type is_negative( T ) noexcept {
+            return false;
+        }
+
+        template<typename T>
+        constexpr typename std::enable_if<std::is_signed<T>::value, bool>::type is_non_positive( T val ) noexcept {
+            return val <= T( 0 );
+        }
+
+        template<typename T>
+        constexpr typename std::enable_if<!std::is_signed<T>::value, bool>::type is_non_positive( T val ) noexcept {
+            return val == T( 0 );
+        }
+
+        template<typename CharT>
+        constexpr typename std::enable_if<( sizeof( CharT ) >= 4 ), bool>::type
+        exceeds_unicode_max( CharT val ) noexcept {
+            return static_cast<std::uint32_t>( static_cast<typename std::make_unsigned<CharT>::type>( val ) ) > 0x10FFFF;
+        }
+
+        template<typename CharT>
+        constexpr typename std::enable_if<( sizeof( CharT ) < 4 ), bool>::type
+        exceeds_unicode_max( CharT ) noexcept {
+            return false;
+        }
+
+        template<typename CharT>
+        constexpr typename std::enable_if<( sizeof( CharT ) >= 2 ), bool>::type
+        is_unicode_surrogate( CharT ch ) noexcept {
+            return static_cast<std::uint32_t>( static_cast<typename std::make_unsigned<CharT>::type>( ch ) ) >= 0xD800 &&
+                   static_cast<std::uint32_t>( static_cast<typename std::make_unsigned<CharT>::type>( ch ) ) <= 0xDFFF;
+        }
+
+        template<typename CharT>
+        constexpr typename std::enable_if<( sizeof( CharT ) < 2 ), bool>::type
+        is_unicode_surrogate( CharT ) noexcept {
+            return false;
+        }
+
+        template<typename CharT>
+        constexpr typename std::enable_if<( sizeof( CharT ) >= 2 ), bool>::type
+        is_unicode_surrogate_range( CharT from, CharT to ) noexcept {
+            return static_cast<std::uint32_t>( static_cast<typename std::make_unsigned<CharT>::type>( from ) ) >= 0xD800 &&
+                   static_cast<std::uint32_t>( static_cast<typename std::make_unsigned<CharT>::type>( to ) ) <= 0xDFFF;
+        }
+
+        template<typename CharT>
+        constexpr typename std::enable_if<( sizeof( CharT ) < 2 ), bool>::type
+        is_unicode_surrogate_range( CharT, CharT ) noexcept {
+            return false;
+        }
+
         /// True if type T is iterator
         template<typename T>
         struct is_iterator {
@@ -283,28 +341,44 @@ namespace ilqvya {
         };
 
         template<typename Target, typename Source>
-        struct can_represent<Target, Source,
-                              typename std::enable_if<std::is_integral<Target>::value && std::is_integral<Source>::value>::type> {
-            static bool check( Source val ) noexcept {
-                if ( std::is_signed<Source>::value && !std::is_signed<Target>::value ) {
-                    if ( val < 0 )
-                        return false;
-                    using USource = typename std::make_unsigned<Source>::type;
-                    return static_cast<std::uintmax_t>( static_cast<USource>( val ) ) <=
-                           static_cast<std::uintmax_t>( ( std::numeric_limits<Target>::max )( ) );
-                }
-                if ( !std::is_signed<Source>::value && std::is_signed<Target>::value ) {
-                    return static_cast<std::uintmax_t>( val ) <=
-                           static_cast<std::uintmax_t>( ( std::numeric_limits<Target>::max )( ) );
-                }
-                if ( !std::is_signed<Source>::value && !std::is_signed<Target>::value ) {
-                    return static_cast<std::uintmax_t>( val ) <=
-                           static_cast<std::uintmax_t>( ( std::numeric_limits<Target>::max )( ) );
-                }
+        struct can_represent_integral {
+            static bool check_impl( Source val, std::true_type, std::false_type ) noexcept {
+                if ( val < Source( 0 ) )
+                    return false;
+                using USource = typename std::make_unsigned<Source>::type;
+                return static_cast<std::uintmax_t>( static_cast<USource>( val ) ) <=
+                       static_cast<std::uintmax_t>( ( std::numeric_limits<Target>::max )( ) );
+            }
+
+            static bool check_impl( Source val, std::false_type, std::true_type ) noexcept {
+                return static_cast<std::uintmax_t>( val ) <=
+                       static_cast<std::uintmax_t>( ( std::numeric_limits<Target>::max )( ) );
+            }
+
+            static bool check_impl( Source val, std::false_type, std::false_type ) noexcept {
+                return static_cast<std::uintmax_t>( val ) <=
+                       static_cast<std::uintmax_t>( ( std::numeric_limits<Target>::max )( ) );
+            }
+
+            static bool check_impl( Source val, std::true_type, std::true_type ) noexcept {
                 return static_cast<std::intmax_t>( val ) >=
                            static_cast<std::intmax_t>( ( std::numeric_limits<Target>::lowest )( ) ) &&
                        static_cast<std::intmax_t>( val ) <=
                            static_cast<std::intmax_t>( ( std::numeric_limits<Target>::max )( ) );
+            }
+
+            static bool check( Source val ) noexcept {
+                return check_impl( val,
+                                   std::integral_constant<bool, std::is_signed<Source>::value>( ),
+                                   std::integral_constant<bool, std::is_signed<Target>::value>( ) );
+            }
+        };
+
+        template<typename Target, typename Source>
+        struct can_represent<Target, Source,
+                              typename std::enable_if<std::is_integral<Target>::value && std::is_integral<Source>::value>::type> {
+            static bool check( Source val ) noexcept {
+                return can_represent_integral<Target, Source>::check( val );
             }
         };
 
@@ -776,7 +850,7 @@ namespace ilqvya {
                 WeightType total_weight = 0;
                 IteratorType last_nonzero_it = std::end( pair_container );
                 for ( IteratorType it = std::begin( pair_container ); it != std::end( pair_container ); ++it ) {
-                    if ( std::is_signed<WeightType>::value && it->second < WeightType( 0 ) )
+                    if ( details::is_negative( it->second ) )
                         throw std::invalid_argument( "Random::get: weights must be non-negative" );
                     if ( it->second > WeightType( 0 ) ) {
                         last_nonzero_it = it;
@@ -785,7 +859,7 @@ namespace ilqvya {
                         throw std::overflow_error( "Random::get: total weight exceeds maximum integer value" );
                     total_weight += it->second;
                 }
-                if ( total_weight == WeightType( 0 ) )
+                if ( details::is_non_positive( total_weight ) )
                     return std::end( pair_container );
 
                 WeightType random_weight = get( engine, WeightType( 0 ), total_weight - 1 );
@@ -810,14 +884,14 @@ namespace ilqvya {
                 for ( IteratorType it = std::begin( pair_container ); it != std::end( pair_container ); ++it ) {
                     if ( !std::isfinite( it->second ) )
                         throw std::invalid_argument( "Random::get: weights must be finite numbers" );
-                    if ( it->second < WeightType( 0 ) )
+                    if ( details::is_negative( it->second ) )
                         throw std::invalid_argument( "Random::get: weights must be non-negative" );
                     if ( it->second > WeightType( 0 ) ) {
                         last_nonzero_it = it;
                     }
                     total_weight += it->second;
                 }
-                if ( total_weight <= WeightType( 0 ) )
+                if ( details::is_non_positive( total_weight ) || !std::isfinite( total_weight ) )
                     return std::end( pair_container );
 
                 WeightType random_weight = get( engine, WeightType( 0 ), total_weight );
@@ -884,7 +958,7 @@ namespace ilqvya {
                 Weight total_weight = 0;
                 const details::weighted_result<Target, Weight>* last_nonzero = nullptr;
                 for ( const auto& item : list ) {
-                    if ( std::is_signed<Weight>::value && item.weight < Weight( 0 ) )
+                    if ( details::is_negative( item.weight ) )
                         throw std::invalid_argument( "Random::get: weights must be non-negative" );
                     if ( item.weight > Weight( 0 ) ) {
                         last_nonzero = &item;
@@ -893,7 +967,7 @@ namespace ilqvya {
                         throw std::overflow_error( "Random::get: total weight exceeds maximum integer value" );
                     total_weight += item.weight;
                 }
-                if ( total_weight == Weight( 0 ) ) {
+                if ( details::is_non_positive( total_weight ) ) {
                     return list.begin( )->value;
                 }
                 Weight random_weight = get( engine, Weight( 0 ), total_weight - 1 );
@@ -908,7 +982,10 @@ namespace ilqvya {
                         return item.value;
                     }
                 }
-                return last->value;
+                if ( last != nullptr ) {
+                    return last->value;
+                }
+                return list.begin( )->value;
             }
 
             template<typename Target, typename Weight>
@@ -921,14 +998,14 @@ namespace ilqvya {
                 for ( const auto& item : list ) {
                     if ( !std::isfinite( item.weight ) )
                         throw std::invalid_argument( "Random::get: weights must be finite numbers" );
-                    if ( item.weight < Weight( 0 ) )
+                    if ( details::is_negative( item.weight ) )
                         throw std::invalid_argument( "Random::get: weights must be non-negative" );
                     if ( item.weight > Weight( 0 ) ) {
                         last_nonzero = &item;
                     }
                     total_weight += item.weight;
                 }
-                if ( total_weight <= Weight( 0 ) ) {
+                if ( details::is_non_positive( total_weight ) || !std::isfinite( total_weight ) ) {
                     return list.begin( )->value;
                 }
                 Weight random_weight = get( engine, Weight( 0 ), total_weight );
@@ -943,7 +1020,10 @@ namespace ilqvya {
                         return item.value;
                     }
                 }
-                return last->value;
+                if ( last != nullptr ) {
+                    return last->value;
+                }
+                return list.begin( )->value;
             }
 
             template<typename Target, typename Weight = double>
@@ -1068,7 +1148,7 @@ namespace ilqvya {
 
             template<typename PopulationIt, typename SampleIt, typename Distance>
             static SampleIt sample( Engine& engine, PopulationIt first, PopulationIt last, SampleIt out, Distance n ) {
-                if ( n == 0 || ( std::is_signed<Distance>::value && n < 0 ) )
+                if ( details::is_non_positive( n ) )
                     return out;
 #if ILQVYA_CPLUSPLUS >= 201703L
                 return std::sample( first, last, out, n, engine );
@@ -1183,12 +1263,10 @@ namespace ilqvya {
                         CharT to = details::default_char_range<CharT>::max_val( ) ) {
                 if ( from > to )
                     std::swap( from, to );
-                using UChar = typename std::make_unsigned<CharT>::type;
-                if ( std::is_same<CharT, char32_t>::value && static_cast<std::uint32_t>( static_cast<UChar>( to ) ) > 0x10FFFF )
+                if ( std::is_same<CharT, char32_t>::value && details::exceeds_unicode_max( to ) )
                     throw std::invalid_argument( "Random::get_string: 'to' exceeds maximum Unicode code point (0x10FFFF)" );
                 if ( ( std::is_same<CharT, char16_t>::value || std::is_same<CharT, char32_t>::value ) &&
-                     static_cast<std::uint32_t>( static_cast<UChar>( from ) ) >= 0xD800 &&
-                     static_cast<std::uint32_t>( static_cast<UChar>( to ) ) <= 0xDFFF ) {
+                     details::is_unicode_surrogate_range( from, to ) ) {
                     throw std::invalid_argument( "Random::get_string: specified range contains only Unicode surrogate code points" );
                 }
                 std::basic_string<CharT> result;
@@ -1196,8 +1274,7 @@ namespace ilqvya {
                 for ( std::size_t i = 0; i < length; ++i ) {
                     CharT ch = get<CharT>( engine, from, to );
                     if ( std::is_same<CharT, char16_t>::value || std::is_same<CharT, char32_t>::value ) {
-                        while ( static_cast<std::uint32_t>( static_cast<UChar>( ch ) ) >= 0xD800 &&
-                                static_cast<std::uint32_t>( static_cast<UChar>( ch ) ) <= 0xDFFF ) {
+                        while ( details::is_unicode_surrogate( ch ) ) {
                             ch = get<CharT>( engine, from, to );
                         }
                     }
@@ -1237,7 +1314,7 @@ namespace ilqvya {
 
             template<typename PopulationIt, typename OutIt, typename Distance>
             static OutIt choice( Engine& engine, PopulationIt first, PopulationIt last, OutIt out, Distance n ) {
-                if ( n == 0 || ( std::is_signed<Distance>::value && n < 0 ) )
+                if ( details::is_non_positive( n ) )
                     return out;
                 const auto size = std::distance( first, last );
                 if ( 0 == size )

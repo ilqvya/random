@@ -26,7 +26,9 @@ inline std::vector<TestCase>& get_test_registry() {
 }
 
 inline void register_test(const char* name, void (*func)()) {
-    get_test_registry().push_back(TestCase{ name, func });
+    if (name && func) {
+        get_test_registry().push_back(TestCase{ name, func });
+    }
 }
 
 struct TestRegistrar {
@@ -127,15 +129,17 @@ inline int run_all_tests() {
         get_current_test_failed() = false;
 
         try {
-            test.func();
+            if (test.func != nullptr) {
+                test.func();
+            }
         } catch (const TestFailureException&) {
             get_current_test_failed() = true;
         } catch (const std::exception& e) {
-            std::cerr << "  [EXCEPTION] " << test.name << " threw: " << e.what() << "\n\n";
+            std::cerr << "  [EXCEPTION] " << (test.name ? test.name : "unnamed test") << " threw: " << e.what() << "\n\n";
             get_current_test_failed() = true;
             ++get_failed_assertions();
         } catch (...) {
-            std::cerr << "  [EXCEPTION] " << test.name << " threw an unknown exception\n\n";
+            std::cerr << "  [EXCEPTION] " << (test.name ? test.name : "unnamed test") << " threw an unknown exception\n\n";
             get_current_test_failed() = true;
             ++get_failed_assertions();
         }

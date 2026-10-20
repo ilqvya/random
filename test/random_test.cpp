@@ -772,24 +772,30 @@ TEST_CASE( "return random pointer from built-in array" ) {
         const int const_carray[3] = { 10, 20, 30 };
         const int* ptr = Random.get( const_carray );
         REQUIRE( ptr != nullptr );
-        REQUIRE( ( *ptr == 10 || *ptr == 20 || *ptr == 30 ) );
+        if ( ptr != nullptr ) {
+            REQUIRE( ( *ptr == 10 || *ptr == 20 || *ptr == 30 ) );
+        }
 
         ilqvya::random_local rl;
         const int* rl_ptr = rl.get( const_carray );
         REQUIRE( rl_ptr != nullptr );
-        REQUIRE( ( *rl_ptr == 10 || *rl_ptr == 20 || *rl_ptr == 30 ) );
+        if ( rl_ptr != nullptr ) {
+            REQUIRE( ( *rl_ptr == 10 || *rl_ptr == 20 || *rl_ptr == 30 ) );
+        }
     }
 
     SECTION( "string literal" ) {
         const char* p = Random.get( "abc" );
         REQUIRE( p != nullptr );
-        REQUIRE( ( *p == 'a' || *p == 'b' || *p == 'c' ) );
+        if ( p != nullptr ) {
+            REQUIRE( ( *p == 'a' || *p == 'b' || *p == 'c' ) );
+        }
 
         // Ensure '\0' is never returned
         bool has_null = false;
         for ( int i = 0; i < 1000; ++i ) {
             const char* sample_p = Random.get( "x" );
-            if ( *sample_p == '\0' ) {
+            if ( sample_p != nullptr && *sample_p == '\0' ) {
                 has_null = true;
                 break;
             }
@@ -798,7 +804,10 @@ TEST_CASE( "return random pointer from built-in array" ) {
 
         ilqvya::random_local rl;
         const char* rl_p = rl.get( "xyz" );
-        REQUIRE( ( *rl_p == 'x' || *rl_p == 'y' || *rl_p == 'z' ) );
+        REQUIRE( rl_p != nullptr );
+        if ( rl_p != nullptr ) {
+            REQUIRE( ( *rl_p == 'x' || *rl_p == 'y' || *rl_p == 'z' ) );
+        }
     }
 
     SECTION( "rvalue array" ) {
