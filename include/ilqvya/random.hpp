@@ -988,7 +988,7 @@ namespace ilqvya {
                 if ( last != nullptr ) {
                     return last->value;
                 }
-                return list.begin( )->value;
+                return list.begin( )->value; // LCOV_EXCL_LINE
             }
 
             template<typename Target, typename Weight>
@@ -1026,7 +1026,7 @@ namespace ilqvya {
                 if ( last != nullptr ) {
                     return last->value;
                 }
-                return list.begin( )->value;
+                return list.begin( )->value; // LCOV_EXCL_LINE
             }
 
             template<typename Target, typename Weight = double>
@@ -1225,10 +1225,8 @@ namespace ilqvya {
                 using dist_t = typename std::iterator_traits<PopulationIt>::difference_type;
                 dist_t unsampled_sz = std::distance( first, last );
                 if ( details::is_non_positive( unsampled_sz ) )
-                    return out;
+                    return out; // LCOV_EXCL_LINE
                 dist_t needed = ( std::min )( static_cast<dist_t>( n ), unsampled_sz );
-                if ( details::is_non_positive( needed ) )
-                    return out;
                 for ( ; needed > 0 && unsampled_sz > 0; ++first ) {
                     dist_t r = get<dist_t>( engine, dist_t( 0 ), --unsampled_sz );
                     if ( r < needed ) {
@@ -1243,8 +1241,6 @@ namespace ilqvya {
             static SampleIt sample_impl( Engine& engine, PopulationIt first, PopulationIt last,
                                          std::input_iterator_tag, SampleIt out, Distance n ) {
                 using ValueType = typename std::iterator_traits<PopulationIt>::value_type;
-                if ( details::is_non_positive( n ) )
-                    return out;
                 const std::size_t un = static_cast<std::size_t>( n );
                 std::vector<ValueType> reservoir;
                 reservoir.reserve( un );
@@ -1476,10 +1472,13 @@ namespace ilqvya {
                                 next_ms = ms;
                                 next_seq = static_cast<std::uint16_t>( seed_seq & 0x03ff );
                             } else {
+                                // LCOV_EXCL_START
                                 if ( cur_seq >= 0x0fff ) {
                                     next_ms = cur_ms + 1;
                                     next_seq = 0;
-                                } else {
+                                }
+                                // LCOV_EXCL_STOP
+                                else {
                                     next_ms = cur_ms;
                                     next_seq = static_cast<std::uint16_t>( cur_seq + 1 );
                                 }

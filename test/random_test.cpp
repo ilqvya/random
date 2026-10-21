@@ -2889,6 +2889,14 @@ TEST_CASE( "Fill bounds safety and validation" ) {
         caught_inf_fill = true;
     }
     REQUIRE( caught_inf_fill );
+
+    bool caught_neg_fill = false;
+    try {
+        Random.fill( u8_vec, -1, 10 );
+    } catch ( const std::out_of_range& ) {
+        caught_neg_fill = true;
+    }
+    REQUIRE( caught_neg_fill );
 }
 
 TEST_CASE( "Choice and distance edge cases" ) {
@@ -2912,6 +2920,17 @@ TEST_CASE( "Choice and distance edge cases" ) {
     // Default arguments for get<common, int, int>
     auto def_int = Random.get<Random_t::common, int, int>( );
     (void)def_int;
+
+    // Empty forward range sample with positive distance
+    std::forward_list<int> empty_fl;
+    std::vector<int> empty_fl_out;
+    Random.sample( empty_fl.begin( ), empty_fl.end( ), std::back_inserter( empty_fl_out ), 2 );
+    REQUIRE( empty_fl_out.empty( ) );
+
+    // High frequency v7 uuid generation
+    for ( int i = 0; i < 5000; ++i ) {
+        (void)Random.get_uuid( Random_t::uuid_version::v7 );
+    }
 }
 
 TEST_CASE( "get_string printable default and Unicode validation" ) {
