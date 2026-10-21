@@ -128,7 +128,7 @@ namespace ilqvya {
 
         template<typename T>
         struct byte_limits {
-            static constexpr T min( ) noexcept { return ( std::numeric_limits<T>::min )( ); }
+            static constexpr T min( ) noexcept { return ( std::numeric_limits<T>::lowest )( ); }
             static constexpr T max( ) noexcept { return ( std::numeric_limits<T>::max )( ); }
         };
 
@@ -335,8 +335,11 @@ namespace ilqvya {
                 using CommonReal = typename std::conditional<
                     std::is_same<Target, long double>::value || std::is_same<Source, long double>::value,
                     long double, double>::type;
-                return static_cast<CommonReal>( val ) >= static_cast<CommonReal>( ( std::numeric_limits<Target>::lowest )( ) ) &&
-                       static_cast<CommonReal>( val ) <= static_cast<CommonReal>( ( std::numeric_limits<Target>::max )( ) );
+                const CommonReal cval = static_cast<CommonReal>( val );
+                if ( !std::isfinite( cval ) )
+                    return false;
+                return cval >= static_cast<CommonReal>( ( std::numeric_limits<Target>::lowest )( ) ) &&
+                       cval <= static_cast<CommonReal>( ( std::numeric_limits<Target>::max )( ) );
             }
         };
 
@@ -560,7 +563,7 @@ namespace ilqvya {
 
             template<typename T>
             ILQVYA_NODISCARD static typename std::enable_if<details::is_uniform_int<T>::value, T>::type
-            get( Engine& engine, T from = ( std::numeric_limits<T>::min )( ),
+            get( Engine& engine, T from = ( std::numeric_limits<T>::lowest )( ),
                  T to = ( std::numeric_limits<T>::max )( ) ) {
                 if ( from == to )
                     return from;
@@ -601,14 +604,14 @@ namespace ilqvya {
                 typename std::enable_if<std::is_same<Key, common>::value &&
                                             details::is_valid_common_numbers<A, B>::value,
                                         C>::type
-                get( Engine& engine, A from = ( std::numeric_limits<A>::min )( ),
+                get( Engine& engine, A from = ( std::numeric_limits<A>::lowest )( ),
                      B to = ( std::numeric_limits<B>::max )( ) ) {
                 return get( engine, static_cast<C>( from ), static_cast<C>( to ) );
             }
 
             template<typename T>
             ILQVYA_NODISCARD static typename std::enable_if<details::is_supported_character<T>::value, T>::type
-            get( Engine& engine, T from = ( std::numeric_limits<T>::min )( ),
+            get( Engine& engine, T from = ( std::numeric_limits<T>::lowest )( ),
                  T to = ( std::numeric_limits<T>::max )( ) ) {
                 using int_t = typename std::conditional<std::is_signed<T>::value, std::int64_t, std::uint64_t>::type;
                 if ( from == to )
@@ -688,10 +691,10 @@ namespace ilqvya {
                                "Random::get(first, last) requires forward iterators. "
                                "Single-pass input iterators (e.g., std::istream_iterator) cannot be traversed twice." );
                 const auto size = std::distance( first, last );
-                if ( 0 == size )
+                if ( details::is_non_positive( size ) )
                     return last;
                 using diff_t = typename std::iterator_traits<ForwardIt>::difference_type;
-                return std::next( first, get<diff_t>( engine, 0, size - 1 ) );
+                return std::next( first, get<diff_t>( engine, diff_t( 0 ), static_cast<diff_t>( size - 1 ) ) );
             }
 
             template<typename Container>
@@ -811,14 +814,14 @@ namespace ilqvya {
                                                             const CharT*>::type
             get( Engine& engine, const CharT ( &literal )[N] ) {
                 static_assert( N > 1, "Random::get: string literal must not be empty" );
-                return std::addressof( literal[get<std::size_t>( engine, 0, N - 2 )] );
+                return std::addressof( literal[get<std::size_t>( engine, std::size_t( 0 ), static_cast<std::size_t>( N - 2 ) )] );
             }
 
             template<typename T, std::size_t N>
             ILQVYA_NODISCARD static typename std::enable_if<!details::is_supported_character<T>::value, T*>::type
             get( Engine& engine, T ( &array )[N] ) {
                 static_assert( N > 0, "Random::get: built-in array must not be empty" );
-                return std::addressof( array[get<std::size_t>( engine, 0, N - 1 )] );
+                return std::addressof( array[get<std::size_t>( engine, std::size_t( 0 ), static_cast<std::size_t>( N - 1 ) )] );
             }
 
             template<typename T, std::size_t N>
@@ -826,7 +829,7 @@ namespace ilqvya {
                                                             typename std::remove_cv<T>::type>::type
             get( Engine& engine, T ( &&array )[N] ) {
                 static_assert( N > 0, "Random::get: built-in array must not be empty" );
-                return array[get<std::size_t>( engine, 0, N - 1 )];
+                return array[get<std::size_t>( engine, std::size_t( 0 ), static_cast<std::size_t>( N - 1 ) )];
             }
 
             template<typename Dist, typename... Args>
@@ -1221,9 +1224,13 @@ namespace ilqvya {
                                          std::forward_iterator_tag, SampleIt out, Distance n ) {
                 using dist_t = typename std::iterator_traits<PopulationIt>::difference_type;
                 dist_t unsampled_sz = std::distance( first, last );
+                if ( details::is_non_positive( unsampled_sz ) )
+                    return out;
                 dist_t needed = ( std::min )( static_cast<dist_t>( n ), unsampled_sz );
-                for ( ; needed != 0; ++first ) {
-                    dist_t r = get<dist_t>( engine, 0, --unsampled_sz );
+                if ( details::is_non_positive( needed ) )
+                    return out;
+                for ( ; needed > 0 && unsampled_sz > 0; ++first ) {
+                    dist_t r = get<dist_t>( engine, dist_t( 0 ), --unsampled_sz );
                     if ( r < needed ) {
                         *out++ = *first;
                         --needed;
@@ -1236,6 +1243,8 @@ namespace ilqvya {
             static SampleIt sample_impl( Engine& engine, PopulationIt first, PopulationIt last,
                                          std::input_iterator_tag, SampleIt out, Distance n ) {
                 using ValueType = typename std::iterator_traits<PopulationIt>::value_type;
+                if ( details::is_non_positive( n ) )
+                    return out;
                 const std::size_t un = static_cast<std::size_t>( n );
                 std::vector<ValueType> reservoir;
                 reservoir.reserve( un );
@@ -1245,7 +1254,7 @@ namespace ilqvya {
                 std::size_t k = reservoir.size( );
                 std::size_t i = k;
                 for ( ; first != last; ++first, ++i ) {
-                    std::size_t j = get<std::size_t>( engine, 0, i );
+                    std::size_t j = get<std::size_t>( engine, std::size_t( 0 ), i );
                     if ( j < k ) {
                         reservoir[j] = *first;
                     }
@@ -1306,7 +1315,7 @@ namespace ilqvya {
                 std::basic_string<CharT> result;
                 result.reserve( length );
                 for ( std::size_t i = 0; i < length; ++i ) {
-                    const std::size_t idx = get<std::size_t>( engine, 0, N - 2 );
+                    const std::size_t idx = get<std::size_t>( engine, std::size_t( 0 ), static_cast<std::size_t>( N - 2 ) );
                     result.push_back( literal[idx] );
                 }
                 return result;
@@ -1317,11 +1326,11 @@ namespace ilqvya {
                 if ( details::is_non_positive( n ) )
                     return out;
                 const auto size = std::distance( first, last );
-                if ( 0 == size )
+                if ( details::is_non_positive( size ) )
                     throw std::invalid_argument( "Random::choice: population must not be empty" );
                 using diff_t = typename std::iterator_traits<PopulationIt>::difference_type;
                 for ( Distance i = 0; i < n; ++i ) {
-                    const diff_t idx = get<diff_t>( engine, 0, size - 1 );
+                    const diff_t idx = get<diff_t>( engine, diff_t( 0 ), static_cast<diff_t>( size - 1 ) );
                     *out++ = *std::next( first, idx );
                 }
                 return out;
@@ -1422,7 +1431,7 @@ namespace ilqvya {
                 std::string result;
                 result.reserve( length );
                 for ( std::size_t i = 0; i < length; ++i ) {
-                    result.push_back( digits[get<std::size_t>( engine, 0, 15 )] );
+                    result.push_back( digits[get<std::size_t>( engine, std::size_t( 0 ), std::size_t( 15 ) )] );
                 }
                 return result;
             } // LCOV_EXCL_LINE
@@ -1453,7 +1462,8 @@ namespace ilqvya {
                         // Packs 48 bits of timestamp ms with 16 bits of sequence state into a single atomic word
                         // to guarantee atomic monotonicity and race-free updates across concurrent callers.
                         static std::atomic<std::uint64_t> last_v7_state{ 0 };
-                        const std::uint16_t seed_seq = static_cast<std::uint16_t>( get<std::uint16_t>( engine, 0, 0x03ff ) );
+                        const std::uint16_t seed_seq = static_cast<std::uint16_t>(
+                            get<std::uint16_t>( engine, std::uint16_t( 0 ), std::uint16_t( 0x03ff ) ) );
                         std::uint64_t current = last_v7_state.load( std::memory_order_relaxed );
                         std::uint64_t final_ms = 0;
                         std::uint16_t final_seq = 0;
@@ -1564,10 +1574,11 @@ namespace ilqvya {
                         bytes[2] = static_cast<std::uint8_t>( ( sec >> 8 ) & 0xff );
                         bytes[3] = static_cast<std::uint8_t>( sec & 0xff );
 
-                        static const std::array<std::uint8_t, 5> process_random = [&engine]( ) {
+                        static const std::array<std::uint8_t, 5> process_random = []( ) {
+                            std::random_device rd;
                             std::array<std::uint8_t, 5> rnd{ };
                             for ( std::size_t i = 0; i < 5; ++i ) {
-                                rnd[i] = get<std::uint8_t>( engine );
+                                rnd[i] = static_cast<std::uint8_t>( rd( ) & 0xff );
                             }
                             return rnd;
                         }( );
@@ -1577,11 +1588,9 @@ namespace ilqvya {
                         bytes[7] = process_random[3];
                         bytes[8] = process_random[4];
 
-                        static std::atomic<std::uint32_t> mongo_counter{ [&engine]( ) {
-                            const auto b0 = static_cast<std::uint32_t>( get<std::uint8_t>( engine ) );
-                            const auto b1 = static_cast<std::uint32_t>( get<std::uint8_t>( engine ) );
-                            const auto b2 = static_cast<std::uint32_t>( get<std::uint8_t>( engine ) );
-                            return ( b0 << 16 ) | ( b1 << 8 ) | b2;
+                        static std::atomic<std::uint32_t> mongo_counter{ []( ) {
+                            std::random_device rd;
+                            return static_cast<std::uint32_t>( rd( ) & 0x00ffffff );
                         }( ) };
                         const std::uint32_t c = mongo_counter.fetch_add( 1, std::memory_order_relaxed ) & 0x00ffffff;
                         bytes[9]  = static_cast<std::uint8_t>( ( c >> 16 ) & 0xff );
@@ -1739,7 +1748,7 @@ namespace ilqvya {
 
         template<typename T>
         ILQVYA_NODISCARD static typename std::enable_if<details::is_uniform_int<T>::value, T>::type
-        get( T from = ( std::numeric_limits<T>::min )( ), T to = ( std::numeric_limits<T>::max )( ) ) {
+        get( T from = ( std::numeric_limits<T>::lowest )( ), T to = ( std::numeric_limits<T>::max )( ) ) {
             return impl::template get<T>( engine_instance( ), from, to );
         }
 
@@ -1760,13 +1769,13 @@ namespace ilqvya {
             typename std::enable_if<std::is_same<Key, common>::value &&
                                         details::is_valid_common_numbers<A, B>::value,
                                     C>::type
-            get( A from = ( std::numeric_limits<A>::min )( ), B to = ( std::numeric_limits<B>::max )( ) ) {
+            get( A from = ( std::numeric_limits<A>::lowest )( ), B to = ( std::numeric_limits<B>::max )( ) ) {
             return impl::template get<Key, A, B, C>( engine_instance( ), from, to );
         }
 
         template<typename T>
         ILQVYA_NODISCARD static typename std::enable_if<details::is_supported_character<T>::value, T>::type
-        get( T from = ( std::numeric_limits<T>::min )( ), T to = ( std::numeric_limits<T>::max )( ) ) {
+        get( T from = ( std::numeric_limits<T>::lowest )( ), T to = ( std::numeric_limits<T>::max )( ) ) {
             return impl::template get<T>( engine_instance( ), from, to );
         }
 
@@ -2366,7 +2375,7 @@ namespace ilqvya {
 
         template<typename T>
         ILQVYA_NODISCARD typename std::enable_if<details::is_uniform_int<T>::value, T>::type
-        get( T from = ( std::numeric_limits<T>::min )( ), T to = ( std::numeric_limits<T>::max )( ) ) {
+        get( T from = ( std::numeric_limits<T>::lowest )( ), T to = ( std::numeric_limits<T>::max )( ) ) {
             return impl::template get<T>( m_engine, from, to );
         }
 
@@ -2387,13 +2396,13 @@ namespace ilqvya {
             typename std::enable_if<std::is_same<Key, common>::value &&
                                         details::is_valid_common_numbers<A, B>::value,
                                     C>::type
-            get( A from = ( std::numeric_limits<A>::min )( ), B to = ( std::numeric_limits<B>::max )( ) ) {
+            get( A from = ( std::numeric_limits<A>::lowest )( ), B to = ( std::numeric_limits<B>::max )( ) ) {
             return impl::template get<Key, A, B, C>( m_engine, from, to );
         }
 
         template<typename T>
         ILQVYA_NODISCARD typename std::enable_if<details::is_supported_character<T>::value, T>::type
-        get( T from = ( std::numeric_limits<T>::min )( ), T to = ( std::numeric_limits<T>::max )( ) ) {
+        get( T from = ( std::numeric_limits<T>::lowest )( ), T to = ( std::numeric_limits<T>::max )( ) ) {
             return impl::template get<T>( m_engine, from, to );
         }
 

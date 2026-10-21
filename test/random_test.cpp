@@ -2873,6 +2873,45 @@ TEST_CASE( "Fill bounds safety and validation" ) {
     for ( auto val : u8_vec ) {
         REQUIRE( ( val >= 10 && val <= 20 ) );
     }
+
+    bool caught_nan_fill = false;
+    try {
+        Random.fill( u8_vec, std::numeric_limits<double>::quiet_NaN( ), 10.0 );
+    } catch ( const std::out_of_range& ) {
+        caught_nan_fill = true;
+    }
+    REQUIRE( caught_nan_fill );
+
+    bool caught_inf_fill = false;
+    try {
+        Random.fill( u8_vec, 0.0, std::numeric_limits<double>::infinity( ) );
+    } catch ( const std::out_of_range& ) {
+        caught_inf_fill = true;
+    }
+    REQUIRE( caught_inf_fill );
+}
+
+TEST_CASE( "Choice and distance edge cases" ) {
+    std::vector<int> empty_vec;
+    bool caught_empty_choice = false;
+    try {
+        (void)Random.choice( empty_vec, 1 );
+    } catch ( const std::invalid_argument& ) {
+        caught_empty_choice = true;
+    }
+    REQUIRE( caught_empty_choice );
+
+    std::vector<int> out;
+    Random.choice( empty_vec.begin( ), empty_vec.end( ), std::back_inserter( out ), 0 );
+    REQUIRE( out.empty( ) );
+
+    std::vector<int> pop = { 1, 2, 3 };
+    auto c0 = Random.choice( pop, 0 );
+    REQUIRE( c0.empty( ) );
+
+    // Default arguments for get<common, int, int>
+    auto def_int = Random.get<Random_t::common, int, int>( );
+    (void)def_int;
 }
 
 TEST_CASE( "get_string printable default and Unicode validation" ) {
