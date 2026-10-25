@@ -76,10 +76,7 @@ There are a few ways to work with random in C++:
     * *random* (or *random_thread_local*): static methods and [thread_local](http://en.cppreference.com/w/cpp/keyword/thread_local) internal state. Fully thread-safe default!
     * *random_static*: static methods and static internal state. Fast, but not thread-safe across concurrent threads.
     * *random_local*: non-static member methods and local member state. Can be created on the stack at local scope.
-  * **Compile-Time Safety**. Temporary rvalue containers and arrays passed to iterator-returning overloads are deleted (`= delete`) at compile time to prevent dangling iterators. String literals return by value without the null terminator, and empty array access is caught at compile time.
-  * **Zero-Allocation Sampling & Performance**. Features immediate return fast-paths for zero-gap ranges (`from == to`), container reservation (`reserve_if_supported`), and optimal sampling algorithms without replacement.
   * **C++20 Modules Support**. Can be consumed either as a single header file (`ilqvya/random.hpp`) for C++11–C++26 or imported as a native C++20 module (`import ilqvya.random;`) for zero macro leakage, clean encapsulation, and faster compilation times.
-  * **Next-Gen Performance**. Uses `std::philox4x64` as the default engine in C++26 (when available), delivering fast counter-based random number generation with minimal 32-byte state and full 256-bit entropy seeding, while seamlessly falling back to `std::mt19937` in C++11–C++23.
 ## Supported compilers
 * GCC 4.9+ (and later)
 * Clang 3.7+ (and later)
